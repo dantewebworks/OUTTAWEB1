@@ -1338,29 +1338,16 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
     <script>
         // User Authentication Variables
         let currentUser = null;
-        let users = JSON.parse(localStorage.getItem('businessFinderUsers')) || [];
-        
-        // Add default admin user if no users exist
-        if (users.length === 0) {
-            users = [{
-                id: 1,
-                name: 'Admin User',
-                email: 'admin@outtaweb.com',
-                password: 'admin123',
-                verified: true,
-                createdAt: new Date().toISOString()
-            }];
-            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-        }
+        let sessionId = localStorage.getItem('outtaWebSessionId');
         
         // App Variables
         let apiKey = '';
         let searchHistory = [];
 
         // Load API key on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Check if user is logged in
-            checkAuthStatus();
+            await checkAuthStatus();
             
             loadApiKey();
             loadSearchHistory();
@@ -3017,11 +3004,32 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         }
 
         // Authentication Functions
-        function checkAuthStatus() {
-            const savedUser = localStorage.getItem('businessFinderCurrentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showApp();
+        async function checkAuthStatus() {
+            if (sessionId) {
+                try {
+                    const response = await fetch('/api/auth/check-session', {
+                        method: 'GET',
+                        headers: {
+                            'x-session-id': sessionId
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentUser = data.user;
+                        showApp();
+                    } else {
+                        localStorage.removeItem('outtaWebSessionId');
+                        sessionId = null;
+                        showLogin();
+                    }
+                } catch (error) {
+                    console.error('Session check error:', error);
+                    localStorage.removeItem('outtaWebSessionId');
+                    sessionId = null;
+                    showLogin();
+                }
             } else {
                 showLogin();
             }
@@ -3079,62 +3087,69 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         }
 
-        function login() {
+        async function login() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
-            const user = users.find(u => u.email.toLowerCase() === email);
-            if (!user) {
-                alert('No account found with this email. Please register.');
-                return;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    sessionId = data.sessionId;
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    showApp();
+                    document.getElementById('loginForm').reset();
+                } else {
+                    alert(data.message || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
             }
-            if (!user.verified) {
-                pendingVerificationUser = user;
-                showVerify();
-                alert('Please verify your email before logging in.');
-                return;
-            }
-            if (user.password !== password) {
-                alert('Incorrect password.');
-                return;
-            }
-            currentUser = user;
-            localStorage.setItem('businessFinderCurrentUser', JSON.stringify(user));
-            showApp();
-            document.getElementById('loginForm').reset();
         }
 
         let pendingVerificationUser = null;
-                 function register() {
-             const name = document.getElementById('registerName').value;
-             const email = document.getElementById('registerEmail').value.trim().toLowerCase();
-             const password = document.getElementById('registerPassword').value;
-             const confirmPassword = document.getElementById('registerConfirmPassword').value;
-             if (password !== confirmPassword) {
-                 alert('Passwords do not match. Please try again.');
-                 return;
-             }
-             if (users.find(u => u.email.toLowerCase() === email)) {
-                 alert('An account with this email already exists. Please login instead.');
-                 return;
-             }
-             const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-             const newUser = {
-                 id: Date.now(),
-                 name: name,
-                 email: email,
-                 password: password,
-                 verified: false,
-                 verificationCode: verificationCode,
-                 createdAt: new Date().toISOString()
-             };
-             users.push(newUser);
-             localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-             pendingVerificationUser = newUser;
-             showVerify();
-             document.getElementById('registerForm').reset();
-             // Display the verification code on screen
-             document.getElementById('verificationCodeText').textContent = verificationCode;
-         }
+        async function register() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password, confirmPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    sessionId = data.sessionId;
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    showApp();
+                    document.getElementById('registerForm').reset();
+                    alert('Registration successful! Welcome to Outta Web!');
+                } else {
+                    alert(data.message || 'Registration failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
+            }
+        }
 
         document.getElementById('verifyForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -3599,7 +3614,8 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
         function logout() {
             currentUser = null;
-            localStorage.removeItem('businessFinderCurrentUser');
+            sessionId = null;
+            localStorage.removeItem('outtaWebSessionId');
             showLogin();
         }
 

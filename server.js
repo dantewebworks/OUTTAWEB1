@@ -7,6 +7,21 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Simple in-memory user storage (in production, use a database)
+let users = [
+    {
+        id: 1,
+        name: 'Admin User',
+        email: 'admin@outtaweb.com',
+        password: 'admin123',
+        verified: true,
+        createdAt: new Date().toISOString()
+    }
+];
+
+// Simple session storage (in production, use Redis or database)
+const sessions = {};
+
 // Security middleware
 app.use(helmet({
     contentSecurityPolicy: {
@@ -55,22 +70,185 @@ app.get('/api/auth/default-credentials', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
     
-    // For now, just return the default credentials
-    // In a real app, you'd check against a database
-    if (email === 'admin@outtaweb.com' && password === 'admin123') {
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (user && user.password === password) {
+        // Create session
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        sessions[sessionId] = {
+            userId: user.id,
+            email: user.email,
+            createdAt: new Date().toISOString()
+        };
+        
         res.json({
             success: true,
             user: {
-                id: 1,
-                name: 'Admin User',
-                email: 'admin@outtaweb.com',
-                verified: true
-            }
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                verified: user.verified
+            },
+            sessionId: sessionId
         });
     } else {
         res.status(401).json({
             success: false,
             message: 'Invalid credentials'
+        });
+    }
+});
+
+app.post('/api/auth/register', (req, res) => {
+    const { name, email, password, confirmPassword } = req.body;
+    
+    if (password !== confirmPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Passwords do not match'
+        });
+    }
+    
+    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+        return res.status(400).json({
+            success: false,
+            message: 'An account with this email already exists'
+        });
+    }
+    
+    const newUser = {
+        id: users.length + 1,
+        name: name,
+        email: email,
+        password: password,
+        verified: true,
+        createdAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    
+    // Create session
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    sessions[sessionId] = {
+        userId: newUser.id,
+        email: newUser.email,
+        createdAt: new Date().toISOString()
+    };
+    
+    res.json({
+        success: true,
+        user: {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            verified: newUser.verified
+        },
+        sessionId: sessionId
+    });
+});
+
+app.post('/api/auth/verify', (req, res) => {
+    const { email, code } = req.body;
+    
+    // For simplicity, accept any 6-digit code
+    if (code && code.length === 6) {
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user) {
+            user.verified = true;
+            res.json({
+                success: true,
+                message: 'Email verified successfully'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+    } else {
+        res.status(400).json({
+            success: false,
+            message: 'Invalid verification code'
+        });
+    }
+});
+
+app.post('/api/auth/reset-request', (req, res) => {
+    const { email } = req.body;
+    
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+        // Generate reset code
+        const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+        user.resetCode = resetCode;
+        
+        res.json({
+            success: true,
+            message: 'Reset code sent',
+            resetCode: resetCode // In production, send via email
+        });
+    } else {
+        res.status(404).json({
+            success: false,
+            message: 'No account found with this email'
+        });
+    }
+});
+
+app.post('/api/auth/reset-password', (req, res) => {
+    const { email, code, newPassword, confirmNewPassword } = req.body;
+    
+    if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Passwords do not match'
+        });
+    }
+    
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user && user.resetCode === code) {
+        user.password = newPassword;
+        delete user.resetCode;
+        
+        res.json({
+            success: true,
+            message: 'Password reset successfully'
+        });
+    } else {
+        res.status(400).json({
+            success: false,
+            message: 'Invalid reset code'
+        });
+    }
+});
+
+app.get('/api/auth/check-session', (req, res) => {
+    const sessionId = req.headers['x-session-id'];
+    
+    if (sessionId && sessions[sessionId]) {
+        const session = sessions[sessionId];
+        const user = users.find(u => u.id === session.userId);
+        
+        if (user) {
+            res.json({
+                success: true,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    verified: user.verified
+                }
+            });
+        } else {
+            res.status(401).json({
+                success: false,
+                message: 'Invalid session'
+            });
+        }
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'No valid session'
         });
     }
 });
