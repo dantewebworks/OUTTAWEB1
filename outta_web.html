@@ -808,6 +808,9 @@
                 <strong>Admin:</strong> <code>admin@outtaweb.com</code> / <code>admin123</code><br>
                 <strong>Your Account:</strong> <code>dantedesignzofficial@gmail.com</code> / <code>yourpassword123</code>
             </div>
+            <button type="button" onclick="testServerConnection()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🧪 Test Server Connection
+            </button>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -3005,8 +3008,12 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
         // Authentication Functions
         async function checkAuthStatus() {
+            console.log('🔍 Checking auth status...');
+            console.log('📋 Current sessionId:', sessionId);
+            
             if (sessionId) {
                 try {
+                    console.log('📡 Checking session with server...');
                     const response = await fetch('/api/auth/check-session', {
                         method: 'GET',
                         headers: {
@@ -3014,23 +3021,28 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                         }
                     });
                     
+                    console.log('📥 Session check response status:', response.status);
                     const data = await response.json();
+                    console.log('📥 Session check response data:', data);
                     
                     if (data.success) {
+                        console.log('✅ Session valid, showing app');
                         currentUser = data.user;
                         showApp();
                     } else {
+                        console.log('❌ Session invalid, showing login');
                         localStorage.removeItem('outtaWebSessionId');
                         sessionId = null;
                         showLogin();
                     }
                 } catch (error) {
-                    console.error('Session check error:', error);
+                    console.error('💥 Session check error:', error);
                     localStorage.removeItem('outtaWebSessionId');
                     sessionId = null;
                     showLogin();
                 }
             } else {
+                console.log('📋 No sessionId, showing login');
                 showLogin();
             }
         }
@@ -3091,7 +3103,10 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             
+            console.log('🔐 Login attempt:', { email, password: '***' });
+            
             try {
+                console.log('📡 Sending request to /api/auth/login...');
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
@@ -3100,19 +3115,23 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     body: JSON.stringify({ email, password })
                 });
                 
+                console.log('📥 Response status:', response.status);
                 const data = await response.json();
+                console.log('📥 Response data:', data);
                 
                 if (data.success) {
+                    console.log('✅ Login successful!');
                     currentUser = data.user;
                     sessionId = data.sessionId;
                     localStorage.setItem('outtaWebSessionId', sessionId);
                     showApp();
                     document.getElementById('loginForm').reset();
                 } else {
+                    console.log('❌ Login failed:', data.message);
                     alert(data.message || 'Login failed. Please check your credentials.');
                 }
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('💥 Login error:', error);
                 alert('Login failed. Please try again.');
             }
         }
@@ -3621,6 +3640,19 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             sessionId = null;
             localStorage.removeItem('outtaWebSessionId');
             showLogin();
+        }
+
+        async function testServerConnection() {
+            console.log('🧪 Testing server connection...');
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                console.log('✅ Server health check:', data);
+                alert('✅ Server is working! Check console for details.');
+            } catch (error) {
+                console.error('❌ Server connection failed:', error);
+                alert('❌ Server connection failed! Check console for details.');
+            }
         }
         
 
