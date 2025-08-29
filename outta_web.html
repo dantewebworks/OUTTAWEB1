@@ -8,26 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap"
         rel="stylesheet">
     <script>
-        // IMMEDIATE LOGIN REMOVAL FOR HEROKU
-        if (window.location.href.includes('herokuapp.com')) {
-            console.log('🚨 IMMEDIATE: Heroku detected - hiding login immediately');
-            document.addEventListener('DOMContentLoaded', function() {
-                const loginOverlay = document.getElementById('loginOverlay');
-                if (loginOverlay) {
-                    loginOverlay.style.display = 'none';
-                    loginOverlay.style.visibility = 'hidden';
-                    loginOverlay.style.opacity = '0';
-                    loginOverlay.style.pointerEvents = 'none';
-                    loginOverlay.classList.add('hidden');
-                }
-                
-                const container = document.querySelector('.container');
-                if (container) {
-                    container.style.display = 'block';
-                    container.classList.remove('hidden');
-                }
-            });
-        }
+        // Removed Heroku-specific login overlay hack; use unified auth flow
     </script>
     <style>
         /* Login Modal Styles */
@@ -175,15 +156,6 @@
             display: none !important;
         }
         
-        /* COMPLETELY HIDE LOGIN ON HEROKU */
-        @media (min-width: 1px) {
-            .login-overlay {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
-        }
 
         body {
             font-family: 'Comic Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1572,36 +1544,9 @@ State abbreviations (CA)"
             console.log('🌐 User Agent:', navigator.userAgent);
 
             try {
-                // AUTO-LOGIN FOR HEROKU - Skip authentication check
-                if (window.location.href.includes('herokuapp.com')) {
-                    console.log('🌐 Heroku detected - auto-logging in...');
-                    
-                    // COMPLETELY REMOVE LOGIN OVERLAY
-                    const loginOverlay = document.getElementById('loginOverlay');
-                    if (loginOverlay) {
-                        loginOverlay.style.display = 'none';
-                        loginOverlay.style.visibility = 'hidden';
-                        loginOverlay.style.opacity = '0';
-                        loginOverlay.style.pointerEvents = 'none';
-                        loginOverlay.classList.add('hidden');
-                        console.log('🌐 Login overlay completely removed');
-                    }
-                    
-                    // Force show main container immediately
-                    const container = document.querySelector('.container');
-                    if (container) {
-                        container.style.display = 'block';
-                        container.classList.remove('hidden');
-                        console.log('🌐 Main container forced to show');
-                    }
-                    
-                    // Auto-login
-                    autoLoginForHeroku();
-                } else {
-                    // Check if user is logged in (for local development)
-                    console.log('🔍 Starting authentication check...');
-                    checkAuthStatus();
-                }
+                // Unified auth flow for all environments
+                console.log('🔍 Starting authentication check...');
+                checkAuthStatus();
             
                 console.log('🔑 Loading API key...');
                 loadApiKey();
@@ -3306,11 +3251,20 @@ State abbreviations (CA)"
         }
 
         function showLogin() {
-            document.getElementById('loginOverlay').classList.remove('hidden');
+            const loginOverlay = document.getElementById('loginOverlay');
+            const container = document.querySelector('.container');
             document.getElementById('registerOverlay').classList.add('hidden');
             document.getElementById('verifyOverlay').classList.add('hidden');
             document.getElementById('resetOverlay').classList.add('hidden');
-            document.querySelector('.container').classList.add('hidden');
+
+            // Show login overlay (override initial inline display:none)
+            loginOverlay.classList.remove('hidden');
+            loginOverlay.style.display = 'flex';
+
+            // Hide app container
+            if (container) {
+                container.classList.add('hidden');
+            }
         }
 
         function showRegister() {
@@ -3385,7 +3339,7 @@ State abbreviations (CA)"
             }
         }
 
-        function login() {
+        async function login() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
 
@@ -3397,39 +3351,69 @@ State abbreviations (CA)"
                 return;
             }
 
-            // Simple client-side authentication
+            // Try server-side authentication first
+            try {
+                const resp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await resp.json();
+                if (resp.ok && data.success) {
+                    console.log('✅ Server login successful for user:', data.user.email);
+
+                    currentUser = data.user;
+                    sessionId = data.sessionId;
+
+                    window.LOGIN_STATE.isLoggedIn = true;
+                    window.LOGIN_STATE.currentUser = currentUser;
+                    window.LOGIN_STATE.sessionId = sessionId;
+
+                    try {
+                        localStorage.setItem('outtaWebSessionId', sessionId);
+                        localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                        console.log('💾 User data saved to localStorage');
+                    } catch (e) {
+                        console.log('⚠️ localStorage not available, using global state only');
+                    }
+
+                    document.getElementById('loginForm').reset();
+                    showApp();
+                    alert('✅ Login successful! Welcome ' + currentUser.name + '!');
+                    return;
+                } else {
+                    console.log('⚠️ Server login failed:', data && data.message);
+                }
+            } catch (err) {
+                console.log('⚠️ Server login error, falling back to local credentials:', err.message);
+            }
+
+            // Fallback to client-side hardcoded users
             const user = HARDCODED_USERS.find(u =>
                 u.email.toLowerCase() === email && u.password === password
             );
 
             if (user) {
-                console.log('✅ Login successful for user:', user.email);
+                console.log('✅ Local fallback login successful for user:', user.email);
 
-                // Set global variables
                 currentUser = user;
                 sessionId = 'session-' + Date.now();
 
-                // Update global state (most reliable)
                 window.LOGIN_STATE.isLoggedIn = true;
                 window.LOGIN_STATE.currentUser = user;
                 window.LOGIN_STATE.sessionId = sessionId;
 
-                // Try to save to localStorage (optional)
                 try {
                     localStorage.setItem('outtaWebSessionId', sessionId);
                     localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
-                    console.log('💾 User data saved to localStorage');
-                } catch (error) {
-                    console.log('⚠️ localStorage not available, using global state only');
+                } catch (e) {
+                    // ignore
                 }
 
-                // Reset form and show app
                 document.getElementById('loginForm').reset();
                 showApp();
-
-                console.log('🎉 Login completed successfully');
                 alert('✅ Login successful! Welcome ' + user.name + '!');
-
             } else {
                 console.log('❌ Login failed: Invalid credentials');
                 alert('❌ Login failed! Please check your email and password.\n\nAvailable accounts:\n• admin@outtaweb.com / admin123\n• dantedesignzofficial@gmail.com / yourpassword123');
