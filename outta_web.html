@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Outta Web - Find Businesses Without Websites</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
         /* Login Modal Styles */
         .login-overlay {
@@ -150,6 +152,7 @@
         .hidden {
             display: none !important;
         }
+
         body {
             font-family: 'Comic Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
@@ -182,7 +185,7 @@
             font-weight: bold;
             font-family: 'Fredoka One', cursive;
             color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .logo-image {
@@ -190,14 +193,14 @@
             height: 80px;
             object-fit: contain;
             border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
         }
 
         .logo-text {
             font-family: 'Fredoka One', cursive;
             font-size: 36px;
             color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .nav {
@@ -231,14 +234,14 @@
             font-family: 'Fredoka One', cursive;
             color: #333;
             margin-bottom: 40px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .search-form {
             background: white;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
         }
 
@@ -298,7 +301,8 @@
             margin-top: 10px;
         }
 
-        .niche-chip, .location-chip {
+        .niche-chip,
+        .location-chip {
             background: #e9ecef;
             color: #495057;
             border: none;
@@ -309,7 +313,8 @@
             transition: all 0.2s;
         }
 
-        .niche-chip:hover, .location-chip:hover {
+        .niche-chip:hover,
+        .location-chip:hover {
             background: #dee2e6;
         }
 
@@ -319,7 +324,7 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .results-table th {
@@ -345,7 +350,7 @@
             font-size: 16px;
             font-weight: 600;
             color: #333;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .contact-badge {
@@ -439,7 +444,7 @@
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .history-header {
@@ -514,7 +519,7 @@
             background: white;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .api-key-input {
@@ -577,7 +582,7 @@
             background: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .niche-category h5 {
@@ -728,7 +733,7 @@
             flex-direction: column;
         }
 
-        #bulkLocationOverlay .login-modal > * {
+        #bulkLocationOverlay .login-modal>* {
             flex-shrink: 0;
         }
 
@@ -793,6 +798,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Login Modal -->
     <div id="loginOverlay" class="login-overlay">
@@ -802,20 +808,42 @@
                 <span class="logo-text">OUTTA WEB</span>
             </div>
             <h2>Welcome to Business Finder</h2>
-            <p style="color: #6c757d; margin-bottom: 30px;">Find businesses without websites for your outreach campaigns</p>
-            <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 10px; margin-bottom: 20px; font-size: 14px;">
+            <p style="color: #6c757d; margin-bottom: 30px;">Find businesses without websites for your outreach campaigns
+            </p>
+            <div
+                style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 10px; margin-bottom: 20px; font-size: 14px;">
                 <strong>Available Accounts:</strong><br>
                 <strong>Admin:</strong> <code>admin@outtaweb.com</code> / <code>admin123</code><br>
-                <strong>Your Account:</strong> <code>dantedesignzofficial@gmail.com</code> / <code>yourpassword123</code>
+                <strong>Your Account:</strong> <code>dantedesignzofficial@gmail.com</code> /
+                <code>yourpassword123</code>
             </div>
-            <button type="button" onclick="testServerConnection()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+            <button type="button" onclick="testServerConnection()"
+                style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
                 🧪 Test Server Connection
             </button>
-            <button type="button" onclick="testLoginDirectly()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+            <button type="button" onclick="testLoginDirectly()"
+                style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
                 🔥 Test Login Directly
             </button>
-            <button type="button" onclick="forceLogin()" style="background: #6f42c1; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+            <button type="button" onclick="forceLogin()"
+                style="background: #6f42c1; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
                 💜 Force Login (Guaranteed)
+            </button>
+            <button type="button" onclick="clearAuthData()"
+                style="background: #fd7e14; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🧹 Clear Auth Data
+            </button>
+            <button type="button" onclick="debugAuthState()"
+                style="background: #20c997; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🔍 Debug Auth State
+            </button>
+            <button type="button" onclick="testLocalStorage()"
+                style="background: #e83e8c; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                💾 Test LocalStorage
+            </button>
+            <button type="button" onclick="ultraSimpleLogin()"
+                style="background: #000000; color: white; border: none; padding: 12px 20px; border-radius: 4px; margin-bottom: 20px; cursor: pointer; font-weight: bold; font-size: 16px;">
+                🚀 ULTRA SIMPLE LOGIN (NO STORAGE)
             </button>
             
             <form id="loginForm" class="login-form">
@@ -884,7 +912,8 @@
         </div>
         <h2>Email Verification</h2>
         <p style="color: #6c757d; margin-bottom: 20px;">Enter the verification code below:</p>
-        <div id="verificationCodeDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #007bff; border: 2px dashed #007bff;">
+            <div id="verificationCodeDisplay"
+                style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #007bff; border: 2px dashed #007bff;">
           <span id="verificationCodeText">------</span>
         </div>
         <form id="verifyForm" class="login-form">
@@ -916,7 +945,8 @@
           <button type="submit" class="login-btn">Get Reset Code</button>
         </form>
         <form id="resetForm" class="login-form hidden">
-          <div id="resetCodeDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #007bff; border: 2px dashed #007bff;">
+                <div id="resetCodeDisplay"
+                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #007bff; border: 2px dashed #007bff;">
             <span id="resetCodeText">------</span>
           </div>
           <div class="form-group">
@@ -947,8 +977,9 @@
                 <span class="logo-text">OUTTA WEB</span>
             </div>
             <h2>Bulk Location Entry</h2>
-            <p style="color: #6c757d; margin-bottom: 20px;">Enter multiple locations separated by commas, new lines, or semicolons. The system will automatically detect city and state.</p>
-            
+            <p style="color: #6c757d; margin-bottom: 20px;">Enter multiple locations separated by commas, new lines, or
+                semicolons. The system will automatically detect city and state.</p>
+
             <div class="form-group">
                 <label for="bulkLocationInput">Locations</label>
                 <textarea id="bulkLocationInput" rows="8" placeholder="Example:
@@ -963,44 +994,60 @@ Or: Los Angeles, CA, Santa Ana, CA, Houston, TX, Miami, FL, New York, NY
 Supports: City, State (Los Angeles, CA)
 City State (Los Angeles CA)
 State names (California)
-State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+State abbreviations (CA)"
+                    style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
                 <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
                     <span id="bulkLocationCount">0</span> locations detected
                 </div>
                 <div id="manyLocationsWarning" class="many-locations-warning">
-                    ⚠️ You have many locations selected. Use the floating button (↓) or scroll down to see the Add/Cancel buttons.
+                    ⚠️ You have many locations selected. Use the floating button (↓) or scroll down to see the
+                    Add/Cancel buttons.
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label>Quick Add Options</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                    <button type="button" class="btn btn-primary" onclick="addPopularCities()" style="font-size: 12px; padding: 6px 12px;">Popular Cities</button>
-                    <button type="button" class="btn btn-primary" onclick="addCaliforniaCities()" style="font-size: 12px; padding: 6px 12px;">California</button>
-                    <button type="button" class="btn btn-primary" onclick="addTexasCities()" style="font-size: 12px; padding: 6px 12px;">Texas</button>
-                    <button type="button" class="btn btn-primary" onclick="addFloridaCities()" style="font-size: 12px; padding: 6px 12px;">Florida</button>
-                    <button type="button" class="btn btn-primary" onclick="addNewYorkCities()" style="font-size: 12px; padding: 6px 12px;">New York</button>
-                    <button type="button" class="btn btn-primary" onclick="clearBulkInput()" style="font-size: 12px; padding: 6px 12px; background: #dc3545;">Clear</button>
+                    <button type="button" class="btn btn-primary" onclick="addPopularCities()"
+                        style="font-size: 12px; padding: 6px 12px;">Popular Cities</button>
+                    <button type="button" class="btn btn-primary" onclick="addCaliforniaCities()"
+                        style="font-size: 12px; padding: 6px 12px;">California</button>
+                    <button type="button" class="btn btn-primary" onclick="addTexasCities()"
+                        style="font-size: 12px; padding: 6px 12px;">Texas</button>
+                    <button type="button" class="btn btn-primary" onclick="addFloridaCities()"
+                        style="font-size: 12px; padding: 6px 12px;">Florida</button>
+                    <button type="button" class="btn btn-primary" onclick="addNewYorkCities()"
+                        style="font-size: 12px; padding: 6px 12px;">New York</button>
+                    <button type="button" class="btn btn-primary" onclick="clearBulkInput()"
+                        style="font-size: 12px; padding: 6px 12px; background: #dc3545;">Clear</button>
                 </div>
             </div>
-            
-            <div id="bulkLocationPreview" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; max-height: 150px; overflow-y: auto; display: none;">
+
+            <div id="bulkLocationPreview"
+                style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; max-height: 150px; overflow-y: auto; display: none;">
                 <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #495057;">Preview (will be added):</h4>
                 <div id="bulkLocationPreviewList" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
             </div>
-            
+
             <!-- Floating Action Button for many locations -->
-            <div id="floatingActionButton" style="position: fixed; bottom: 20px; right: 20px; display: none; z-index: 1001;">
-                <button type="button" onclick="scrollToBottom()" style="background: #007bff; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4); cursor: pointer; transition: all 0.3s;">
+            <div id="floatingActionButton"
+                style="position: fixed; bottom: 20px; right: 20px; display: none; z-index: 1001;">
+                <button type="button" onclick="scrollToBottom()"
+                    style="background: #007bff; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4); cursor: pointer; transition: all 0.3s;">
                     ↓
                 </button>
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px; position: sticky; bottom: 0; background: white; padding: 15px 0; border-top: 2px solid #e9ecef; z-index: 10;">
-                <button type="button" class="login-btn" onclick="processBulkLocations()" style="flex: 1; font-size: 16px; font-weight: 700; padding: 15px 20px; background: #28a745; border: 2px solid #28a745; box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);">✅ Add Locations</button>
-                <button type="button" class="login-btn" onclick="closeBulkLocationModal()" style="flex: 1; font-size: 16px; font-weight: 700; padding: 15px 20px; background: #dc3545; border: 2px solid #dc3545; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);">❌ Cancel</button>
-            </div>
+
+            <div
+                style="display: flex; gap: 10px; margin-top: 20px; position: sticky; bottom: 0; background: white; padding: 15px 0; border-top: 2px solid #e9ecef; z-index: 10;">
+                <button type="button" class="login-btn" onclick="processBulkLocations()"
+                    style="flex: 1; font-size: 16px; font-weight: 700; padding: 15px 20px; background: #28a745; border: 2px solid #28a745; box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);">✅
+                    Add Locations</button>
+                <button type="button" class="login-btn" onclick="closeBulkLocationModal()"
+                    style="flex: 1; font-size: 16px; font-weight: 700; padding: 15px 20px; background: #dc3545; border: 2px solid #dc3545; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);">❌
+                    Cancel</button>
         </div>
+      </div>
     </div>
 
     <div class="container">
@@ -1036,11 +1083,13 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                         <label for="location">Location(s)</label>
                         <div style="display: flex; gap: 10px; align-items: flex-start;">
                             <div style="flex: 1;">
-                                <input type="text" id="location" placeholder="e.g. Los Angeles, CA, Santa Ana, CA (press comma to add multiple or use Bulk Add button)">
-                                <div class="location-recommendations" id="locationRecommendations"></div>
-                                <div id="locationList" class="niche-chips" style="margin-top: 0.5rem;"></div>
+                                <input type="text" id="location"
+                                    placeholder="e.g. Los Angeles, CA, Santa Ana, CA (press comma to add multiple or use Bulk Add button)">
+                        <div class="location-recommendations" id="locationRecommendations"></div>
+                        <div id="locationList" class="niche-chips" style="margin-top: 0.5rem;"></div>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="addBulkLocations()" style="white-space: nowrap; padding: 12px 16px; height: fit-content;">
+                            <button type="button" class="btn btn-primary" onclick="addBulkLocations()"
+                                style="white-space: nowrap; padding: 12px 16px; height: fit-content;">
                                 Bulk Add
                             </button>
                         </div>
@@ -1084,14 +1133,21 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                         <div class="niche-category">
                             <h5>Personal Services</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('barber shops')">Barber Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('hair salons')">Hair Salons</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('nail salons')">Nail Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('barber shops')">Barber
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('hair salons')">Hair
+                                    Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('nail salons')">Nail
+                                    Salons</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('spas')">Spas</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('massage therapy')">Massage Therapy</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tattoo shops')">Tattoo Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('piercing studios')">Piercing Studios</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tanning salons')">Tanning Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('massage therapy')">Massage
+                                    Therapy</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tattoo shops')">Tattoo
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('piercing studios')">Piercing
+                                    Studios</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tanning salons')">Tanning
+                                    Salons</button>
                             </div>
                         </div>
                         
@@ -1099,91 +1155,130 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                             <h5>Home Services</h5>
                             <div class="niche-chips">
                                 <button class="niche-chip" onclick="addNicheFromSelection('plumbers')">Plumbers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('electricians')">Electricians</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('HVAC contractors')">HVAC Contractors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('electricians')">Electricians</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('HVAC contractors')">HVAC
+                                    Contractors</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('roofers')">Roofers</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('painters')">Painters</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('landscapers')">Landscapers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('cleaning services')">Cleaning Services</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('handyman services')">Handyman Services</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('landscapers')">Landscapers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('cleaning services')">Cleaning
+                                    Services</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('handyman services')">Handyman
+                                    Services</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Automotive</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto repair')">Auto Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto repair')">Auto
+                                    Repair</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('car wash')">Car Wash</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tire shops')">Tire Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto detailing')">Auto Detailing</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('oil change')">Oil Change</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('brake repair')">Brake Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('transmission repair')">Transmission Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto body shops')">Auto Body Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tire shops')">Tire
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto detailing')">Auto
+                                    Detailing</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('oil change')">Oil
+                                    Change</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('brake repair')">Brake
+                                    Repair</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('transmission repair')">Transmission Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto body shops')">Auto Body
+                                    Shops</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Professional Services</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('interior designers')">Interior Designers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('photographers')">Photographers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('personal trainers')">Personal Trainers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('interior designers')">Interior Designers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('photographers')">Photographers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('personal trainers')">Personal
+                                    Trainers</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('tutors')">Tutors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('accountants')">Accountants</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('accountants')">Accountants</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('lawyers')">Lawyers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('real estate agents')">Real Estate Agents</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('consultants')">Consultants</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('real estate agents')">Real
+                                    Estate Agents</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('consultants')">Consultants</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Food & Beverage</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('restaurants')">Restaurants</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('food trucks')">Food Trucks</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('restaurants')">Restaurants</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('food trucks')">Food
+                                    Trucks</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('catering')">Catering</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('bakeries')">Bakeries</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('coffee shops')">Coffee Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('pizza places')">Pizza Places</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('food delivery')">Food Delivery</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('meal prep')">Meal Prep</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('coffee shops')">Coffee
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('pizza places')">Pizza
+                                    Places</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('food delivery')">Food
+                                    Delivery</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('meal prep')">Meal
+                                    Prep</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Health & Wellness</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('chiropractors')">Chiropractors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('chiropractors')">Chiropractors</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('dentists')">Dentists</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('physical therapy')">Physical Therapy</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('yoga studios')">Yoga Studios</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('physical therapy')">Physical
+                                    Therapy</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('yoga studios')">Yoga
+                                    Studios</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('gyms')">Gyms</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('nutritionists')">Nutritionists</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('acupuncture')">Acupuncture</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('mental health')">Mental Health</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('nutritionists')">Nutritionists</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('acupuncture')">Acupuncture</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('mental health')">Mental
+                                    Health</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="niche-selection-section best-niches-section">
-                    <h4>🎯 Best Niches to Reach Out To That Will Most Definitely Be the Owners If You Should Send an SMS</h4>
+                    <h4>🎯 Best Niches to Reach Out To That Will Most Definitely Be the Owners If You Should Send an SMS
+                    </h4>
                     <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
-                        These niches are typically owner-operated businesses where the owner is directly involved in daily operations and likely to respond to SMS outreach.
+                        These niches are typically owner-operated businesses where the owner is directly involved in
+                        daily operations and likely to respond to SMS outreach.
                     </p>
                     <div class="niche-categories">
                         <div class="niche-category">
                             <h5>Owner-Operated Services</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('barber shops')">Barber Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('nail salons')">Nail Salons</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tattoo shops')">Tattoo Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('piercing studios')">Piercing Studios</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('massage therapy')">Massage Therapy</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('barber shops')">Barber
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('nail salons')">Nail
+                                    Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tattoo shops')">Tattoo
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('piercing studios')">Piercing
+                                    Studios</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('massage therapy')">Massage
+                                    Therapy</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('spas')">Spas</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tanning salons')">Tanning Salons</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('hair salons')">Hair Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tanning salons')">Tanning
+                                    Salons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('hair salons')">Hair
+                                    Salons</button>
                             </div>
                         </div>
                         
@@ -1191,97 +1286,142 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                             <h5>Skilled Trades</h5>
                             <div class="niche-chips">
                                 <button class="niche-chip" onclick="addNicheFromSelection('plumbers')">Plumbers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('electricians')">Electricians</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('HVAC contractors')">HVAC Contractors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('electricians')">Electricians</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('HVAC contractors')">HVAC
+                                    Contractors</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('roofers')">Roofers</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('painters')">Painters</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('landscapers')">Landscapers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('handyman services')">Handyman Services</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('cleaning services')">Cleaning Services</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('landscapers')">Landscapers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('handyman services')">Handyman
+                                    Services</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('cleaning services')">Cleaning
+                                    Services</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Automotive Services</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto repair')">Auto Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto repair')">Auto
+                                    Repair</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('car wash')">Car Wash</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tire shops')">Tire Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto detailing')">Auto Detailing</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('oil change')">Oil Change</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('brake repair')">Brake Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('transmission repair')">Transmission Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('auto body shops')">Auto Body Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tire shops')">Tire
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto detailing')">Auto
+                                    Detailing</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('oil change')">Oil
+                                    Change</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('brake repair')">Brake
+                                    Repair</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('transmission repair')">Transmission Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('auto body shops')">Auto Body
+                                    Shops</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Personal & Professional</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('interior designers')">Interior Designers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('photographers')">Photographers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('personal trainers')">Personal Trainers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('interior designers')">Interior Designers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('photographers')">Photographers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('personal trainers')">Personal
+                                    Trainers</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('tutors')">Tutors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('real estate agents')">Real Estate Agents</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('accountants')">Accountants</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('real estate agents')">Real
+                                    Estate Agents</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('accountants')">Accountants</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('lawyers')">Lawyers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('consultants')">Consultants</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('consultants')">Consultants</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Food & Beverage</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('restaurants')">Restaurants</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('food trucks')">Food Trucks</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('restaurants')">Restaurants</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('food trucks')">Food
+                                    Trucks</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('catering')">Catering</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('bakeries')">Bakeries</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('coffee shops')">Coffee Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('pizza places')">Pizza Places</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('food delivery')">Food Delivery</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('meal prep')">Meal Prep</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('coffee shops')">Coffee
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('pizza places')">Pizza
+                                    Places</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('food delivery')">Food
+                                    Delivery</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('meal prep')">Meal
+                                    Prep</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Health & Wellness</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('chiropractors')">Chiropractors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('chiropractors')">Chiropractors</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('dentists')">Dentists</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('physical therapy')">Physical Therapy</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('yoga studios')">Yoga Studios</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('physical therapy')">Physical
+                                    Therapy</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('yoga studios')">Yoga
+                                    Studios</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('gyms')">Gyms</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('nutritionists')">Nutritionists</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('acupuncture')">Acupuncture</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('mental health')">Mental Health</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('nutritionists')">Nutritionists</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('acupuncture')">Acupuncture</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('mental health')">Mental
+                                    Health</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Additional Owner-Operated</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('pet groomers')">Pet Groomers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('veterinarians')">Veterinarians</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('daycare centers')">Daycare Centers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('tutoring centers')">Tutoring Centers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('music lessons')">Music Lessons</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('dance studios')">Dance Studios</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('martial arts')">Martial Arts</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('swimming lessons')">Swimming Lessons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('pet groomers')">Pet
+                                    Groomers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('veterinarians')">Veterinarians</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('daycare centers')">Daycare
+                                    Centers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('tutoring centers')">Tutoring
+                                    Centers</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('music lessons')">Music
+                                    Lessons</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('dance studios')">Dance
+                                    Studios</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('martial arts')">Martial
+                                    Arts</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('swimming lessons')">Swimming
+                                    Lessons</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Service Businesses</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('dry cleaners')">Dry Cleaners</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('laundromats')">Laundromats</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('dry cleaners')">Dry
+                                    Cleaners</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('laundromats')">Laundromats</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('tailors')">Tailors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('shoe repair')">Shoe Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('jewelry repair')">Jewelry Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('watch repair')">Watch Repair</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('key makers')">Key Makers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('locksmiths')">Locksmiths</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('shoe repair')">Shoe
+                                    Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('jewelry repair')">Jewelry
+                                    Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('watch repair')">Watch
+                                    Repair</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('key makers')">Key
+                                    Makers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('locksmiths')">Locksmiths</button>
                             </div>
                         </div>
                         
@@ -1289,26 +1429,41 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                             <h5>Retail & Specialty</h5>
                             <div class="niche-chips">
                                 <button class="niche-chip" onclick="addNicheFromSelection('florists')">Florists</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('gift shops')">Gift Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('antique stores')">Antique Stores</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('thrift stores')">Thrift Stores</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('pawn shops')">Pawn Shops</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('bookstores')">Bookstores</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('libraries')">Libraries</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('art galleries')">Art Galleries</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('gift shops')">Gift
+                                    Shops</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('antique stores')">Antique
+                                    Stores</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('thrift stores')">Thrift
+                                    Stores</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('pawn shops')">Pawn
+                                    Shops</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('bookstores')">Bookstores</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('libraries')">Libraries</button>
+                                <button class="niche-chip" onclick="addNicheFromSelection('art galleries')">Art
+                                    Galleries</button>
                             </div>
                         </div>
                         
                         <div class="niche-category">
                             <h5>Construction & Professional</h5>
                             <div class="niche-chips">
-                                <button class="niche-chip" onclick="addNicheFromSelection('construction companies')">Construction Companies</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('contractors')">Contractors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('architects')">Architects</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('engineers')">Engineers</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('surveyors')">Surveyors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('inspectors')">Inspectors</button>
-                                <button class="niche-chip" onclick="addNicheFromSelection('appraisers')">Appraisers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('construction companies')">Construction
+                                    Companies</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('contractors')">Contractors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('architects')">Architects</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('engineers')">Engineers</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('surveyors')">Surveyors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('inspectors')">Inspectors</button>
+                                <button class="niche-chip"
+                                    onclick="addNicheFromSelection('appraisers')">Appraisers</button>
                                 <button class="niche-chip" onclick="addNicheFromSelection('notaries')">Notaries</button>
                             </div>
                         </div>
@@ -1345,9 +1500,9 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
     </div>
 
     <script>
-        // User Authentication Variables
+        // User Authentication Variables - SIMPLIFIED VERSION
         let currentUser = null;
-        let sessionId = localStorage.getItem('outtaWebSessionId');
+        let sessionId = null;
         
         // Simple hardcoded users for immediate testing
         const HARDCODED_USERS = [
@@ -1367,41 +1522,63 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         ];
         
+        // GLOBAL LOGIN STATE - This will persist during the session
+        window.LOGIN_STATE = {
+            isLoggedIn: false,
+            currentUser: null,
+            sessionId: null
+        };
+        
         // App Variables
         let apiKey = '';
         let searchHistory = [];
 
         // Load API key on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🚀 Page loaded, initializing app...');
+            console.log('🌐 Current URL:', window.location.href);
+            console.log('🌐 User Agent:', navigator.userAgent);
+
+            try {
             // Check if user is logged in
+                console.log('🔍 Starting authentication check...');
             checkAuthStatus();
             
+                console.log('🔑 Loading API key...');
             loadApiKey();
+
+                console.log('📚 Loading search history...');
             loadSearchHistory();
+
+                console.log('✅ App initialization completed');
+            } catch (error) {
+                console.error('❌ Error during app initialization:', error);
+                alert('⚠️ Error during app initialization. Check console for details.');
+            }
             
             // Add event listeners
-            document.getElementById('location').addEventListener('keydown', function(e) {
+            document.getElementById('location').addEventListener('keydown', function (e) {
                 if (e.key === ',') {
                     e.preventDefault();
                     addLocation();
                 }
             });
             
-            document.getElementById('location').addEventListener('input', function(e) {
+            document.getElementById('location').addEventListener('input', function (e) {
                 handleLocationInput(e.target.value);
             });
             
-            document.getElementById('niche').addEventListener('input', function(e) {
+            document.getElementById('niche').addEventListener('input', function (e) {
                 handleNicheInput(e.target.value);
             });
             
             // Add login form event listeners
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
+            document.getElementById('loginForm').addEventListener('submit', function (e) {
                 e.preventDefault();
                 login();
             });
             
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
+            document.getElementById('registerForm').addEventListener('submit', function (e) {
                 e.preventDefault();
                 register();
             });
@@ -1730,13 +1907,13 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             
             // Use the same parsing logic as bulk locations
             const locations = parseBulkLocations(value);
-            
+
             if (locations.length === 0) {
                 alert('Please enter a valid location format (e.g., "Los Angeles, CA" or "Houston TX")');
                 return;
             }
-            
-            const container = document.getElementById('locationList');
+
+                const container = document.getElementById('locationList');
             locations.forEach(location => {
                 // Check if location already exists
                 const existingChips = container.querySelectorAll('.location-chip');
@@ -1747,18 +1924,18 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                         break;
                     }
                 }
-                
+
                 if (!exists) {
-                    const chip = document.createElement('button');
-                    chip.className = 'location-chip';
-                    chip.textContent = location;
-                    chip.onclick = () => chip.remove();
-                    container.appendChild(chip);
+                const chip = document.createElement('button');
+                chip.className = 'location-chip';
+                chip.textContent = location;
+                chip.onclick = () => chip.remove();
+                container.appendChild(chip);
                 }
             });
             
             input.value = '';
-            
+
             // Show success message if multiple locations were added
             if (locations.length > 1) {
                 const notification = document.createElement('div');
@@ -1773,7 +1950,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 `;
                 notification.innerHTML = `✅ Added ${locations.length} location(s) successfully!`;
                 container.parentNode.appendChild(notification);
-                
+
                 // Remove notification after 3 seconds
                 setTimeout(() => {
                     if (notification.parentNode) {
@@ -3033,22 +3210,40 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         // Authentication Functions
         function checkAuthStatus() {
             console.log('🔍 Checking auth status...');
-            console.log('📋 Current sessionId:', sessionId);
+            console.log('🔍 Global login state:', window.LOGIN_STATE);
             
-            if (sessionId && sessionId.startsWith('hardcoded-session-')) {
-                console.log('✅ Hardcoded session found, showing app');
-                // Find the user from hardcoded users
+            // Check global state first (most reliable)
+            if (window.LOGIN_STATE.isLoggedIn && window.LOGIN_STATE.currentUser) {
+                console.log('✅ Found logged in user in global state:', window.LOGIN_STATE.currentUser.email);
+                currentUser = window.LOGIN_STATE.currentUser;
+                sessionId = window.LOGIN_STATE.sessionId;
+                showApp();
+                return;
+            }
+            
+            // Fallback to localStorage (if available)
+            try {
                 const savedUser = localStorage.getItem('outtaWebCurrentUser');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
+                    sessionId = localStorage.getItem('outtaWebSessionId') || 'session-' + Date.now();
+                    
+                    // Update global state
+                    window.LOGIN_STATE.isLoggedIn = true;
+                    window.LOGIN_STATE.currentUser = currentUser;
+                    window.LOGIN_STATE.sessionId = sessionId;
+                    
+                    console.log('✅ Found saved user in localStorage:', currentUser.email);
                     showApp();
-                } else {
-                    showLogin();
+                    return;
                 }
-            } else {
-                console.log('📋 No valid session, showing login');
-                showLogin();
+            } catch (error) {
+                console.error('❌ Error reading localStorage:', error);
             }
+            
+            // No valid session found
+            console.log('📋 No valid session found, showing login');
+            showLogin();
         }
 
         function showLogin() {
@@ -3106,41 +3301,66 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         function login() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
-            
+
             console.log('🔐 Login attempt:', { email, password: '***' });
-            
-            // Simple client-side authentication for immediate testing
-            const user = HARDCODED_USERS.find(u => 
+
+            // Validate input
+            if (!email || !password) {
+                alert('❌ Please enter both email and password.');
+                return;
+            }
+
+            // Simple client-side authentication
+            const user = HARDCODED_USERS.find(u =>
                 u.email.toLowerCase() === email && u.password === password
             );
-            
+
             if (user) {
-                console.log('✅ Login successful!');
+                console.log('✅ Login successful for user:', user.email);
+
+                // Set global variables
                 currentUser = user;
-                sessionId = 'hardcoded-session-' + Date.now();
-                localStorage.setItem('outtaWebSessionId', sessionId);
-                localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
-                showApp();
+                sessionId = 'session-' + Date.now();
+
+                // Update global state (most reliable)
+                window.LOGIN_STATE.isLoggedIn = true;
+                window.LOGIN_STATE.currentUser = user;
+                window.LOGIN_STATE.sessionId = sessionId;
+
+                // Try to save to localStorage (optional)
+                try {
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
+                    console.log('💾 User data saved to localStorage');
+                } catch (error) {
+                    console.log('⚠️ localStorage not available, using global state only');
+                }
+
+                // Reset form and show app
                 document.getElementById('loginForm').reset();
+                showApp();
+
+                console.log('🎉 Login completed successfully');
                 alert('✅ Login successful! Welcome ' + user.name + '!');
+
             } else {
                 console.log('❌ Login failed: Invalid credentials');
-                alert('❌ Login failed! Please check your email and password.\n\nTry:\nEmail: dantedesignzofficial@gmail.com\nPassword: yourpassword123');
+                alert('❌ Login failed! Please check your email and password.\n\nAvailable accounts:\n• admin@outtaweb.com / admin123\n• dantedesignzofficial@gmail.com / yourpassword123');
             }
         }
 
 
         async function register() {
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                alert('Passwords do not match. Please try again.');
-                return;
-            }
-            
+             const name = document.getElementById('registerName').value;
+             const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+             const password = document.getElementById('registerPassword').value;
+             const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+             if (password !== confirmPassword) {
+                 alert('Passwords do not match. Please try again.');
+                 return;
+             }
+
             try {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
@@ -3149,15 +3369,15 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     },
                     body: JSON.stringify({ name, email, password, confirmPassword })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     currentUser = data.user;
                     sessionId = data.sessionId;
                     localStorage.setItem('outtaWebSessionId', sessionId);
                     showApp();
-                    document.getElementById('registerForm').reset();
+             document.getElementById('registerForm').reset();
                     alert('Registration successful! Welcome to Business Finder.');
                 } else {
                     alert(data.message || 'Registration failed. Please try again.');
@@ -3168,7 +3388,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         }
 
-        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+        document.getElementById('verifyForm').addEventListener('submit', function (e) {
             e.preventDefault();
             verifyCode();
         });
@@ -3176,7 +3396,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         async function verifyCode() {
             const code = document.getElementById('verifyCode').value.trim();
             const email = document.getElementById('verifyEmail').value.trim().toLowerCase();
-            
+
             try {
                 const response = await fetch('/api/auth/verify', {
                     method: 'POST',
@@ -3185,14 +3405,14 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     },
                     body: JSON.stringify({ email, code })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    showApp();
-                    document.getElementById('verifyForm').reset();
-                    alert('Email verified! Welcome to Business Finder.');
-                } else {
+                showApp();
+                document.getElementById('verifyForm').reset();
+                alert('Email verified! Welcome to Business Finder.');
+            } else {
                     alert(data.message || 'Incorrect verification code. Please try again.');
                 }
             } catch (error) {
@@ -3204,10 +3424,10 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
 
         // Password Reset
-        document.getElementById('resetRequestForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('resetEmail').value.trim().toLowerCase();
-            
+        document.getElementById('resetRequestForm').addEventListener('submit', async function (e) {
+             e.preventDefault();
+             const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+
             try {
                 const response = await fetch('/api/auth/reset-request', {
                     method: 'POST',
@@ -3216,13 +3436,13 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     },
                     body: JSON.stringify({ email })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    document.getElementById('resetRequestForm').classList.add('hidden');
-                    document.getElementById('resetForm').classList.remove('hidden');
-                    // Display the reset code on screen
+             document.getElementById('resetRequestForm').classList.add('hidden');
+             document.getElementById('resetForm').classList.remove('hidden');
+             // Display the reset code on screen
                     document.getElementById('resetCodeText').textContent = data.resetCode;
                 } else {
                     alert(data.message || 'Reset request failed. Please try again.');
@@ -3233,18 +3453,18 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         });
 
-        document.getElementById('resetForm').addEventListener('submit', async function(e) {
+        document.getElementById('resetForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const code = document.getElementById('resetCode').value.trim();
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
             const email = document.getElementById('resetEmail').value.trim().toLowerCase();
-            
+
             if (newPassword !== confirmNewPassword) {
                 alert('Passwords do not match.');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/auth/reset-password', {
                     method: 'POST',
@@ -3253,14 +3473,14 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     },
                     body: JSON.stringify({ email, code, newPassword })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    alert('Password reset successful! You can now log in.');
-                    showLogin();
-                    document.getElementById('resetForm').reset();
-                    document.getElementById('resetRequestForm').reset();
+            alert('Password reset successful! You can now log in.');
+            showLogin();
+            document.getElementById('resetForm').reset();
+            document.getElementById('resetRequestForm').reset();
                 } else {
                     alert(data.message || 'Password reset failed. Please try again.');
                 }
@@ -3274,7 +3494,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         function addBulkLocations() {
             document.getElementById('bulkLocationOverlay').classList.remove('hidden');
             document.getElementById('bulkLocationInput').focus();
-            
+
             // Add event listener for real-time preview
             document.getElementById('bulkLocationInput').addEventListener('input', updateBulkLocationPreview);
         }
@@ -3294,7 +3514,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             const countElement = document.getElementById('bulkLocationCount');
             const floatingButton = document.getElementById('floatingActionButton');
             const warning = document.getElementById('manyLocationsWarning');
-            
+
             if (!input.trim()) {
                 preview.style.display = 'none';
                 countElement.textContent = '0';
@@ -3302,20 +3522,20 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 warning.style.display = 'none';
                 return;
             }
-            
+
             const locations = parseBulkLocations(input);
             countElement.textContent = locations.length;
-            
+
             if (locations.length === 0) {
                 preview.style.display = 'none';
                 floatingButton.style.display = 'none';
                 warning.style.display = 'none';
                 return;
             }
-            
+
             preview.style.display = 'block';
             previewList.innerHTML = '';
-            
+
             locations.forEach(location => {
                 const chip = document.createElement('span');
                 chip.className = 'location-chip';
@@ -3323,7 +3543,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 chip.style.margin = '0';
                 previewList.appendChild(chip);
             });
-            
+
             // Show floating button and warning if there are many locations
             if (locations.length > 10) {
                 floatingButton.style.display = 'block';
@@ -3336,29 +3556,29 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
         function parseBulkLocations(input) {
             if (!input.trim()) return [];
-            
+
             // Split by multiple delimiters: commas, newlines, semicolons
             const rawLocations = input.split(/[,\n;]/).map(loc => loc.trim()).filter(loc => loc);
-            
+
             const processedLocations = [];
-            
+
             for (const location of rawLocations) {
                 if (!location) continue;
-                
+
                 // Try to detect and format the location
                 const formattedLocation = detectAndFormatLocation(location);
                 if (formattedLocation) {
                     processedLocations.push(formattedLocation);
                 }
             }
-            
+
             return [...new Set(processedLocations)]; // Remove duplicates
         }
 
         function detectAndFormatLocation(location) {
             // Remove extra whitespace and normalize
             location = location.trim().replace(/\s+/g, ' ');
-            
+
             // Common patterns for city, state
             const patterns = [
                 // "City, State" format
@@ -3370,20 +3590,20 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 // "City State Name" format (no comma)
                 /^([^,]+)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)$/i
             ];
-            
+
             for (const pattern of patterns) {
                 const match = location.match(pattern);
                 if (match) {
                     const city = match[1].trim();
                     const state = match[2].trim();
-                    
+
                     // Convert state name to abbreviation if needed
                     const stateAbbr = convertStateNameToAbbr(state);
-                    
+
                     return `${city}, ${stateAbbr}`;
                 }
             }
-            
+
             // If no pattern matches, try to guess
             return guessLocationFormat(location);
         }
@@ -3401,7 +3621,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT', 'vermont': 'VT',
                 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY'
             };
-            
+
             const normalizedState = stateName.toLowerCase();
             return stateMap[normalizedState] || stateName.toUpperCase();
         }
@@ -3411,27 +3631,27 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             if (/^[^,]+,\s*[A-Z]{2}$/i.test(location)) {
                 return location;
             }
-            
+
             // Try to extract city and state from common patterns
             const words = location.split(' ');
-            
+
             // If we have at least 2 words, assume last word is state
             if (words.length >= 2) {
                 const lastWord = words[words.length - 1];
                 const city = words.slice(0, -1).join(' ');
-                
+
                 // Check if last word looks like a state abbreviation
                 if (/^[A-Z]{2}$/i.test(lastWord)) {
                     return `${city}, ${lastWord.toUpperCase()}`;
                 }
-                
+
                 // Check if last word is a state name
                 const stateAbbr = convertStateNameToAbbr(lastWord);
                 if (stateAbbr !== lastWord.toUpperCase()) {
                     return `${city}, ${stateAbbr}`;
                 }
             }
-            
+
             // If we can't parse it, return as is
             return location;
         }
@@ -3439,12 +3659,12 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         function processBulkLocations() {
             const input = document.getElementById('bulkLocationInput').value;
             const locations = parseBulkLocations(input);
-            
+
             if (locations.length === 0) {
                 alert('Please enter at least one valid location.');
                 return;
             }
-            
+
             // Add all locations to the location list
             const container = document.getElementById('locationList');
             locations.forEach(location => {
@@ -3457,7 +3677,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                         break;
                     }
                 }
-                
+
                 if (!exists) {
                     const chip = document.createElement('button');
                     chip.className = 'location-chip';
@@ -3466,9 +3686,9 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     container.appendChild(chip);
                 }
             });
-            
+
             closeBulkLocationModal();
-            
+
             // Show success message
             const notification = document.createElement('div');
             notification.style.cssText = `
@@ -3482,7 +3702,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             `;
             notification.innerHTML = `✅ Added ${locations.length} location(s) successfully!`;
             container.parentNode.appendChild(notification);
-            
+
             // Remove notification after 3 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
@@ -3514,7 +3734,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'Denver, CO',
                 'Washington, DC'
             ];
-            
+
             document.getElementById('bulkLocationInput').value = popularCities.join('\n');
             updateBulkLocationPreview();
         }
@@ -3542,7 +3762,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'San Bernardino, CA',
                 'Fontana, CA'
             ];
-            
+
             document.getElementById('bulkLocationInput').value = californiaCities.join('\n');
             updateBulkLocationPreview();
         }
@@ -3570,7 +3790,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'Waco, TX',
                 'Carrollton, TX'
             ];
-            
+
             document.getElementById('bulkLocationInput').value = texasCities.join('\n');
             updateBulkLocationPreview();
         }
@@ -3598,7 +3818,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'Boca Raton, FL',
                 'Hollywood, FL'
             ];
-            
+
             document.getElementById('bulkLocationInput').value = floridaCities.join('\n');
             updateBulkLocationPreview();
         }
@@ -3626,7 +3846,7 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 'Ithaca, NY',
                 'Saratoga Springs, NY'
             ];
-            
+
             document.getElementById('bulkLocationInput').value = newYorkCities.join('\n');
             updateBulkLocationPreview();
         }
@@ -3672,16 +3892,16 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        email: 'dantedesignzofficial@gmail.com', 
-                        password: 'yourpassword123' 
+                    body: JSON.stringify({
+                        email: 'dantedesignzofficial@gmail.com',
+                        password: 'yourpassword123'
                     })
                 });
-                
+
                 console.log('📥 Login response status:', response.status);
                 const data = await response.json();
                 console.log('📥 Login response data:', data);
-                
+
                 if (data.success) {
                     console.log('✅ Direct login successful!');
                     currentUser = data.user;
@@ -3701,17 +3921,38 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
         function forceLogin() {
             console.log('💜 Force login triggered...');
+
             const user = HARDCODED_USERS[1]; // Dante's account
+            console.log('💜 Using user:', user);
+
+            // Set global variables
             currentUser = user;
-            sessionId = 'hardcoded-session-' + Date.now();
-            localStorage.setItem('outtaWebSessionId', sessionId);
-            localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
+            sessionId = 'force-session-' + Date.now();
+
+            // Update global state (most reliable)
+            window.LOGIN_STATE.isLoggedIn = true;
+            window.LOGIN_STATE.currentUser = user;
+            window.LOGIN_STATE.sessionId = sessionId;
+
+            // Try localStorage (optional)
+            try {
+                localStorage.setItem('outtaWebSessionId', sessionId);
+                localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
+                console.log('💜 Data saved to localStorage');
+            } catch (error) {
+                console.log('💜 localStorage not available, using global state only');
+            }
+
+            // Reset form and show app
+            document.getElementById('loginForm').reset();
             showApp();
+
+            console.log('💜 Force login completed successfully');
             alert('💜 Force login successful! Welcome ' + user.name + '!');
         }
-        
 
-        
+
+
 
 
         function showRegisterForm() {
@@ -3721,6 +3962,123 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         function showLoginForm() {
             showLogin();
         }
+
+        function clearAuthData() {
+            console.log('🧹 Clearing all authentication data...');
+
+            // Clear global variables
+            currentUser = null;
+            sessionId = null;
+
+            // Clear localStorage
+            localStorage.removeItem('outtaWebSessionId');
+            localStorage.removeItem('outtaWebCurrentUser');
+            localStorage.removeItem('businessFinderCurrentUser'); // Also clear the old key just in case
+
+            // Show login screen
+            showLogin();
+
+            console.log('🧹 Authentication data cleared');
+            alert('🧹 All authentication data cleared. Please login again.');
+        }
+
+        function debugAuthState() {
+            console.log('🔍 === AUTH DEBUG STATE ===');
+            console.log('🔍 currentUser:', currentUser);
+            console.log('🔍 sessionId:', sessionId);
+            console.log('🔍 localStorage outtaWebCurrentUser:', localStorage.getItem('outtaWebCurrentUser'));
+            console.log('🔍 localStorage outtaWebSessionId:', localStorage.getItem('outtaWebSessionId'));
+            console.log('🔍 localStorage businessFinderCurrentUser:', localStorage.getItem('businessFinderCurrentUser'));
+            console.log('🔍 HARDCODED_USERS:', HARDCODED_USERS);
+            console.log('🔍 Login overlay hidden?', document.getElementById('loginOverlay').classList.contains('hidden'));
+            console.log('🔍 Container hidden?', document.querySelector('.container').classList.contains('hidden'));
+            console.log('🔍 === END DEBUG ===');
+
+            const debugInfo = {
+                currentUser: currentUser,
+                sessionId: sessionId,
+                localStorage: {
+                    outtaWebCurrentUser: localStorage.getItem('outtaWebCurrentUser'),
+                    outtaWebSessionId: localStorage.getItem('outtaWebSessionId'),
+                    businessFinderCurrentUser: localStorage.getItem('businessFinderCurrentUser')
+                },
+                hardcodedUsers: HARDCODED_USERS,
+                uiState: {
+                    loginOverlayHidden: document.getElementById('loginOverlay').classList.contains('hidden'),
+                    containerHidden: document.querySelector('.container').classList.contains('hidden')
+                }
+            };
+
+            alert('🔍 Debug info logged to console. Check browser developer tools.');
+            return debugInfo;
+        }
+
+        function testLocalStorage() {
+            console.log('💾 Testing localStorage functionality...');
+
+            try {
+                // Test basic localStorage operations
+                const testKey = 'outtaWebTest';
+                const testValue = 'test-' + Date.now();
+
+                console.log('💾 Setting test value:', testValue);
+                localStorage.setItem(testKey, testValue);
+
+                const retrievedValue = localStorage.getItem(testKey);
+                console.log('💾 Retrieved test value:', retrievedValue);
+
+                if (retrievedValue === testValue) {
+                    console.log('✅ localStorage is working correctly');
+                    localStorage.removeItem(testKey);
+                    alert('✅ localStorage is working correctly on this domain!');
+                } else {
+                    console.log('❌ localStorage value mismatch');
+                    alert('❌ localStorage is not working correctly - value mismatch');
+                }
+
+                // Test JSON storage
+                const testObject = { test: true, timestamp: Date.now() };
+                localStorage.setItem(testKey + 'JSON', JSON.stringify(testObject));
+                const retrievedObject = JSON.parse(localStorage.getItem(testKey + 'JSON'));
+
+                if (retrievedObject.test === true) {
+                    console.log('✅ localStorage JSON storage is working');
+                    localStorage.removeItem(testKey + 'JSON');
+                } else {
+                    console.log('❌ localStorage JSON storage failed');
+                    alert('❌ localStorage JSON storage is not working correctly');
+                }
+
+            } catch (error) {
+                console.error('❌ localStorage test failed:', error);
+                alert('❌ localStorage test failed: ' + error.message + '\n\nThis might be due to browser privacy settings or Heroku domain restrictions.');
+            }
+        }
+
+        function ultraSimpleLogin() {
+            console.log('🚀 Ultra simple login triggered...');
+            
+            // Just set the user directly without any storage
+            const user = HARDCODED_USERS[1]; // Dante's account
+            
+            console.log('🚀 Setting user directly:', user);
+            
+            // Set global variables
+            currentUser = user;
+            sessionId = 'ultra-simple-' + Date.now();
+            
+            // Update global state
+            window.LOGIN_STATE.isLoggedIn = true;
+            window.LOGIN_STATE.currentUser = user;
+            window.LOGIN_STATE.sessionId = sessionId;
+            
+            // Show app immediately
+            showApp();
+            
+            console.log('🚀 Ultra simple login completed');
+            alert('🚀 Ultra simple login successful! Welcome ' + user.name + '!\n\nThis bypassed all storage mechanisms.');
+        }
     </script>
 </body>
+
 </html> 
