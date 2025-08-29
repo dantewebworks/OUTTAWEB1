@@ -808,6 +808,9 @@
                 Email: <code>admin@outtaweb.com</code><br>
                 Password: <code>admin123</code>
             </div>
+            <button type="button" onclick="createAdminUser()" style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🔧 Create Admin User (if login fails)
+            </button>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -1351,7 +1354,11 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 createdAt: new Date().toISOString()
             }];
             localStorage.setItem('businessFinderUsers', JSON.stringify(users));
+            console.log('Created default admin user');
         }
+        
+        console.log('Current users:', users);
+        console.log('Users in localStorage:', JSON.parse(localStorage.getItem('businessFinderUsers') || '[]'));
         
         // App Variables
         let apiKey = '';
@@ -3082,7 +3089,13 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         function login() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
+            
+            console.log('Login attempt - Email:', email);
+            console.log('Available users:', users);
+            console.log('Users from localStorage:', JSON.parse(localStorage.getItem('businessFinderUsers') || '[]'));
+            
             const user = users.find(u => u.email.toLowerCase() === email);
+            console.log('Found user:', user);
             
             if (!user) {
                 alert('No account found with this email. Please register.');
@@ -3610,6 +3623,38 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             currentUser = null;
             localStorage.removeItem('businessFinderCurrentUser');
             showLogin();
+        }
+        
+        function createAdminUser() {
+            const adminUser = {
+                id: 1,
+                name: 'Admin User',
+                email: 'admin@outtaweb.com',
+                password: 'admin123',
+                verified: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            let currentUsers = JSON.parse(localStorage.getItem('businessFinderUsers')) || [];
+            
+            // Check if admin user already exists
+            const existingAdmin = currentUsers.find(u => u.email === 'admin@outtaweb.com');
+            if (existingAdmin) {
+                alert('Admin user already exists!');
+                return;
+            }
+            
+            // Add admin user
+            currentUsers.push(adminUser);
+            localStorage.setItem('businessFinderUsers', JSON.stringify(currentUsers));
+            
+            // Update the global users array
+            users = currentUsers;
+            
+            console.log('Admin user created successfully');
+            console.log('Updated users:', users);
+            
+            alert('✅ Admin user created successfully!\n\nYou can now login with:\nEmail: admin@outtaweb.com\nPassword: admin123');
         }
         
 
