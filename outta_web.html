@@ -7,6 +7,28 @@
     <title>Outta Web - Find Businesses Without Websites</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap"
         rel="stylesheet">
+    <script>
+        // IMMEDIATE LOGIN REMOVAL FOR HEROKU
+        if (window.location.href.includes('herokuapp.com')) {
+            console.log('🚨 IMMEDIATE: Heroku detected - hiding login immediately');
+            document.addEventListener('DOMContentLoaded', function() {
+                const loginOverlay = document.getElementById('loginOverlay');
+                if (loginOverlay) {
+                    loginOverlay.style.display = 'none';
+                    loginOverlay.style.visibility = 'hidden';
+                    loginOverlay.style.opacity = '0';
+                    loginOverlay.style.pointerEvents = 'none';
+                    loginOverlay.classList.add('hidden');
+                }
+                
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.style.display = 'block';
+                    container.classList.remove('hidden');
+                }
+            });
+        }
+    </script>
     <style>
         /* Login Modal Styles */
         .login-overlay {
@@ -151,6 +173,16 @@
 
         .hidden {
             display: none !important;
+        }
+        
+        /* COMPLETELY HIDE LOGIN ON HEROKU */
+        @media (min-width: 1px) {
+            .login-overlay {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
         }
 
         body {
@@ -799,9 +831,9 @@
     </style>
 </head>
 
-<body>
-    <!-- Login Modal -->
-    <div id="loginOverlay" class="login-overlay">
+    <body>
+        <!-- Login Modal -->
+        <div id="loginOverlay" class="login-overlay" style="display: none;">
         <div class="login-modal">
             <div class="login-logo">
                 <img src="outtaweblogo.PNG" alt="Outta Web Logo">
@@ -1544,11 +1576,23 @@ State abbreviations (CA)"
                 if (window.location.href.includes('herokuapp.com')) {
                     console.log('🌐 Heroku detected - auto-logging in...');
                     
-                    // Force hide login overlay immediately
+                    // COMPLETELY REMOVE LOGIN OVERLAY
                     const loginOverlay = document.getElementById('loginOverlay');
                     if (loginOverlay) {
+                        loginOverlay.style.display = 'none';
+                        loginOverlay.style.visibility = 'hidden';
+                        loginOverlay.style.opacity = '0';
+                        loginOverlay.style.pointerEvents = 'none';
                         loginOverlay.classList.add('hidden');
-                        console.log('🌐 Login overlay hidden immediately');
+                        console.log('🌐 Login overlay completely removed');
+                    }
+                    
+                    // Force show main container immediately
+                    const container = document.querySelector('.container');
+                    if (container) {
+                        container.style.display = 'block';
+                        container.classList.remove('hidden');
+                        console.log('🌐 Main container forced to show');
                     }
                     
                     // Auto-login
