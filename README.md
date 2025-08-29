@@ -42,7 +42,7 @@ heroku login
 ```
 
 2. **Initialize Git** (if not already done):
-```bash
+   ```bash
 git init
 git add .
 git commit -m "Initial commit"

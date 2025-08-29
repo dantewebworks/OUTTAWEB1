@@ -808,6 +808,9 @@
                 Email: <code>admin@outtaweb.com</code><br>
                 Password: <code>admin123</code>
             </div>
+            <button type="button" onclick="testServerConnection()" style="background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🔧 Test Server Connection
+            </button>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -3007,14 +3010,24 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         async function checkAuthStatus() {
             if (sessionId) {
                 try {
-                    const response = await fetch('/api/auth/check-session', {
+                    const apiUrl = window.location.origin + '/api/auth/check-session';
+                    console.log('Checking session at:', apiUrl);
+                    
+                    const response = await fetch(apiUrl, {
                         method: 'GET',
                         headers: {
                             'x-session-id': sessionId
                         }
                     });
                     
+                    console.log('Session check response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
                     const data = await response.json();
+                    console.log('Session check response data:', data);
                     
                     if (data.success) {
                         currentUser = data.user;
@@ -3091,8 +3104,17 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             
+            // Show loading state
+            const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+            const originalText = loginBtn.textContent;
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.disabled = true;
+            
             try {
-                const response = await fetch('/api/auth/login', {
+                const apiUrl = window.location.origin + '/api/auth/login';
+                console.log('Attempting login to:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3100,7 +3122,14 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     body: JSON.stringify({ email, password })
                 });
                 
+                console.log('Login response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Login response data:', data);
                 
                 if (data.success) {
                     currentUser = data.user;
@@ -3113,7 +3142,11 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                alert('Login failed. Please try again.');
+                alert('Login failed: ' + error.message + '. Please try again.');
+            } finally {
+                // Reset button state
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
             }
         }
 
@@ -3124,8 +3157,17 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerConfirmPassword').value;
             
+            // Show loading state
+            const registerBtn = document.querySelector('#registerForm button[type="submit"]');
+            const originalText = registerBtn.textContent;
+            registerBtn.textContent = 'Registering...';
+            registerBtn.disabled = true;
+            
             try {
-                const response = await fetch('/api/auth/register', {
+                const apiUrl = window.location.origin + '/api/auth/register';
+                console.log('Attempting registration to:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3133,7 +3175,14 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                     body: JSON.stringify({ name, email, password, confirmPassword })
                 });
                 
+                console.log('Registration response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Registration response data:', data);
                 
                 if (data.success) {
                     currentUser = data.user;
@@ -3147,7 +3196,11 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                alert('Registration failed. Please try again.');
+                alert('Registration failed: ' + error.message + '. Please try again.');
+            } finally {
+                // Reset button state
+                registerBtn.textContent = originalText;
+                registerBtn.disabled = false;
             }
         }
 
@@ -3617,6 +3670,22 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             sessionId = null;
             localStorage.removeItem('outtaWebSessionId');
             showLogin();
+        }
+        
+        async function testServerConnection() {
+            try {
+                const apiUrl = window.location.origin + '/api/health';
+                console.log('Testing server connection to:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                console.log('Server health check response:', data);
+                alert('✅ Server is working! Status: ' + data.status + '\nMessage: ' + data.message);
+            } catch (error) {
+                console.error('Server connection test failed:', error);
+                alert('❌ Server connection failed: ' + error.message);
+            }
         }
 
         function showRegisterForm() {
