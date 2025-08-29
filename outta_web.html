@@ -1540,15 +1540,21 @@ State abbreviations (CA)"
             console.log('🌐 User Agent:', navigator.userAgent);
 
             try {
-            // Check if user is logged in
-                console.log('🔍 Starting authentication check...');
-            checkAuthStatus();
+                // AUTO-LOGIN FOR HEROKU - Skip authentication check
+                if (window.location.href.includes('herokuapp.com')) {
+                    console.log('🌐 Heroku detected - auto-logging in...');
+                    autoLoginForHeroku();
+                } else {
+                    // Check if user is logged in (for local development)
+                    console.log('🔍 Starting authentication check...');
+                    checkAuthStatus();
+                }
             
                 console.log('🔑 Loading API key...');
-            loadApiKey();
+                loadApiKey();
 
                 console.log('📚 Loading search history...');
-            loadSearchHistory();
+                loadSearchHistory();
 
                 console.log('✅ App initialization completed');
             } catch (error) {
@@ -4077,6 +4083,30 @@ State abbreviations (CA)"
             
             console.log('🚀 Ultra simple login completed');
             alert('🚀 Ultra simple login successful! Welcome ' + user.name + '!\n\nThis bypassed all storage mechanisms.');
+        }
+
+        function autoLoginForHeroku() {
+            console.log('🌐 Auto-login for Heroku triggered...');
+            
+            // Automatically log in as Dante
+            const user = HARDCODED_USERS[1]; // Dante's account
+            
+            console.log('🌐 Auto-setting user:', user);
+            
+            // Set global variables
+            currentUser = user;
+            sessionId = 'heroku-auto-' + Date.now();
+            
+            // Update global state
+            window.LOGIN_STATE.isLoggedIn = true;
+            window.LOGIN_STATE.currentUser = user;
+            window.LOGIN_STATE.sessionId = sessionId;
+            
+            // Show app immediately (no login screen)
+            showApp();
+            
+            console.log('🌐 Auto-login for Heroku completed');
+            console.log('🌐 User is now logged in as:', user.name);
         }
     </script>
 </body>
