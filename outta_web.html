@@ -821,33 +821,9 @@
                 <strong>Your Account:</strong> <code>dantedesignzofficial@gmail.com</code> /
                 <code>yourpassword123</code>
             </div>
-            <button type="button" onclick="testServerConnection()"
-                style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                🧪 Test Server Connection
-            </button>
             <button type="button" onclick="testLoginDirectly()"
                 style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
                 🔥 Test Login Directly
-            </button>
-            <button type="button" onclick="forceLogin()"
-                style="background: #6f42c1; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                💜 Force Login (Guaranteed)
-            </button>
-            <button type="button" onclick="clearAuthData()"
-                style="background: #fd7e14; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                🧹 Clear Auth Data
-            </button>
-            <button type="button" onclick="debugAuthState()"
-                style="background: #20c997; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                🔍 Debug Auth State
-            </button>
-            <button type="button" onclick="testLocalStorage()"
-                style="background: #e83e8c; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                💾 Test LocalStorage
-            </button>
-            <button type="button" onclick="ultraSimpleLogin()"
-                style="background: #000000; color: white; border: none; padding: 12px 20px; border-radius: 4px; margin-bottom: 20px; cursor: pointer; font-weight: bold; font-size: 16px;">
-                🚀 ULTRA SIMPLE LOGIN (NO STORAGE)
             </button>
             
             <form id="loginForm" class="login-form">
@@ -3245,6 +3221,39 @@ State abbreviations (CA)"
                 console.error('❌ Error reading localStorage:', error);
             }
             
+            // Try server session if we have a saved sessionId
+            try {
+                const savedSession = localStorage.getItem('outtaWebSessionId');
+                if (savedSession) {
+                    fetch('/api/auth/check-session', {
+                        headers: { 'X-Session-Id': savedSession }
+                    })
+                    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (ok && data.success && data.user) {
+                            currentUser = data.user;
+                            sessionId = savedSession;
+                            window.LOGIN_STATE.isLoggedIn = true;
+                            window.LOGIN_STATE.currentUser = currentUser;
+                            window.LOGIN_STATE.sessionId = sessionId;
+                            try {
+                                localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                            } catch {}
+                            console.log('✅ Restored session from server for:', currentUser.email);
+                            showApp();
+                        } else {
+                            console.log('ℹ️ No valid server session. Showing login.');
+                            showLogin();
+                        }
+                    })
+                    .catch(() => {
+                        console.log('ℹ️ Session check failed. Showing login.');
+                        showLogin();
+                    });
+                    return;
+                }
+            } catch {}
+
             // No valid session found
             console.log('📋 No valid session found, showing login');
             showLogin();
@@ -3446,9 +3455,12 @@ State abbreviations (CA)"
                 if (data.success) {
                     currentUser = data.user;
                     sessionId = data.sessionId;
-                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    try {
+                        localStorage.setItem('outtaWebSessionId', sessionId);
+                        localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                    } catch {}
                     showApp();
-             document.getElementById('registerForm').reset();
+                    document.getElementById('registerForm').reset();
                     alert('Registration successful! Welcome to Business Finder.');
                 } else {
                     alert(data.message || 'Registration failed. Please try again.');
@@ -3938,7 +3950,10 @@ State abbreviations (CA)"
         function logout() {
             currentUser = null;
             sessionId = null;
-            localStorage.removeItem('outtaWebSessionId');
+            try {
+                localStorage.removeItem('outtaWebSessionId');
+                localStorage.removeItem('outtaWebCurrentUser');
+            } catch {}
             showLogin();
         }
 
