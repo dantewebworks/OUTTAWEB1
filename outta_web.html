@@ -808,9 +808,6 @@
                 Email: <code>admin@outtaweb.com</code><br>
                 Password: <code>admin123</code>
             </div>
-            <button type="button" onclick="testServerConnection()" style="background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
-                🔧 Test Server Connection
-            </button>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -1341,16 +1338,29 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
     <script>
         // User Authentication Variables
         let currentUser = null;
-        let sessionId = localStorage.getItem('outtaWebSessionId');
+        let users = JSON.parse(localStorage.getItem('businessFinderUsers')) || [];
+        
+        // Initialize with default admin user if no users exist
+        if (users.length === 0) {
+            users = [{
+                id: 1,
+                name: 'Admin User',
+                email: 'admin@outtaweb.com',
+                password: 'admin123',
+                verified: true,
+                createdAt: new Date().toISOString()
+            }];
+            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
+        }
         
         // App Variables
         let apiKey = '';
         let searchHistory = [];
 
         // Load API key on page load
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             // Check if user is logged in
-            await checkAuthStatus();
+            checkAuthStatus();
             
             loadApiKey();
             loadSearchHistory();
@@ -3007,42 +3017,11 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         }
 
         // Authentication Functions
-        async function checkAuthStatus() {
-            if (sessionId) {
-                try {
-                    const apiUrl = window.location.origin + '/api/auth/check-session';
-                    console.log('Checking session at:', apiUrl);
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'x-session-id': sessionId
-                        }
-                    });
-                    
-                    console.log('Session check response status:', response.status);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('Session check response data:', data);
-                    
-                    if (data.success) {
-                        currentUser = data.user;
-                        showApp();
-                    } else {
-                        localStorage.removeItem('outtaWebSessionId');
-                        sessionId = null;
-                        showLogin();
-                    }
-                } catch (error) {
-                    console.error('Session check error:', error);
-                    localStorage.removeItem('outtaWebSessionId');
-                    sessionId = null;
-                    showLogin();
-                }
+        function checkAuthStatus() {
+            const savedUser = localStorage.getItem('businessFinderCurrentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showApp();
             } else {
                 showLogin();
             }
@@ -3100,108 +3079,70 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         }
 
-        async function login() {
+        function login() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
+            const user = users.find(u => u.email.toLowerCase() === email);
             
-            // Show loading state
-            const loginBtn = document.querySelector('#loginForm button[type="submit"]');
-            const originalText = loginBtn.textContent;
-            loginBtn.textContent = 'Logging in...';
-            loginBtn.disabled = true;
-            
-            try {
-                const apiUrl = window.location.origin + '/api/auth/login';
-                console.log('Attempting login to:', apiUrl);
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                console.log('Login response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('Login response data:', data);
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    sessionId = data.sessionId;
-                    localStorage.setItem('outtaWebSessionId', sessionId);
-                    showApp();
-                    document.getElementById('loginForm').reset();
-                } else {
-                    alert(data.message || 'Login failed. Please check your credentials.');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                alert('Login failed: ' + error.message + '. Please try again.');
-            } finally {
-                // Reset button state
-                loginBtn.textContent = originalText;
-                loginBtn.disabled = false;
+            if (!user) {
+                alert('No account found with this email. Please register.');
+                return;
             }
+            
+            if (!user.verified) {
+                pendingVerificationUser = user;
+                showVerify();
+                alert('Please verify your email before logging in.');
+                return;
+            }
+            
+            if (user.password !== password) {
+                alert('Incorrect password.');
+                return;
+            }
+            
+            currentUser = user;
+            localStorage.setItem('businessFinderCurrentUser', JSON.stringify(user));
+            showApp();
+            document.getElementById('loginForm').reset();
         }
 
         let pendingVerificationUser = null;
-        async function register() {
+        function register() {
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value.trim().toLowerCase();
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerConfirmPassword').value;
             
-            // Show loading state
-            const registerBtn = document.querySelector('#registerForm button[type="submit"]');
-            const originalText = registerBtn.textContent;
-            registerBtn.textContent = 'Registering...';
-            registerBtn.disabled = true;
-            
-            try {
-                const apiUrl = window.location.origin + '/api/auth/register';
-                console.log('Attempting registration to:', apiUrl);
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ name, email, password, confirmPassword })
-                });
-                
-                console.log('Registration response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('Registration response data:', data);
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    sessionId = data.sessionId;
-                    localStorage.setItem('outtaWebSessionId', sessionId);
-                    showApp();
-                    document.getElementById('registerForm').reset();
-                    alert('Registration successful! Welcome to Outta Web!');
-                } else {
-                    alert(data.message || 'Registration failed. Please try again.');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Registration failed: ' + error.message + '. Please try again.');
-            } finally {
-                // Reset button state
-                registerBtn.textContent = originalText;
-                registerBtn.disabled = false;
+            if (password !== confirmPassword) {
+                alert('Passwords do not match. Please try again.');
+                return;
             }
+            
+            if (users.find(u => u.email.toLowerCase() === email)) {
+                alert('An account with this email already exists. Please login instead.');
+                return;
+            }
+            
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                password: password,
+                verified: false,
+                verificationCode: verificationCode,
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
+            pendingVerificationUser = newUser;
+            showVerify();
+            document.getElementById('registerForm').reset();
+            
+            // Display the verification code on screen
+            document.getElementById('verificationCodeText').textContent = verificationCode;
         }
 
         document.getElementById('verifyForm').addEventListener('submit', function(e) {
@@ -3667,26 +3608,11 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
 
         function logout() {
             currentUser = null;
-            sessionId = null;
-            localStorage.removeItem('outtaWebSessionId');
+            localStorage.removeItem('businessFinderCurrentUser');
             showLogin();
         }
         
-        async function testServerConnection() {
-            try {
-                const apiUrl = window.location.origin + '/api/health';
-                console.log('Testing server connection to:', apiUrl);
-                
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                console.log('Server health check response:', data);
-                alert('✅ Server is working! Status: ' + data.status + '\nMessage: ' + data.message);
-            } catch (error) {
-                console.error('Server connection test failed:', error);
-                alert('❌ Server connection failed: ' + error.message);
-            }
-        }
+
 
         function showRegisterForm() {
             showRegister();
