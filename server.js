@@ -3,6 +3,16 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
+const { Pool } = require('pg');
+
+const hasDb = !!process.env.DATABASE_URL;
+let pool = null;
+if (hasDb) {
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +41,53 @@ users.push({
     verified: true,
     createdAt: new Date().toISOString()
 });
+
+// Database helpers (only used when DATABASE_URL is set)
+async function dbGetUserByEmail(email) {
+    const { rows } = await pool.query('SELECT id, name, email, password, verified, reset_code FROM users WHERE LOWER(email)=LOWER($1)', [email]);
+    return rows[0] || null;
+}
+
+async function dbCreateUser({ name, email, password }) {
+    const { rows } = await pool.query(
+        'INSERT INTO users(name, email, password, verified) VALUES($1,$2,$3,true) RETURNING id, name, email, verified',
+        [name, email, password]
+    );
+    return rows[0];
+}
+
+async function dbCreateSession(userId, email) {
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    await pool.query('INSERT INTO sessions(id, user_id, email) VALUES($1,$2,$3)', [sessionId, userId, email]);
+    return sessionId;
+}
+
+async function dbGetUserBySession(sessionId) {
+    const { rows } = await pool.query(
+        `SELECT u.id, u.name, u.email, u.verified
+         FROM sessions s JOIN users u ON u.id = s.user_id
+         WHERE s.id = $1`,
+        [sessionId]
+    );
+    return rows[0] || null;
+}
+
+async function dbSetResetCode(userId, code) {
+    await pool.query('UPDATE users SET reset_code=$1 WHERE id=$2', [code, userId]);
+}
+
+async function dbResetPassword(email, code, newPassword) {
+    const { rows } = await pool.query('SELECT id, reset_code FROM users WHERE LOWER(email)=LOWER($1)', [email]);
+    const user = rows[0];
+    if (!user || user.reset_code !== code) return false;
+    await pool.query('UPDATE users SET password=$1, reset_code=NULL WHERE id=$2', [newPassword, user.id]);
+    return true;
+}
+
+async function dbVerifyEmail(email) {
+    const { rowCount } = await pool.query('UPDATE users SET verified=true WHERE LOWER(email)=LOWER($1)', [email]);
+    return rowCount > 0;
+}
 
 // Security middleware
 app.use(helmet({
@@ -79,189 +136,158 @@ app.get('/api/auth/default-credentials', (req, res) => {
     });
 });
 
-app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (user && user.password === password) {
-        // Create session
-        const sessionId = Math.random().toString(36).substring(2, 15);
-        sessions[sessionId] = {
-            userId: user.id,
-            email: user.email,
-            createdAt: new Date().toISOString()
-        };
-        
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                verified: user.verified
-            },
-            sessionId: sessionId
-        });
-    } else {
-        res.status(401).json({
-            success: false,
-            message: 'Invalid credentials'
-        });
-    }
-});
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-app.post('/api/auth/register', (req, res) => {
-    const { name, email, password, confirmPassword } = req.body;
-    
-    if (password !== confirmPassword) {
-        return res.status(400).json({
-            success: false,
-            message: 'Passwords do not match'
-        });
-    }
-    
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-        return res.status(400).json({
-            success: false,
-            message: 'An account with this email already exists'
-        });
-    }
-    
-    const newUser = {
-        id: users.length + 1,
-        name: name,
-        email: email,
-        password: password,
-        verified: true,
-        createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    
-    // Create session
-    const sessionId = Math.random().toString(36).substring(2, 15);
-    sessions[sessionId] = {
-        userId: newUser.id,
-        email: newUser.email,
-        createdAt: new Date().toISOString()
-    };
-    
-    res.json({
-        success: true,
-        user: {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            verified: newUser.verified
-        },
-        sessionId: sessionId
-    });
-});
+        if (hasDb) {
+            const user = await dbGetUserByEmail(email);
+            if (user && user.password === password) {
+                const sessionId = await dbCreateSession(user.id, user.email);
+                return res.json({
+                    success: true,
+                    user: { id: user.id, name: user.name, email: user.email, verified: user.verified },
+                    sessionId
+                });
+            }
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
 
-app.post('/api/auth/verify', (req, res) => {
-    const { email, code } = req.body;
-    
-    // For simplicity, accept any 6-digit code
-    if (code && code.length === 6) {
+        // Fallback: in-memory
         const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (user) {
-            user.verified = true;
-            res.json({
+        if (user && user.password === password) {
+            const sessionId = Math.random().toString(36).substring(2, 15);
+            sessions[sessionId] = { userId: user.id, email: user.email, createdAt: new Date().toISOString() };
+            return res.json({
                 success: true,
-                message: 'Email verified successfully'
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                message: 'User not found'
+                user: { id: user.id, name: user.name, email: user.email, verified: user.verified },
+                sessionId
             });
         }
-    } else {
-        res.status(400).json({
-            success: false,
-            message: 'Invalid verification code'
-        });
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-app.post('/api/auth/reset-request', (req, res) => {
-    const { email } = req.body;
-    
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (user) {
-        // Generate reset code
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { name, email, password, confirmPassword } = req.body;
+        if (password !== confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Passwords do not match' });
+        }
+
+        if (hasDb) {
+            const exists = await dbGetUserByEmail(email);
+            if (exists) return res.status(400).json({ success: false, message: 'An account with this email already exists' });
+            const user = await dbCreateUser({ name, email, password });
+            const sessionId = await dbCreateSession(user.id, user.email);
+            return res.json({ success: true, user, sessionId });
+        }
+
+        // Fallback: in-memory
+        if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+            return res.status(400).json({ success: false, message: 'An account with this email already exists' });
+        }
+        const newUser = { id: users.length + 1, name, email, password, verified: true, createdAt: new Date().toISOString() };
+        users.push(newUser);
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        sessions[sessionId] = { userId: newUser.id, email: newUser.email, createdAt: new Date().toISOString() };
+        res.json({ success: true, user: { id: newUser.id, name: newUser.name, email: newUser.email, verified: newUser.verified }, sessionId });
+    } catch (err) {
+        console.error('Register error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+app.post('/api/auth/verify', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        if (!code || code.length !== 6) return res.status(400).json({ success: false, message: 'Invalid verification code' });
+
+        if (hasDb) {
+            const ok = await dbVerifyEmail(email);
+            return ok
+                ? res.json({ success: true, message: 'Email verified successfully' })
+                : res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        user.verified = true;
+        res.json({ success: true, message: 'Email verified successfully' });
+    } catch (err) {
+        console.error('Verify error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+app.post('/api/auth/reset-request', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (hasDb) {
+            const user = await dbGetUserByEmail(email);
+            if (!user) return res.status(404).json({ success: false, message: 'No account found with this email' });
+            const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            await dbSetResetCode(user.id, resetCode);
+            return res.json({ success: true, message: 'Reset code sent', resetCode }); // display-only for dev
+        }
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (!user) return res.status(404).json({ success: false, message: 'No account found with this email' });
         const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
         user.resetCode = resetCode;
-        
-        res.json({
-            success: true,
-            message: 'Reset code sent',
-            resetCode: resetCode // In production, send via email
-        });
-    } else {
-        res.status(404).json({
-            success: false,
-            message: 'No account found with this email'
-        });
+        res.json({ success: true, message: 'Reset code sent', resetCode });
+    } catch (err) {
+        console.error('Reset request error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-app.post('/api/auth/reset-password', (req, res) => {
-    const { email, code, newPassword, confirmNewPassword } = req.body;
-    
-    if (newPassword !== confirmNewPassword) {
-        return res.status(400).json({
-            success: false,
-            message: 'Passwords do not match'
-        });
-    }
-    
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (user && user.resetCode === code) {
-        user.password = newPassword;
-        delete user.resetCode;
-        
-        res.json({
-            success: true,
-            message: 'Password reset successfully'
-        });
-    } else {
-        res.status(400).json({
-            success: false,
-            message: 'Invalid reset code'
-        });
-    }
-});
+app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+        const { email, code, newPassword, confirmNewPassword } = req.body;
+        if (newPassword !== confirmNewPassword) return res.status(400).json({ success: false, message: 'Passwords do not match' });
 
-app.get('/api/auth/check-session', (req, res) => {
-    const sessionId = req.headers['x-session-id'];
-    
-    if (sessionId && sessions[sessionId]) {
-        const session = sessions[sessionId];
-        const user = users.find(u => u.id === session.userId);
-        
-        if (user) {
-            res.json({
-                success: true,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    verified: user.verified
-                }
-            });
-        } else {
-            res.status(401).json({
-                success: false,
-                message: 'Invalid session'
-            });
+        if (hasDb) {
+            const ok = await dbResetPassword(email, code, newPassword);
+            return ok
+                ? res.json({ success: true, message: 'Password reset successfully' })
+                : res.status(400).json({ success: false, message: 'Invalid reset code' });
         }
-    } else {
-        res.status(401).json({
-            success: false,
-            message: 'No valid session'
-        });
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user && user.resetCode === code) {
+            user.password = newPassword;
+            delete user.resetCode;
+            return res.json({ success: true, message: 'Password reset successfully' });
+        }
+        res.status(400).json({ success: false, message: 'Invalid reset code' });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+app.get('/api/auth/check-session', async (req, res) => {
+    try {
+        const sessionId = req.headers['x-session-id'];
+        if (!sessionId) return res.status(401).json({ success: false, message: 'No valid session' });
+
+        if (hasDb) {
+            const user = await dbGetUserBySession(sessionId);
+            if (!user) return res.status(401).json({ success: false, message: 'No valid session' });
+            return res.json({ success: true, user });
+        }
+
+        if (sessions[sessionId]) {
+            const session = sessions[sessionId];
+            const user = users.find(u => u.id === session.userId);
+            if (user) return res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, verified: user.verified } });
+            return res.status(401).json({ success: false, message: 'Invalid session' });
+        }
+        res.status(401).json({ success: false, message: 'No valid session' });
+    } catch (err) {
+        console.error('Check-session error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
