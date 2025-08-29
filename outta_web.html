@@ -803,6 +803,11 @@
             </div>
             <h2>Welcome to Business Finder</h2>
             <p style="color: #6c757d; margin-bottom: 30px;">Find businesses without websites for your outreach campaigns</p>
+            <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 10px; margin-bottom: 20px; font-size: 14px;">
+                <strong>Default Login:</strong><br>
+                Email: <code>admin@outtaweb.com</code><br>
+                Password: <code>admin123</code>
+            </div>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -1334,6 +1339,19 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
         // User Authentication Variables
         let currentUser = null;
         let users = JSON.parse(localStorage.getItem('businessFinderUsers')) || [];
+        
+        // Add default admin user if no users exist
+        if (users.length === 0) {
+            users = [{
+                id: 1,
+                name: 'Admin User',
+                email: 'admin@outtaweb.com',
+                password: 'admin123',
+                verified: true,
+                createdAt: new Date().toISOString()
+            }];
+            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
+        }
         
         // App Variables
         let apiKey = '';

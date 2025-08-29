@@ -43,6 +43,38 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Authentication endpoints
+app.get('/api/auth/default-credentials', (req, res) => {
+    res.json({
+        email: 'admin@outtaweb.com',
+        password: 'admin123',
+        message: 'Default admin credentials'
+    });
+});
+
+app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body;
+    
+    // For now, just return the default credentials
+    // In a real app, you'd check against a database
+    if (email === 'admin@outtaweb.com' && password === 'admin123') {
+        res.json({
+            success: true,
+            user: {
+                id: 1,
+                name: 'Admin User',
+                email: 'admin@outtaweb.com',
+                verified: true
+            }
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'Invalid credentials'
+        });
+    }
+});
+
 // Google Places API proxy endpoint
 app.get('/api/places/search', async (req, res) => {
     try {
