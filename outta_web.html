@@ -811,6 +811,9 @@
             <button type="button" onclick="testServerConnection()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
                 🧪 Test Server Connection
             </button>
+            <button type="button" onclick="testLoginDirectly()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">
+                🔥 Test Login Directly
+            </button>
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
@@ -3668,6 +3671,41 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             } catch (error) {
                 console.error('❌ Server connection failed:', error);
                 alert('❌ Server connection failed! Check console for details.');
+            }
+        }
+
+        async function testLoginDirectly() {
+            console.log('🔥 Testing login directly...');
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: 'dantedesignzofficial@gmail.com', 
+                        password: 'yourpassword123' 
+                    })
+                });
+                
+                console.log('📥 Login response status:', response.status);
+                const data = await response.json();
+                console.log('📥 Login response data:', data);
+                
+                if (data.success) {
+                    console.log('✅ Direct login successful!');
+                    currentUser = data.user;
+                    sessionId = data.sessionId;
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    showApp();
+                    alert('✅ Direct login successful! You should now see the app.');
+                } else {
+                    console.log('❌ Direct login failed:', data.message);
+                    alert('❌ Direct login failed: ' + data.message);
+                }
+            } catch (error) {
+                console.error('💥 Direct login error:', error);
+                alert('💥 Direct login error: ' + error.message);
             }
         }
         
