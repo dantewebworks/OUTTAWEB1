@@ -22,6 +22,16 @@ let users = [
 // Simple session storage (in production, use Redis or database)
 const sessions = {};
 
+// Add your actual user account
+users.push({
+    id: 2,
+    name: 'Dante',
+    email: 'dantedesignzofficial@gmail.com',
+    password: 'yourpassword123', // Change this to your actual password
+    verified: true,
+    createdAt: new Date().toISOString()
+});
+
 // Security middleware
 app.use(helmet({
     contentSecurityPolicy: {
