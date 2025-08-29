@@ -1543,6 +1543,15 @@ State abbreviations (CA)"
                 // AUTO-LOGIN FOR HEROKU - Skip authentication check
                 if (window.location.href.includes('herokuapp.com')) {
                     console.log('🌐 Heroku detected - auto-logging in...');
+                    
+                    // Force hide login overlay immediately
+                    const loginOverlay = document.getElementById('loginOverlay');
+                    if (loginOverlay) {
+                        loginOverlay.classList.add('hidden');
+                        console.log('🌐 Login overlay hidden immediately');
+                    }
+                    
+                    // Auto-login
                     autoLoginForHeroku();
                 } else {
                     // Check if user is logged in (for local development)
@@ -3286,12 +3295,40 @@ State abbreviations (CA)"
         }
 
         function showApp() {
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('registerOverlay').classList.add('hidden');
-            document.getElementById('verifyOverlay').classList.add('hidden');
-            document.getElementById('resetOverlay').classList.add('hidden');
-            document.querySelector('.container').classList.remove('hidden');
+            console.log('🎯 showApp() called...');
+            
+            // Force hide all overlays
+            const loginOverlay = document.getElementById('loginOverlay');
+            const registerOverlay = document.getElementById('registerOverlay');
+            const verifyOverlay = document.getElementById('verifyOverlay');
+            const resetOverlay = document.getElementById('resetOverlay');
+            
+            if (loginOverlay) {
+                loginOverlay.classList.add('hidden');
+                console.log('🎯 Login overlay hidden');
+            }
+            if (registerOverlay) {
+                registerOverlay.classList.add('hidden');
+                console.log('🎯 Register overlay hidden');
+            }
+            if (verifyOverlay) {
+                verifyOverlay.classList.add('hidden');
+                console.log('🎯 Verify overlay hidden');
+            }
+            if (resetOverlay) {
+                resetOverlay.classList.add('hidden');
+                console.log('🎯 Reset overlay hidden');
+            }
+            
+            // Force show main container
+            const container = document.querySelector('.container');
+            if (container) {
+                container.classList.remove('hidden');
+                console.log('🎯 Main container shown');
+            }
+            
             updateUserInfo();
+            console.log('🎯 showApp() completed');
         }
 
         function updateUserInfo() {
@@ -4102,11 +4139,26 @@ State abbreviations (CA)"
             window.LOGIN_STATE.currentUser = user;
             window.LOGIN_STATE.sessionId = sessionId;
             
+            // Force hide login overlay and show app immediately
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (loginOverlay) {
+                loginOverlay.classList.add('hidden');
+                console.log('🌐 Login overlay hidden');
+            }
+            
             // Show app immediately (no login screen)
             showApp();
             
             console.log('🌐 Auto-login for Heroku completed');
             console.log('🌐 User is now logged in as:', user.name);
+            
+            // Double-check after a short delay
+            setTimeout(() => {
+                if (loginOverlay && !loginOverlay.classList.contains('hidden')) {
+                    console.log('🌐 Force hiding login overlay again...');
+                    loginOverlay.classList.add('hidden');
+                }
+            }, 100);
         }
     </script>
 </body>
