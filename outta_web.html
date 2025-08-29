@@ -3136,8 +3136,8 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             }
         }
 
-        let pendingVerificationUser = null;
-        function register() {
+
+        async function register() {
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value.trim().toLowerCase();
             const password = document.getElementById('registerPassword').value;
@@ -3148,30 +3148,31 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
                 return;
             }
             
-            if (users.find(u => u.email.toLowerCase() === email)) {
-                alert('An account with this email already exists. Please login instead.');
-                return;
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password, confirmPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    sessionId = data.sessionId;
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    showApp();
+                    document.getElementById('registerForm').reset();
+                    alert('Registration successful! Welcome to Business Finder.');
+                } else {
+                    alert(data.message || 'Registration failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
             }
-            
-            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const newUser = {
-                id: Date.now(),
-                name: name,
-                email: email,
-                password: password,
-                verified: false,
-                verificationCode: verificationCode,
-                createdAt: new Date().toISOString()
-            };
-            
-            users.push(newUser);
-            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-            pendingVerificationUser = newUser;
-            showVerify();
-            document.getElementById('registerForm').reset();
-            
-            // Display the verification code on screen
-            document.getElementById('verificationCodeText').textContent = verificationCode;
         }
 
         document.getElementById('verifyForm').addEventListener('submit', function(e) {
@@ -3179,86 +3180,101 @@ State abbreviations (CA)" style="width: 100%; padding: 12px; border: 2px solid #
             verifyCode();
         });
 
-        function verifyCode() {
+        async function verifyCode() {
             const code = document.getElementById('verifyCode').value.trim();
-            if (!pendingVerificationUser) {
-                alert('No user pending verification.');
-                return;
-            }
-            if (pendingVerificationUser.verificationCode === code) {
-                pendingVerificationUser.verified = true;
-                // Update user in users array
-                users = users.map(u => u.email === pendingVerificationUser.email ? pendingVerificationUser : u);
-                localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-                localStorage.setItem('businessFinderCurrentUser', JSON.stringify(pendingVerificationUser));
-                currentUser = pendingVerificationUser;
-                pendingVerificationUser = null;
-                showApp();
-                document.getElementById('verifyForm').reset();
-                alert('Email verified! Welcome to Business Finder.');
-            } else {
-                alert('Incorrect verification code. Please try again.');
+            const email = document.getElementById('verifyEmail').value.trim().toLowerCase();
+            
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showApp();
+                    document.getElementById('verifyForm').reset();
+                    alert('Email verified! Welcome to Business Finder.');
+                } else {
+                    alert(data.message || 'Incorrect verification code. Please try again.');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                alert('Verification failed. Please try again.');
             }
         }
 
-                 function resendVerificationCode() {
-             if (!pendingVerificationUser) {
-                 alert('No user pending verification.');
-                 return;
-             }
-             pendingVerificationUser.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-             users = users.map(u => u.email === pendingVerificationUser.email ? pendingVerificationUser : u);
-             localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-             showVerify();
-         }
+
 
         // Password Reset
-        let pendingResetUser = null;
-                 document.getElementById('resetRequestForm').addEventListener('submit', function(e) {
-             e.preventDefault();
-             const email = document.getElementById('resetEmail').value.trim().toLowerCase();
-             const user = users.find(u => u.email.toLowerCase() === email);
-             if (!user) {
-                 alert('No account found with this email.');
-                 return;
-             }
-             const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-             user.resetCode = resetCode;
-             users = users.map(u => u.email === user.email ? user : u);
-             localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-             pendingResetUser = user;
-             document.getElementById('resetRequestForm').classList.add('hidden');
-             document.getElementById('resetForm').classList.remove('hidden');
-             // Display the reset code on screen
-             document.getElementById('resetCodeText').textContent = resetCode;
-         });
+        document.getElementById('resetRequestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+            
+            try {
+                const response = await fetch('/api/auth/reset-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('resetRequestForm').classList.add('hidden');
+                    document.getElementById('resetForm').classList.remove('hidden');
+                    // Display the reset code on screen
+                    document.getElementById('resetCodeText').textContent = data.resetCode;
+                } else {
+                    alert(data.message || 'Reset request failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Reset request error:', error);
+                alert('Reset request failed. Please try again.');
+            }
+        });
 
-        document.getElementById('resetForm').addEventListener('submit', function(e) {
+        document.getElementById('resetForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const code = document.getElementById('resetCode').value.trim();
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-            if (!pendingResetUser) {
-                alert('No user pending password reset.');
-                return;
-            }
-            if (pendingResetUser.resetCode !== code) {
-                alert('Incorrect reset code.');
-                return;
-            }
+            const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+            
             if (newPassword !== confirmNewPassword) {
                 alert('Passwords do not match.');
                 return;
             }
-            pendingResetUser.password = newPassword;
-            delete pendingResetUser.resetCode;
-            users = users.map(u => u.email === pendingResetUser.email ? pendingResetUser : u);
-            localStorage.setItem('businessFinderUsers', JSON.stringify(users));
-            alert('Password reset successful! You can now log in.');
-            pendingResetUser = null;
-            showLogin();
-            document.getElementById('resetForm').reset();
-            document.getElementById('resetRequestForm').reset();
+            
+            try {
+                const response = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, code, newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Password reset successful! You can now log in.');
+                    showLogin();
+                    document.getElementById('resetForm').reset();
+                    document.getElementById('resetRequestForm').reset();
+                } else {
+                    alert(data.message || 'Password reset failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Password reset error:', error);
+                alert('Password reset failed. Please try again.');
+            }
         });
 
         // Bulk Location Functions
