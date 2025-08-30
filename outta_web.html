@@ -15,6 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Outta Web">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // IMMEDIATE LOGIN REMOVAL FOR HEROKU/RENDER
         if (window.location.href.includes('herokuapp.com') || window.location.href.includes('onrender.com')) {
@@ -36,13 +37,35 @@
                 }
             });
         }
+
+        // Supabase init (public config via server)
+        window.SUPABASE = null;
+        async function initSupabase() {
+            try {
+                const resp = await fetch('/api/public/supabase-config', { cache: 'no-store' });
+                if (resp.ok) {
+                    const { url, anonKey } = await resp.json();
+                    if (url && anonKey && window.supabase && window.supabase.createClient) {
+                        window.SUPABASE = window.supabase.createClient(url, anonKey);
+                        console.log('✅ Supabase initialized');
+                    } else {
+                        console.log('ℹ️ Supabase config missing or library not loaded');
+                    }
+                }
+            } catch (e) {
+                console.log('ℹ️ Supabase init skipped:', e.message);
+            }
+        }
         
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                initSupabase();
                 navigator.serviceWorker.register('/sw.js').then(() => {
                     console.log('✅ Service worker registered');
                 }).catch(err => console.log('SW registration failed', err));
             });
+        } else {
+            window.addEventListener('load', initSupabase);
         }
     </script>
     <style>
@@ -3438,6 +3461,14 @@ State abbreviations (CA)"
                         console.log('⚠️ localStorage not available, using global state only');
                     }
 
+                    // Attempt Supabase sign-in (non-blocking)
+                    try {
+                        if (window.SUPABASE) {
+                            const { error: sErr } = await window.SUPABASE.auth.signInWithPassword({ email, password });
+                            if (sErr) console.log('ℹ️ Supabase sign-in skipped:', sErr.message);
+                        }
+                    } catch (e) { console.log('ℹ️ Supabase sign-in error:', e.message); }
+
                     document.getElementById('loginForm').reset();
                     showApp();
                     alert('✅ Login successful! Welcome ' + currentUser.name + '!');
@@ -3471,6 +3502,14 @@ State abbreviations (CA)"
                     // ignore
                 }
 
+                // Attempt Supabase sign-in (non-blocking)
+                try {
+                    if (window.SUPABASE) {
+                        const { error: sErr } = await window.SUPABASE.auth.signInWithPassword({ email, password });
+                        if (sErr) console.log('ℹ️ Supabase sign-in skipped:', sErr.message);
+                    }
+                } catch (e) { console.log('ℹ️ Supabase sign-in error:', e.message); }
+
                 document.getElementById('loginForm').reset();
                 showApp();
                 alert('✅ Login successful! Welcome ' + user.name + '!');
@@ -3492,34 +3531,64 @@ State abbreviations (CA)"
                  return;
              }
 
-            try {
-                const response = await fetch('/api/auth/register', {
+            const tasks = [];
+            // Supabase sign up (non-blocking, safe to skip if not configured)
+            if (window.SUPABASE && window.SUPABASE.auth) {
+                tasks.push(
+                    window.SUPABASE.auth.signUp({
+                        email,
+                        password,
+                        options: { data: { name } }
+                    }).then(({ data, error }) => {
+                        if (error) throw new Error(error.message);
+                        return data;
+                    })
+                );
+            } else {
+                tasks.push(Promise.resolve({ skipped: true }));
+            }
+
+            // Existing server registration
+            tasks.push(
+                fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ name, email, password, confirmPassword })
-                });
+                }).then(async r => {
+                    const json = await r.json().catch(() => ({}));
+                    if (!r.ok || !json.success) throw new Error(json.message || 'Server registration failed');
+                    return json;
+                })
+            );
 
-                const data = await response.json();
+            const results = await Promise.allSettled(tasks);
+            const supaOk = results[0].status === 'fulfilled';
+            const serverOk = results[results.length - 1].status === 'fulfilled';
 
-                if (data.success) {
-                    currentUser = data.user;
-                    sessionId = data.sessionId;
-                    try {
-                        localStorage.setItem('outtaWebSessionId', sessionId);
-                        localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
-                    } catch {}
-                    showApp();
-                    document.getElementById('registerForm').reset();
-                    alert('Registration successful! Welcome to Business Finder.');
-                } else {
-                    alert(data.message || 'Registration failed. Please try again.');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Registration failed. Please try again.');
+            if (!supaOk && !serverOk) {
+                const supaErr = results[0].status === 'rejected' ? (results[0].reason?.message || results[0].reason) : null;
+                const serverErr = results[results.length - 1].status === 'rejected' ? (results[results.length - 1].reason?.message || results[results.length - 1].reason) : null;
+                console.error('Registration errors:', { supabase: supaErr, server: serverErr });
+                alert('Server error during signup. Please try again.');
+                return;
             }
+
+            // Keep existing app logic: prefer server session
+            if (serverOk) {
+                const data = results[results.length - 1].value;
+                currentUser = data.user;
+                sessionId = data.sessionId;
+                try {
+                    localStorage.setItem('outtaWebSessionId', sessionId);
+                    localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                } catch {}
+            }
+
+            showApp();
+            document.getElementById('registerForm').reset();
+            alert('Registration successful!');
         }
 
         document.getElementById('verifyForm').addEventListener('submit', function (e) {

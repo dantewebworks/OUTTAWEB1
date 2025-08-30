@@ -134,11 +134,11 @@ app.use(helmet({
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
             // Allow inline event handlers (onclick, etc.) used throughout the app
             scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://maps.googleapis.com", "https://cors-anywhere.herokuapp.com", "https://api.allorigins.win", "https://corsproxy.io", "https://thingproxy.freeboard.io"]
+            connectSrc: ["'self'", "https://maps.googleapis.com", "https://cors-anywhere.herokuapp.com", "https://api.allorigins.win", "https://corsproxy.io", "https://thingproxy.freeboard.io", "https://*.supabase.co"]
         }
     }
 }));
@@ -171,6 +171,14 @@ app.get('/manifest.webmanifest', (req, res) => {
 app.get('/sw.js', (req, res) => {
     res.type('application/javascript');
     res.sendFile(path.join(__dirname, 'sw.js'));
+});
+
+// Public endpoint exposing safe Supabase config for the client
+app.get('/api/public/supabase-config', (req, res) => {
+    res.json({
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL || null,
+        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null
+    });
 });
 
 // API Routes
