@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Niche Recommendations</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .niche-chip { background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; cursor: pointer; margin: 2px; display: inline-block; }
+        .niche-chip:hover { background: #0056b3; }
+        #recommendedNichesList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Test Niche Recommendations</h1>
+    
+    <div>
+        <h3>Niches That Will Most Likely Be the Owners of the Business if SMS Should Have Been Sent:</h3>
+        <div id="recommendedNichesList"></div>
+    </div>
+
+    <script>
+        function testNiches() {
+            console.log("Testing niche recommendations...");
+            const container = document.getElementById('recommendedNichesList');
+            if (container) {
+                console.log("Container found, adding niches...");
+                container.innerHTML = '';
+                
+                const testNiches = [
+                    'Barber Shops', 'Interior Designers', 'Personal Trainers', 'Massage Therapy',
+                    'Auto Repair', 'Plumbers', 'Electricians', 'Handyman Services', 'Contractors',
+                    'Beauty Salons', 'Nail Salons', 'Hair Salons', 'Tattoo Artists', 'Piercing Studios',
+                    'Chiropractors', 'Acupuncture', 'Physical Therapy', 'Occupational Therapy',
+                    'Nutritionists', 'Dietitians', 'Life Coaches', 'Therapists', 'Psychologists',
+                    'Dog Walkers', 'Pet Groomers', 'Mobile Car Wash', 'Mobile Mechanics',
+                    'Mobile Notary', 'Mobile Detailers', 'Mobile Barbers', 'Mobile Nail Technicians',
+                    'Mobile Tutors', 'Mobile Personal Trainers', 'Mobile Massage Therapists',
+                    'Junk Removal', 'Pressure Washing', 'Snow Removal', 'Lawn Care',
+                    'Piano Teachers', 'Music Instructors', 'Art Instructors', 'Craft Teachers',
+                    'Bicycle Repair', 'Tailors', 'Shoe Repair', 'Upholstery Services',
+                    'Carpet Cleaning', 'Window Cleaning', 'Pool Services', 'Tree Services',
+                    'Fence Contractors', 'Concrete Contractors', 'Driveway Contractors',
+                    'Home Inspectors', 'Solar Installers', 'Gutter Cleaning', 'Roofing Contractors',
+                    'Locksmiths', 'Moving Companies', 'Cleaning Services', 'Daycare Centers',
+                    'HVAC Services', 'Pest Control', 'Real Estate', 'Gyms & Fitness',
+                    'Photographers', 'Wedding Planners', 'Dance Studios', 'Graphic Designers',
+                    'Web Designers', 'Marketing Consultants', 'Business Consultants',
+                    'Financial Advisors', 'Tutoring Services', 'Bakeries', 'Ice Cream Shops',
+                    'Butcher Shops', 'Fish Markets', 'Farmers Markets', 'Organic Food Stores',
+                    'Health Food Stores', 'Vitamin Shops', 'Supplement Stores', 'Yoga Studios',
+                    'Pilates Studios', 'CrossFit Gyms', 'Martial Arts Schools', 'Swimming Lessons',
+                    'Tennis Lessons', 'Golf Lessons', 'Skiing Lessons', 'Rock Climbing',
+                    'Paintball', 'Laser Tag', 'Escape Rooms', 'Arcades', 'Bowling Alleys',
+                    'Mini Golf', 'Go-Kart Racing', 'Horseback Riding', 'Fishing Charters',
+                    'Boat Rentals', 'Jet Ski Rentals', 'Kayak Rentals', 'Canoe Rentals',
+                    'Bike Rentals', 'Scooter Rentals', 'Skateboard Shops', 'Surf Shops',
+                    'Diving Shops', 'Scuba Diving', 'Snorkeling Tours', 'Whale Watching',
+                    'Dolphin Tours', 'Fishing Tours', 'Hunting Guides', 'Wildlife Tours',
+                    'Bird Watching', 'Nature Tours', 'Hiking Guides', 'Rock Climbing Guides',
+                    'Mountain Biking', 'Road Biking', 'Cycling Tours', 'Running Clubs',
+                    'Walking Tours', 'Photography Tours', 'Art Classes', 'Cooking Classes',
+                    'Wine Tasting', 'Beer Tasting', 'Distillery Tours', 'Brewery Tours',
+                    'Vineyard Tours', 'Winery Tours', 'Cheese Shops', 'Olive Oil Shops',
+                    'Tea Shops', 'Coffee Roasters', 'Chocolate Shops', 'Candy Stores',
+                    'Popcorn Shops', 'Fudge Shops', 'Ice Cream Parlors', 'Gelato Shops',
+                    'Smoothie Shops', 'Juice Bars', 'Acai Bowls', 'Bubble Tea', 'Milk Tea',
+                    'Tea Houses', 'Hookah Lounges', 'Cigar Shops', 'Tobacco Shops',
+                    'Vape Shops', 'Smoke Shops', 'Gift Shops', 'Antique Shops',
+                    'Vintage Shops', 'Thrift Stores', 'Consignment Shops', 'Pawn Shops',
+                    'Jewelry Repair', 'Watch Repair', 'Bag Repair', 'Leather Repair',
+                    'Canvas Repair', 'Tent Repair', 'Umbrella Repair', 'Key Duplication',
+                    'Locksmith Services', 'Safe Services', 'Security Services', 'Alarm Services',
+                    'Surveillance Services', 'Private Investigators', 'Process Servers',
+                    'Bail Bonds', 'Notary Services', 'Translation Services', 'Interpretation Services',
+                    'Language Schools', 'ESL Classes', 'Test Preparation', 'College Counseling',
+                    'Career Counseling', 'Resume Writing', 'Job Placement', 'Staffing Agencies',
+                    'Recruitment Services', 'HR Consulting', 'Business Coaching', 'Life Coaching',
+                    'Career Coaching', 'Executive Coaching', 'Leadership Training', 'Team Building',
+                    'Corporate Training', 'Professional Development', 'Skills Training',
+                    'Computer Training', 'Software Training', 'IT Training', 'Network Training',
+                    'Cybersecurity Training', 'Data Recovery', 'Computer Repair', 'Phone Repair',
+                    'Tablet Repair', 'Laptop Repair', 'Desktop Repair', 'Server Repair',
+                    'Printer Repair', 'Scanner Repair', 'Copier Repair', 'Fax Services',
+                    'Printing Services', 'Copying Services', 'Binding Services', 'Lamination Services',
+                    'Sign Making', 'Banner Making', 'Vinyl Cutting', 'Embroidery',
+                    'Screen Printing', 'T-Shirt Printing', 'Custom Apparel', 'Uniform Services',
+                    'Workwear', 'Safety Equipment', 'Hard Hats', 'Safety Glasses',
+                    'Safety Gloves', 'Safety Shoes', 'Safety Vests', 'Fall Protection',
+                    'Safety Harnesses', 'Safety Lanyards', 'Safety Nets', 'Safety Barriers',
+                    'Traffic Control', 'Road Signs', 'Traffic Signs', 'Construction Signs',
+                    'Safety Signs', 'Warning Signs', 'Caution Signs', 'Danger Signs',
+                    'Emergency Signs', 'Exit Signs', 'Fire Extinguishers', 'Fire Alarms',
+                    'Fire Sprinklers', 'Fire Suppression', 'Fire Safety', 'Emergency Lighting',
+                    'Emergency Exits', 'Emergency Plans', 'Emergency Kits', 'First Aid',
+                    'CPR Training', 'First Aid Training', 'Safety Training', 'OSHA Training',
+                    'Hazmat Training', 'Confined Space Training', 'Fall Protection Training',
+                    'Scaffold Training', 'Crane Training', 'Forklift Training', 'Heavy Equipment Training',
+                    'Construction Training', 'Trade Training', 'Apprenticeship Programs', 'Vocational Schools',
+                    'Technical Schools', 'Trade Schools', 'Community Colleges', 'Universities',
+                    'Online Schools', 'Distance Learning', 'E-Learning', 'Virtual Learning',
+                    'Remote Learning', 'Hybrid Learning', 'Blended Learning', 'Flipped Classroom',
+                    'Project-Based Learning', 'Experiential Learning', 'Hands-On Learning',
+                    'Practical Training', 'Skills Development', 'Competency Training',
+                    'Certification Programs', 'Licensing Programs', 'Continuing Education',
+                    'Professional Development', 'Career Advancement', 'Skill Enhancement',
+                    'Knowledge Building', 'Expertise Development', 'Specialization Training',
+                    'Advanced Training', 'Specialized Training', 'Custom Training', 'Tailored Training',
+                    'Personalized Learning', 'Individualized Instruction', 'One-On-One Training',
+                    'Private Lessons', 'Group Classes', 'Workshops', 'Seminars', 'Conferences',
+                    'Symposiums', 'Summits', 'Forums', 'Panels', 'Roundtables', 'Think Tanks',
+                    'Focus Groups', 'Advisory Boards', 'Consulting Groups', 'Expert Panels',
+                    'Subject Matter Experts', 'Industry Specialists', 'Domain Experts',
+                    'Thought Leaders', 'Influencers', 'Mentors', 'Advisors', 'Coaches',
+                    'Trainers', 'Instructors', 'Teachers', 'Professors', 'Lecturers',
+                    'Speakers', 'Presenters', 'Facilitators', 'Moderators', 'Mediators',
+                    'Arbitrators', 'Negotiators', 'Brokers', 'Agents', 'Representatives',
+                    'Advocates', 'Attorneys', 'Lawyers', 'Paralegals', 'Legal Assistants',
+                    'Court Reporters', 'Process Servers', 'Bail Bondsmen', 'Private Investigators',
+                    'Security Guards', 'Bodyguards', 'Escorts', 'Chauffeurs', 'Drivers',
+                    'Couriers', 'Messengers', 'Delivery Services', 'Shipping Services',
+                    'Logistics', 'Transportation', 'Moving Services', 'Storage Services',
+                    'Warehousing', 'Distribution', 'Supply Chain', 'Procurement', 'Sourcing',
+                    'Vendor Management', 'Contract Management', 'Project Management',
+                    'Program Management', 'Portfolio Management', 'Strategic Planning',
+                    'Business Planning', 'Financial Planning', 'Investment Planning',
+                    'Retirement Planning', 'Estate Planning', 'Tax Planning', 'Insurance Planning',
+                    'Risk Management', 'Compliance', 'Regulatory Affairs', 'Legal Affairs',
+                    'Corporate Affairs', 'Public Relations', 'Media Relations', 'Government Relations',
+                    'Community Relations', 'Stakeholder Relations', 'Investor Relations',
+                    'Customer Relations', 'Client Relations', 'Partner Relations', 'Supplier Relations',
+                    'Employee Relations', 'Labor Relations', 'Union Relations', 'Management Relations',
+                    'Executive Relations', 'Board Relations', 'Shareholder Relations', 'Owner Relations',
+                    'Family Relations', 'Personal Relations', 'Professional Relations', 'Business Relations',
+                    'Commercial Relations', 'Trade Relations', 'Industry Relations', 'Sector Relations',
+                    'Market Relations', 'Economic Relations', 'Financial Relations', 'Monetary Relations',
+                    'Fiscal Relations', 'Budgetary Relations', 'Accounting Relations', 'Auditing Relations',
+                    'Bookkeeping Relations', 'Payroll Relations', 'Benefits Relations', 'Compensation Relations',
+                    'Rewards Relations', 'Recognition Relations', 'Performance Relations', 'Productivity Relations',
+                    'Efficiency Relations', 'Effectiveness Relations', 'Quality Relations', 'Standards Relations',
+                    'Compliance Relations', 'Regulatory Relations', 'Legal Relations', 'Ethical Relations',
+                    'Moral Relations', 'Social Relations', 'Cultural Relations', 'Diversity Relations',
+                    'Inclusion Relations', 'Equity Relations', 'Equality Relations', 'Fairness Relations',
+                    'Justice Relations', 'Rights Relations', 'Responsibilities Relations', 'Obligations Relations',
+                    'Duties Relations', 'Liabilities Relations', 'Accountability Relations', 'Transparency Relations',
+                    'Disclosure Relations', 'Reporting Relations', 'Communication Relations', 'Information Relations',
+                    'Data Relations', 'Analytics Relations', 'Intelligence Relations', 'Insights Relations',
+                    'Knowledge Relations', 'Wisdom Relations', 'Expertise Relations', 'Experience Relations',
+                    'Skills Relations', 'Capabilities Relations', 'Competencies Relations', 'Qualifications Relations',
+                    'Credentials Relations', 'Certifications Relations', 'Licenses Relations', 'Permits Relations',
+                    'Authorizations Relations', 'Approvals Relations', 'Endorsements Relations', 'Recommendations Relations',
+                    'Referrals Relations', 'Testimonials Relations', 'Reviews Relations', 'Ratings Relations',
+                    'Scores Relations', 'Grades Relations', 'Levels Relations', 'Tiers Relations',
+                    'Categories Relations', 'Classifications Relations', 'Groupings Relations', 'Clusters Relations',
+                    'Segments Relations', 'Divisions Relations', 'Departments Relations', 'Units Relations',
+                    'Teams Relations', 'Groups Relations', 'Organizations Relations', 'Institutions Relations',
+                    'Establishments Relations', 'Enterprises Relations', 'Companies Relations', 'Corporations Relations',
+                    'Partnerships Relations', 'Sole Proprietorships Relations', 'LLCs Relations', 'S-Corps Relations',
+                    'C-Corps Relations', 'Non-Profits Relations', 'Charities Relations', 'Foundations Relations',
+                    'Associations Relations', 'Societies Relations', 'Clubs Relations', 'Groups Relations',
+                    'Organizations Relations', 'Institutions Relations', 'Establishments Relations', 'Enterprises Relations'
+                ];
+                
+                console.log("Adding " + testNiches.length + " niches...");
+                
+                testNiches.forEach(niche => {
+                    const chip = document.createElement('div');
+                    chip.textContent = niche;
+                    chip.className = 'niche-chip';
+                    chip.onclick = () => {
+                        console.log("Clicked: " + niche);
+                        alert("Clicked: " + niche);
+                    };
+                    container.appendChild(chip);
+                });
+                
+                console.log("Done adding niches. Total chips: " + container.children.length);
+            } else {
+                console.log("Container not found!");
+            }
+        }
+        
+        // Call the function when page loads
+        document.addEventListener('DOMContentLoaded', testNiches);
+        
+        // Also call it after a delay to make sure
+        setTimeout(testNiches, 1000);
+    </script>
+</body>
+</html> 
