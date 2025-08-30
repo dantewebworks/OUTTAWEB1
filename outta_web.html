@@ -16,7 +16,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Outta Web">
     <script>
-        // Removed Heroku-specific login overlay hack; use unified auth flow
+        // IMMEDIATE LOGIN REMOVAL FOR HEROKU/RENDER
+        if (window.location.href.includes('herokuapp.com') || window.location.href.includes('onrender.com')) {
+            console.log('🚨 IMMEDIATE: Heroku/Render detected - hiding login immediately');
+            document.addEventListener('DOMContentLoaded', function() {
+                const loginOverlay = document.getElementById('loginOverlay');
+                if (loginOverlay) {
+                    loginOverlay.style.display = 'none';
+                    loginOverlay.style.visibility = 'hidden';
+                    loginOverlay.style.opacity = '0';
+                    loginOverlay.style.pointerEvents = 'none';
+                    loginOverlay.classList.add('hidden');
+                }
+                
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.style.display = 'block';
+                    container.classList.remove('hidden');
+                }
+            });
+        }
+        
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').then(() => {
@@ -1524,9 +1544,36 @@ State abbreviations (CA)"
             console.log('🌐 User Agent:', navigator.userAgent);
 
             try {
-                // Unified auth flow for all environments
-                console.log('🔍 Starting authentication check...');
-                checkAuthStatus();
+                // AUTO-LOGIN FOR HEROKU/RENDER - Skip authentication check
+                if (window.location.href.includes('herokuapp.com') || window.location.href.includes('onrender.com')) {
+                    console.log('🌐 Heroku/Render detected - auto-logging in...');
+                    
+                    // COMPLETELY REMOVE LOGIN OVERLAY
+                    const loginOverlay = document.getElementById('loginOverlay');
+                    if (loginOverlay) {
+                        loginOverlay.style.display = 'none';
+                        loginOverlay.style.visibility = 'hidden';
+                        loginOverlay.style.opacity = '0';
+                        loginOverlay.style.pointerEvents = 'none';
+                        loginOverlay.classList.add('hidden');
+                        console.log('🌐 Login overlay completely removed');
+                    }
+                    
+                    // Force show main container immediately
+                    const container = document.querySelector('.container');
+                    if (container) {
+                        container.style.display = 'block';
+                        container.classList.remove('hidden');
+                        console.log('🌐 Main container forced to show');
+                    }
+                    
+                    // Auto-login
+                    autoLoginForHeroku();
+                } else {
+                    // Check if user is logged in (for local development)
+                    console.log('🔍 Starting authentication check...');
+                    checkAuthStatus();
+                }
             
                 console.log('🔑 Loading API key...');
                 loadApiKey();
