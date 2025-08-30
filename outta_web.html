@@ -7,8 +7,23 @@
     <title>Outta Web - Find Businesses Without Websites</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap"
         rel="stylesheet">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#007bff">
+    <link rel="apple-touch-icon" href="/outtaweblogo.PNG">
+    <link rel="icon" type="image/png" sizes="192x192" href="/outtaweblogo.PNG">
+    <link rel="icon" type="image/png" sizes="512x512" href="/outtaweblogo.PNG">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Outta Web">
     <script>
         // Removed Heroku-specific login overlay hack; use unified auth flow
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(() => {
+                    console.log('✅ Service worker registered');
+                }).catch(err => console.log('SW registration failed', err));
+            });
+        }
     </script>
     <style>
         /* Login Modal Styles */

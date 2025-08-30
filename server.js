@@ -122,6 +122,18 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (but do NOT auto-serve index.html for '/')
 app.use(express.static(path.join(__dirname), { index: false }));
 
+// Serve PWA manifest with correct content type
+app.get('/manifest.webmanifest', (req, res) => {
+    res.type('application/manifest+json');
+    res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
+// (Optional) Ensure service worker is served from root
+app.get('/sw.js', (req, res) => {
+    res.type('application/javascript');
+    res.sendFile(path.join(__dirname, 'sw.js'));
+});
+
 // API Routes
 app.get('/api/health', (req, res) => {
     res.json({ 
