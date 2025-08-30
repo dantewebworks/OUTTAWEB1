@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Finder - Find Businesses Without Websites</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .niche-chip {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            margin: 2px;
+            display: inline-block;
+        }
+        .niche-chip:hover {
+            background: #0056b3;
+        }
+        .suggestions-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestion-item:hover {
+            background: #f5f5f5;
+        }
+        .hidden {
+            display: none;
+        }
+        .results-section {
+            margin-top: 30px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .results-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e1e5e9;
+        }
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e1e5e9;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .location-recommendations {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .location-chip {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .location-chip:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Business Finder</h1>
+            <p>Find businesses without websites for SMS outreach</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('search')">Search</div>
+                <div class="tab" onclick="switchTab('history')">History</div>
+            </div>
+            
+            <div id="search-tab" class="tab-content active">
+                <div class="search-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minResults">Minimum Results</label>
+                            <input type="number" id="minResults" value="20" min="1" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxResults">Maximum Results (optional)</label>
+                            <input type="number" id="maxResults" value="1000" min="1" max="1000">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" placeholder="Enter city, state, or zip code">
+                        <div class="location-recommendations" id="locationRecommendations"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="niche">Niche</label>
+                        <input type="text" id="niche" placeholder="Enter business niche (e.g., barber shops, restaurants)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="manualNicheInput">Add Custom Niches</label>
+                        <input type="text" id="manualNicheInput" placeholder="Type niche and press comma to add">
+                        <div id="manualNicheSuggestions" class="suggestions-dropdown hidden"></div>
+                        <div id="manualNiches" style="margin-top: 10px;"></div>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="avoidDuplicates" checked>
+                        <label for="avoidDuplicates">Avoid duplicate businesses from previous searches</label>
+                    </div>
+                    
+                    <button class="btn" onclick="findBusinesses()">Find Businesses Without Websites</button>
+                </div>
+                
+                <div class="recommended-niches" id="recommendedNiches" style="margin-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="font-weight: bold; color: #b8860b; margin-bottom: 4px;">Niches That Will Most Likely Be the Owners of the Business if SMS Should Have Been Sent:</div>
+                    <div id="recommendedNichesList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+                
+                <div id="searchResults"></div>
+            </div>
+            
+            <div id="history-tab" class="tab-content">
+                <div id="searchHistory"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let businessFinder;
+        let searchHistory = [];
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            displayNiches();
+            updateLocationRecommendations();
+        });
+        
+        function initializeApp() {
+            // Load search history
+            try {
+                searchHistory = JSON.parse(localStorage.getItem('businessSearchHistory') || '[]');
+            } catch (e) {
+                searchHistory = [];
+            }
+            
+            // Initialize business finder
+            businessFinder = new BusinessFinder();
+            
+            // Set up event listeners
+            document.getElementById('manualNicheInput').addEventListener('input', function() {
+                handleManualNicheInput(this.value);
+            });
+            
+            document.getElementById('manualNicheInput').addEventListener('keydown', function(e) {
+                if (e.key === ',') {
+                    e.preventDefault();
+                    addManualNiche();
+                }
+            });
+        }
+        
+        function displayNiches() {
+            console.log("displayNiches function called");
+            const container = document.getElementById("recommendedNichesList");
+            if (container) {
+                console.log("Container found, clearing and adding niches...");
+                container.innerHTML = '';
+                
+                const niches = [
+                    'Acupuncture', 'Art Classes', 'Art Instructors', 'Auto Glass', 'Auto Repair', 'Bail Bonds',
+                    'Bakeries', 'Barber Shops', 'Beauty Salons', 'Bicycle Repair', 'Bike Rentals', 'Bird Watching',
+                    'Boat Rentals', 'Bowling Alleys', 'Bubble Tea', 'Business Consultants', 'Candy Stores',
+                    'Canoe Rentals', 'Carpet Cleaning', 'Catering Services', 'Cheese Shops', 'Chiropractors',
+                    'Chocolate Shops', 'Cleaning Services', 'Coffee Roasters', 'College Counseling', 'Computer Repair',
+                    'Computer Training', 'Concrete Contractors', 'Contractors', 'Cooking Classes', 'Copying Services',
+                    'Craft Teachers', 'CrossFit Gyms', 'Dance Instructors', 'Dance Studios', 'Daycare Centers',
+                    'Dental Equipment Repair', 'Desktop Repair', 'Dietitians', 'Diving Shops', 'Dog Walkers',
+                    'Dolphin Tours', 'Drone Photography', 'Drone Videography', 'Electricians', 'Escape Rooms',
+                    'Event Planning', 'Exit Signs', 'Farmers Markets', 'Fax Services', 'Fence Contractors',
+                    'Financial Advisors', 'Fire Alarms', 'Fire Extinguishers', 'Fire Safety', 'First Aid Training',
+                    'Fish Markets', 'Fishing Charters', 'Fishing Tours', 'Fitness Bootcamps', 'Food Trucks',
+                    'Fudge Shops', 'Gelato Shops', 'Gift Shops', 'Go-Kart Racing', 'Golf Lessons',
+                    'Graphic Designers', 'Gutter Cleaning', 'Gyms & Fitness', 'Hair Salons', 'Handyman Services',
+                    'Hard Hats', 'Health Food Stores', 'Heavy Equipment Repair', 'Henna Artists', 'Hiking Guides',
+                    'Home Inspectors', 'Home Security', 'Hookah Lounges', 'Horseback Riding', 'Hot Dog Carts',
+                    'House Cleaning', 'HVAC Services', 'Ice Cream Parlors', 'Ice Cream Shops', 'Interior Designers',
+                    'Irrigation Services', 'IT Support', 'Jewelry Repair', 'Job Placement', 'Junk Removal',
+                    'Juice Bars', 'Kayak Rentals', 'Key Duplication', 'Laboratory Equipment Repair', 'Ladder Safety',
+                    'Landscaping', 'Language Schools', 'Laser Tag', 'Lawn Care', 'Leather Repair', 'Life Coaches',
+                    'Locksmith Services', 'Laptop Repair', 'Martial Arts Schools', 'Massage Therapy', 'Math Tutors',
+                    'Medical Equipment Repair', 'Mini Golf', 'Mobile Appliance Repair', 'Mobile Auto Glass',
+                    'Mobile Auto Repair', 'Mobile Bartenders', 'Mobile Car Detailing', 'Mobile Car Wash',
+                    'Mobile Caterers', 'Mobile Computer Repair', 'Mobile DJs', 'Mobile Dog Grooming',
+                    'Mobile Event Planners', 'Mobile Fitness Bootcamps', 'Mobile Hair Stylists', 'Mobile IT Support',
+                    'Mobile Locksmith', 'Mobile Massage Therapists', 'Mobile Mechanics', 'Mobile Nail Technicians',
+                    'Mobile Notary', 'Mobile Oil Change', 'Mobile Personal Trainers', 'Mobile Pet Grooming',
+                    'Mobile Phone Repair', 'Mobile Photographers', 'Mobile Plumbers', 'Mobile Security',
+                    'Mobile Tire Service', 'Mobile Tutors', 'Mobile Veterinarians', 'Mobile Window Tinting',
+                    'Mobile Yoga Instructors', 'Moving Companies', 'Music Instructors', 'Nail Salons',
+                    'Nature Tours', 'Network Training', 'Notary Services', 'Nutritionists', 'Occupational Therapy',
+                    'Oil Change', 'Organic Food Stores', 'Paintball', 'Pawn Shops', 'Personal Trainers',
+                    'Pest Control', 'Pet Groomers', 'Phone Repair', 'Photographers', 'Physical Therapy',
+                    'Piano Teachers', 'Piercing Studios', 'Pilates Studios', 'Pizza Delivery', 'Plumbers',
+                    'Pool Services', 'Popcorn Shops', 'Pressure Washing', 'Printing Services', 'Private Investigators',
+                    'Process Servers', 'Professional Development', 'Psychologists', 'Public Relations', 'Real Estate',
+                    'Reading Tutors', 'Resume Writing', 'Roofing Contractors', 'Rock Climbing', 'Running Clubs',
+                    'Safety Equipment', 'Safety Glasses', 'Safety Gloves', 'Safety Harnesses', 'Safety Signs',
+                    'Safety Training', 'Safety Vests', 'Scaffold Training', 'Scuba Diving', 'Security Guards',
+                    'Security Services', 'Shoe Repair', 'Sign Making', 'Skateboard Shops', 'Skiing Lessons',
+                    'Smoothie Shops', 'Snow Removal', 'Solar Installers', 'Spa Services', 'Specialized Training',
+                    'Sports Coaching', 'Staffing Agencies', 'Surf Shops', 'Swimming Lessons', 'Tattoo Artists',
+                    'Tax Preparation', 'Tea Shops', 'Technical Schools', 'Tennis Lessons', 'Test Preparation',
+                    'Therapists', 'Thrift Stores', 'Tire Service', 'Tobacco Shops', 'Tree Services',
+                    'Tutoring Services', 'Upholstery Services', 'Vape Shops', 'Veterinary Equipment Repair',
+                    'Vintage Shops', 'Vitamin Shops', 'Watch Repair', 'Web Designers', 'Wedding Planners',
+                    'Whale Watching', 'Window Cleaning', 'Wine Tasting', 'Writing Tutors', 'Yoga Studios',
+                    'Zumba Instructors'
+                ];
+                
+                console.log("Adding " + niches.length + " niches...");
+                
+                niches.forEach(niche => {
+                    const chip = document.createElement('div');
+                    chip.textContent = niche;
+                    chip.className = 'niche-chip';
+                    chip.onclick = () => {
+                        console.log("Clicked niche: " + niche);
+                        document.getElementById('manualNicheInput').value = niche;
+                        addManualNiche();
+                    };
+                    container.appendChild(chip);
+                });
+                
+                console.log("Done adding niches. Total chips: " + container.children.length);
+            } else {
+                console.log("Container not found!");
+            }
+        }
+        
+        function updateLocationRecommendations() {
+            const container = document.getElementById('locationRecommendations');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            // High-yield cities for business outreach
+            const highYieldCities = [
+                'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
+                'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
+                'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
+                'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
+                'Boston, MA', 'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Oklahoma City, OK',
+                'Portland, OR', 'Las Vegas, NV', 'Memphis, TN', 'Louisville, KY', 'Baltimore, MD',
+                'Milwaukee, WI', 'Albuquerque, NM', 'Tucson, AZ', 'Fresno, CA', 'Sacramento, CA',
+                'Mesa, AZ', 'Kansas City, MO', 'Atlanta, GA', 'Long Beach, CA', 'Colorado Springs, CO',
+                'Raleigh, NC', 'Miami, FL', 'Virginia Beach, VA', 'Omaha, NE', 'Oakland, CA',
+                'Minneapolis, MN', 'Tulsa, OK', 'Arlington, TX', 'Tampa, FL', 'New Orleans, LA'
+            ];
+            
+            highYieldCities.forEach(city => {
+                const chip = document.createElement('div');
+                chip.textContent = city;
+                chip.className = 'location-chip';
+                chip.onclick = () => {
+                    document.getElementById('location').value = city;
+                };
+                container.appendChild(chip);
+            });
+        }
+        
+        function handleManualNicheInput(value) {
+            const suggestions = document.getElementById('manualNicheSuggestions');
+            if (!value.trim()) {
+                suggestions.classList.add('hidden');
+                return;
+            }
+            
+            const allNiches = [
+                'Barber Shops', 'Interior Designers', 'Personal Trainers', 'Massage Therapy',
+                'Auto Repair', 'Plumbers', 'Electricians', 'Handyman Services', 'Contractors',
+                'Beauty Salons', 'Nail Salons', 'Hair Salons', 'Tattoo Artists', 'Piercing Studios',
+                'Chiropractors', 'Acupuncture', 'Physical Therapy', 'Occupational Therapy',
+                'Nutritionists', 'Dietitians', 'Life Coaches', 'Therapists', 'Psychologists',
+                'Dog Walkers', 'Pet Groomers', 'Mobile Car Wash', 'Mobile Mechanics',
+                'Mobile Notary', 'Mobile Detailers', 'Mobile Barbers', 'Mobile Nail Technicians',
+                'Mobile Tutors', 'Mobile Personal Trainers', 'Mobile Massage Therapists',
+                'Junk Removal', 'Pressure Washing', 'Snow Removal', 'Lawn Care',
+                'Piano Teachers', 'Music Instructors', 'Art Instructors', 'Craft Teachers',
+                'Bicycle Repair', 'Tailors', 'Shoe Repair', 'Upholstery Services',
+                'Carpet Cleaning', 'Window Cleaning', 'Pool Services', 'Tree Services',
+                'Fence Contractors', 'Concrete Contractors', 'Driveway Contractors',
+                'Home Inspectors', 'Solar Installers', 'Gutter Cleaning', 'Roofing Contractors',
+                'Locksmiths', 'Moving Companies', 'Cleaning Services', 'Daycare Centers',
+                'HVAC Services', 'Pest Control', 'Real Estate', 'Gyms & Fitness',
+                'Photographers', 'Wedding Planners', 'Dance Studios', 'Graphic Designers',
+                'Web Designers', 'Marketing Consultants', 'Business Consultants',
+                'Financial Advisors', 'Tutoring Services', 'Bakeries', 'Ice Cream Shops',
+                'Butcher Shops', 'Fish Markets', 'Farmers Markets', 'Organic Food Stores',
+                'Health Food Stores', 'Vitamin Shops', 'Supplement Stores', 'Yoga Studios',
+                'Pilates Studios', 'CrossFit Gyms', 'Martial Arts Schools', 'Swimming Lessons',
+                'Tennis Lessons', 'Golf Lessons', 'Skiing Lessons', 'Rock Climbing',
+                'Paintball', 'Laser Tag', 'Escape Rooms', 'Arcades', 'Bowling Alleys',
+                'Mini Golf', 'Go-Kart Racing', 'Horseback Riding', 'Fishing Charters',
+                'Boat Rentals', 'Jet Ski Rentals', 'Kayak Rentals', 'Canoe Rentals',
+                'Bike Rentals', 'Scooter Rentals', 'Skateboard Shops', 'Surf Shops',
+                'Diving Shops', 'Scuba Diving', 'Snorkeling Tours', 'Whale Watching',
+                'Dolphin Tours', 'Fishing Tours', 'Hunting Guides', 'Wildlife Tours',
+                'Bird Watching', 'Nature Tours', 'Hiking Guides', 'Rock Climbing Guides',
+                'Mountain Biking', 'Road Biking', 'Cycling Tours', 'Running Clubs',
+                'Walking Tours', 'Photography Tours', 'Art Classes', 'Cooking Classes',
+                'Wine Tasting', 'Beer Tasting', 'Distillery Tours', 'Brewery Tours',
+                'Vineyard Tours', 'Winery Tours', 'Cheese Shops', 'Olive Oil Shops',
+                'Tea Shops', 'Coffee Roasters', 'Chocolate Shops', 'Candy Stores',
+                'Popcorn Shops', 'Fudge Shops', 'Ice Cream Parlors', 'Gelato Shops',
+                'Smoothie Shops', 'Juice Bars', 'Acai Bowls', 'Bubble Tea', 'Milk Tea',
+                'Tea Houses', 'Hookah Lounges', 'Cigar Shops', 'Tobacco Shops',
+                'Vape Shops', 'Smoke Shops', 'Gift Shops', 'Antique Shops',
+                'Vintage Shops', 'Thrift Stores', 'Consignment Shops', 'Pawn Shops',
+                'Jewelry Repair', 'Watch Repair', 'Bag Repair', 'Leather Repair',
+                'Canvas Repair', 'Tent Repair', 'Umbrella Repair', 'Key Duplication',
+                'Locksmith Services', 'Safe Services', 'Security Services', 'Alarm Services',
+                'Surveillance Services', 'Private Investigators', 'Process Servers',
+                'Bail Bonds', 'Notary Services', 'Translation Services', 'Interpretation Services',
+                'Language Schools', 'ESL Classes', 'Test Preparation', 'College Counseling',
+                'Career Counseling', 'Resume Writing', 'Job Placement', 'Staffing Agencies',
+                'Recruitment Services', 'HR Consulting', 'Business Coaching', 'Life Coaching',
+                'Career Coaching', 'Executive Coaching', 'Leadership Training', 'Team Building',
+                'Corporate Training', 'Professional Development', 'Skills Training',
+                'Computer Training', 'Software Training', 'IT Training', 'Network Training',
+                'Cybersecurity Training', 'Data Recovery', 'Computer Repair', 'Phone Repair',
+                'Tablet Repair', 'Laptop Repair', 'Desktop Repair', 'Server Repair',
+                'Printer Repair', 'Scanner Repair', 'Copier Repair', 'Fax Services',
+                'Printing Services', 'Copying Services', 'Binding Services', 'Lamination Services',
+                'Sign Making', 'Banner Making', 'Vinyl Cutting', 'Embroidery',
+                'Screen Printing', 'T-Shirt Printing', 'Custom Apparel', 'Uniform Services',
+                'Workwear', 'Safety Equipment', 'Hard Hats', 'Safety Glasses',
+                'Safety Gloves', 'Safety Shoes', 'Safety Vests', 'Fall Protection',
+                'Safety Harnesses', 'Safety Lanyards', 'Safety Nets', 'Safety Barriers',
+                'Traffic Control', 'Road Signs', 'Traffic Signs', 'Construction Signs',
+                'Safety Signs', 'Warning Signs', 'Caution Signs', 'Danger Signs',
+                'Emergency Signs', 'Exit Signs', 'Fire Extinguishers', 'Fire Alarms',
+                'Fire Sprinklers', 'Fire Suppression', 'Fire Safety', 'Emergency Lighting',
+                'Emergency Exits', 'Emergency Plans', 'Emergency Kits', 'First Aid',
+                'CPR Training', 'First Aid Training', 'Safety Training', 'OSHA Training',
+                'Hazmat Training', 'Confined Space Training', 'Fall Protection Training',
+                'Scaffold Training', 'Crane Training', 'Forklift Training', 'Heavy Equipment Training',
+                'Construction Training', 'Trade Training', 'Apprenticeship Programs', 'Vocational Schools',
+                'Technical Schools', 'Trade Schools', 'Community Colleges', 'Universities',
+                'Online Schools', 'Distance Learning', 'E-Learning', 'Virtual Learning',
+                'Remote Learning', 'Hybrid Learning', 'Blended Learning', 'Flipped Classroom',
+                'Project-Based Learning', 'Experiential Learning', 'Hands-On Learning',
+                'Practical Training', 'Skills Development', 'Competency Training',
+                'Certification Programs', 'Licensing Programs', 'Continuing Education',
+                'Professional Development', 'Career Advancement', 'Skill Enhancement',
+                'Knowledge Building', 'Expertise Development', 'Specialization Training',
+                'Advanced Training', 'Specialized Training', 'Custom Training', 'Tailored Training',
+                'Personalized Learning', 'Individualized Instruction', 'One-On-One Training',
+                'Private Lessons', 'Group Classes', 'Workshops', 'Seminars', 'Conferences',
+                'Symposiums', 'Summits', 'Forums', 'Panels', 'Roundtables', 'Think Tanks',
+                'Focus Groups', 'Advisory Boards', 'Consulting Groups', 'Expert Panels',
+                'Subject Matter Experts', 'Industry Specialists', 'Domain Experts',
+                'Thought Leaders', 'Influencers', 'Mentors', 'Advisors', 'Coaches',
+                'Trainers', 'Instructors', 'Teachers', 'Professors', 'Lecturers',
+                'Speakers', 'Presenters', 'Facilitators', 'Moderators', 'Mediators',
+                'Arbitrators', 'Negotiators', 'Brokers', 'Agents', 'Representatives',
+                'Advocates', 'Attorneys', 'Lawyers', 'Paralegals', 'Legal Assistants',
+                'Court Reporters', 'Process Servers', 'Bail Bondsmen', 'Private Investigators',
+                'Security Guards', 'Bodyguards', 'Escorts', 'Chauffeurs', 'Drivers',
+                'Couriers', 'Messengers', 'Delivery Services', 'Shipping Services',
+                'Logistics', 'Transportation', 'Moving Services', 'Storage Services',
+                'Warehousing', 'Distribution', 'Supply Chain', 'Procurement', 'Sourcing',
+                'Vendor Management', 'Contract Management', 'Project Management',
+                'Program Management', 'Portfolio Management', 'Strategic Planning',
+                'Business Planning', 'Financial Planning', 'Investment Planning',
+                'Retirement Planning', 'Estate Planning', 'Tax Planning', 'Insurance Planning',
+                'Risk Management', 'Compliance', 'Regulatory Affairs', 'Legal Affairs',
+                'Corporate Affairs', 'Public Relations', 'Media Relations', 'Government Relations',
+                'Community Relations', 'Stakeholder Relations', 'Investor Relations',
+                'Customer Relations', 'Client Relations', 'Partner Relations', 'Supplier Relations',
+                'Employee Relations', 'Labor Relations', 'Union Relations', 'Management Relations',
+                'Executive Relations', 'Board Relations', 'Shareholder Relations', 'Owner Relations',
+                'Family Relations', 'Personal Relations', 'Professional Relations', 'Business Relations',
+                'Commercial Relations', 'Trade Relations', 'Industry Relations', 'Sector Relations',
+                'Market Relations', 'Economic Relations', 'Financial Relations', 'Monetary Relations',
+                'Fiscal Relations', 'Budgetary Relations', 'Accounting Relations', 'Auditing Relations',
+                'Bookkeeping Relations', 'Payroll Relations', 'Benefits Relations', 'Compensation Relations',
+                'Rewards Relations', 'Recognition Relations', 'Performance Relations', 'Productivity Relations',
+                'Efficiency Relations', 'Effectiveness Relations', 'Quality Relations', 'Standards Relations',
+                'Compliance Relations', 'Regulatory Relations', 'Legal Relations', 'Ethical Relations',
+                'Moral Relations', 'Social Relations', 'Cultural Relations', 'Diversity Relations',
+                'Inclusion Relations', 'Equity Relations', 'Equality Relations', 'Fairness Relations',
+                'Justice Relations', 'Rights Relations', 'Responsibilities Relations', 'Obligations Relations',
+                'Duties Relations', 'Liabilities Relations', 'Accountability Relations', 'Transparency Relations',
+                'Disclosure Relations', 'Reporting Relations', 'Communication Relations', 'Information Relations',
+                'Data Relations', 'Analytics Relations', 'Intelligence Relations', 'Insights Relations',
+                'Knowledge Relations', 'Wisdom Relations', 'Expertise Relations', 'Experience Relations',
+                'Skills Relations', 'Capabilities Relations', 'Competencies Relations', 'Qualifications Relations',
+                'Credentials Relations', 'Certifications Relations', 'Licenses Relations', 'Permits Relations',
+                'Authorizations Relations', 'Approvals Relations', 'Endorsements Relations', 'Recommendations Relations',
+                'Referrals Relations', 'Testimonials Relations', 'Reviews Relations', 'Ratings Relations',
+                'Scores Relations', 'Grades Relations', 'Levels Relations', 'Tiers Relations',
+                'Categories Relations', 'Classifications Relations', 'Groupings Relations', 'Clusters Relations',
+                'Segments Relations', 'Divisions Relations', 'Departments Relations', 'Units Relations',
+                'Teams Relations', 'Groups Relations', 'Organizations Relations', 'Institutions Relations',
+                'Establishments Relations', 'Enterprises Relations', 'Companies Relations', 'Corporations Relations',
+                'Partnerships Relations', 'Sole Proprietorships Relations', 'LLCs Relations', 'S-Corps Relations',
+                'C-Corps Relations', 'Non-Profits Relations', 'Charities Relations', 'Foundations Relations',
+                'Associations Relations', 'Societies Relations', 'Clubs Relations', 'Groups Relations',
+                'Organizations Relations', 'Institutions Relations', 'Establishments Relations', 'Enterprises Relations'
+            ];
+            
+            const filtered = allNiches.filter(niche => 
+                niche.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 10);
+            
+            if (filtered.length > 0) {
+                suggestions.innerHTML = '';
+                filtered.forEach(niche => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.textContent = niche;
+                    item.onclick = () => {
+                        document.getElementById('manualNicheInput').value = niche;
+                        suggestions.classList.add('hidden');
+                        addManualNiche();
+                    };
+                    suggestions.appendChild(item);
+                });
+                suggestions.classList.remove('hidden');
+            } else {
+                suggestions.classList.add('hidden');
+            }
+        }
+        
+        function addManualNiche() {
+            const input = document.getElementById('manualNicheInput');
+            const value = input.value.trim();
+            
+            if (!value) return;
+            
+            // Handle comma-separated values
+            const niches = value.split(',').map(n => n.trim()).filter(n => n);
+            
+            niches.forEach(niche => {
+                const container = document.getElementById('manualNiches');
+                const chip = document.createElement('div');
+                chip.className = 'niche-chip';
+                chip.textContent = niche;
+                chip.onclick = () => removeManualNiche(chip);
+                container.appendChild(chip);
+            });
+            
+            input.value = '';
+            document.getElementById('manualNicheSuggestions').classList.add('hidden');
+        }
+        
+        function removeManualNiche(chip) {
+            chip.remove();
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            if (tabName === 'history') {
+                displaySearchHistory();
+            }
+        }
+        
+        function displaySearchHistory() {
+            const container = document.getElementById('searchHistory');
+            if (searchHistory.length === 0) {
+                container.innerHTML = '<p>No search history found.</p>';
+                return;
+            }
+            
+            let html = '<h3>Search History</h3>';
+            searchHistory.forEach((entry, index) => {
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                        <h4>Search ${index + 1}</h4>
+                        <p><strong>Location:</strong> ${entry.location}</p>
+                        <p><strong>Niche:</strong> ${entry.niche}</p>
+                        <p><strong>Results:</strong> ${entry.businesses ? entry.businesses.length : 0} businesses found</p>
+                        <p><strong>Date:</strong> ${new Date(entry.timestamp).toLocaleString()}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        function findBusinesses() {
+            const location = document.getElementById('location').value.trim();
+            const niche = document.getElementById('niche').value.trim();
+            const minResults = parseInt(document.getElementById('minResults').value) || 20;
+            const maxResults = parseInt(document.getElementById('maxResults').value) || 1000;
+            const avoidDuplicates = document.getElementById('avoidDuplicates').checked;
+            
+            if (!location) {
+                alert('Please enter a location');
+                return;
+            }
+            
+            if (!niche) {
+                alert('Please enter a niche');
+                return;
+            }
+            
+            // Show loading
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '<div class="loading">Searching for businesses...</div>';
+            
+            // Simulate search (replace with actual API call)
+            setTimeout(() => {
+                const mockResults = generateMockResults(location, niche, minResults);
+                displayResults(mockResults, location, niche);
+            }, 2000);
+        }
+        
+        function generateMockResults(location, niche, count) {
+            const results = [];
+            for (let i = 1; i <= count; i++) {
+                results.push({
+                    name: `${niche} Business ${i}`,
+                    category: niche,
+                    phone: `555-${String(i).padStart(3, '0')}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
+                    email: Math.random() > 0.7 ? `business${i}@example.com` : null,
+                    bestContact: Math.random() > 0.5 ? 'SMS' : 'Email',
+                    owner: Math.random() > 0.8 ? 'Owner-operated' : 'Manager',
+                    address: `${Math.floor(Math.random() * 9999)} Main St, ${location}`,
+                    rating: (Math.random() * 2 + 3).toFixed(1),
+                    facebook: Math.random() > 0.6 ? `facebook.com/business${i}` : null,
+                    instagram: Math.random() > 0.6 ? `instagram.com/business${i}` : null,
+                    twitter: Math.random() > 0.8 ? `twitter.com/business${i}` : null,
+                    confidence: Math.floor(Math.random() * 40 + 60),
+                    location: location
+                });
+            }
+            return results;
+        }
+        
+        function displayResults(businesses, location, niche) {
+            const container = document.getElementById('searchResults');
+            
+            if (businesses.length === 0) {
+                container.innerHTML = '<div class="error">No businesses found matching your criteria.</div>';
+                return;
+            }
+            
+            let html = `
+                <div class="success">
+                    <h3>Found ${businesses.length} businesses in ${location}</h3>
+                    <button class="btn" onclick="exportToCSV()">Export to CSV</button>
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Business Name</th>
+                            <th>Category</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Best Contact</th>
+                            <th>Owner</th>
+                            <th>Address</th>
+                            <th>Rating</th>
+                            <th>Social Media</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            businesses.forEach(business => {
+                const socialMedia = [];
+                if (business.facebook) socialMedia.push(`<a href="https://${business.facebook}" target="_blank">Facebook</a>`);
+                if (business.instagram) socialMedia.push(`<a href="https://${business.instagram}" target="_blank">Instagram</a>`);
+                if (business.twitter) socialMedia.push(`<a href="https://${business.twitter}" target="_blank">Twitter</a>`);
+                
+                html += `
+                    <tr>
+                        <td>${business.name}</td>
+                        <td>${business.category}</td>
+                        <td>${business.phone}</td>
+                        <td>${business.email || 'N/A'}</td>
+                        <td>${business.bestContact}</td>
+                        <td>${business.owner}</td>
+                        <td>${business.address}</td>
+                        <td>${business.rating}</td>
+                        <td>${socialMedia.join(', ') || 'N/A'}</td>
+                        <td>${business.confidence}%</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            // Save to history
+            saveSearchToHistory(location, niche, businesses);
+        }
+        
+        function saveSearchToHistory(location, niche, businesses) {
+            const entry = {
+                location,
+                niche,
+                businesses,
+                timestamp: Date.now()
+            };
+            
+            searchHistory.unshift(entry);
+            if (searchHistory.length > 50) {
+                searchHistory = searchHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('businessSearchHistory', JSON.stringify(searchHistory));
+        }
+        
+        function exportToCSV() {
+            const table = document.querySelector('.results-table');
+            if (!table) return;
+            
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csvContent = rows.map(row => {
+                return Array.from(row.querySelectorAll('th, td'))
+                    .map(cell => `"${cell.textContent.replace(/"/g, '""')}"`)
+                    .join(',');
+            }).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'business_results.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // BusinessFinder class (simplified for demo)
+        class BusinessFinder {
+            constructor() {
+                this.apiKey = null;
+            }
+            
+            async searchBusinesses(location, niche, minResults, maxResults) {
+                // This would contain the actual Google Places API integration
+                // For now, we'll use mock data
+                return generateMockResults(location, niche, minResults);
+            }
+        }
+        
+        // Additional trigger for niche display
+        setTimeout(displayNiches, 1000);
+    </script>
+</body>
+</html> 
