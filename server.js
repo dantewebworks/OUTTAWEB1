@@ -132,6 +132,8 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            connectSrc: ["'self'", "https://*.supabase.co"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
@@ -179,6 +181,16 @@ app.get('/api/public/supabase-config', (req, res) => {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL || null,
         anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null
     });
+});
+
+// Client-consumable runtime config (injects env vars into window.__ENV__)
+app.get('/config.js', (req, res) => {
+    res.type('application/javascript');
+    const payload = {
+        SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    };
+    res.send(`window.__ENV__ = ${JSON.stringify(payload)};`);
 });
 
 // API Routes
@@ -427,6 +439,18 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Config endpoint for client-side environment variables
+app.get('/config.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(`
+        window.ENV = {
+            SUPABASE_URL: '${process.env.NEXT_PUBLIC_SUPABASE_URL || ''}',
+            SUPABASE_ANON_KEY: '${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}',
+            SITE_URL: '${process.env.NEXT_PUBLIC_SITE_URL || ''}'
+        };
+    `);
+});
+
 // DB Health endpoint (simple)
 app.get('/api/db/health', async (req, res) => {
     if (!hasDb) return res.json({ hasDb: false, connected: false });
@@ -441,6 +465,15 @@ app.get('/api/db/health', async (req, res) => {
 // Serve the main HTML file
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'outta_web.html'));
+});
+
+// Serve manifest and service worker
+app.get('/manifest.webmanifest', (req, res) => {
+    res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
+app.get('/sw.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
 // Serve index.html as alternative

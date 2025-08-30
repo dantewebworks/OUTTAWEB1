@@ -1,15 +1,19 @@
 services:
   - type: web
-    name: outta-web-app
+    name: outtaweb1
     env: node
     plan: free
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://outtaweb1.onrender.com
         sync: false
 
