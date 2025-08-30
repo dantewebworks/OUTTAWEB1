@@ -16,57 +16,31 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Outta Web">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
     <script>
-        // IMMEDIATE LOGIN REMOVAL FOR HEROKU/RENDER
-        if (window.location.href.includes('herokuapp.com') || window.location.href.includes('onrender.com')) {
-            console.log('🚨 IMMEDIATE: Heroku/Render detected - hiding login immediately');
-            document.addEventListener('DOMContentLoaded', function() {
-                const loginOverlay = document.getElementById('loginOverlay');
-                if (loginOverlay) {
-                    loginOverlay.style.display = 'none';
-                    loginOverlay.style.visibility = 'hidden';
-                    loginOverlay.style.opacity = '0';
-                    loginOverlay.style.pointerEvents = 'none';
-                    loginOverlay.classList.add('hidden');
-                }
-                
-                const container = document.querySelector('.container');
-                if (container) {
-                    container.style.display = 'block';
-                    container.classList.remove('hidden');
-                }
-            });
+      function initSupabase() {
+        try {
+          const url = (window.__ENV__ && window.__ENV__.SUPABASE_URL) || window.NEXT_PUBLIC_SUPABASE_URL || null;
+          const anonKey = (window.__ENV__ && window.__ENV__.SUPABASE_ANON_KEY) || window.NEXT_PUBLIC_SUPABASE_ANON_KEY || null;
+          if (url && anonKey && window.supabase && window.supabase.createClient) {
+            window.SUPABASE = window.supabase.createClient(url, anonKey);
+            console.log('✅ Supabase initialized');
+          } else {
+            console.log('ℹ️ Supabase config missing or library not loaded');
+          }
+        } catch (e) {
+          console.log('ℹ️ Supabase init skipped:', e.message);
         }
+      }
 
-        // Supabase init (public config via server)
-        window.SUPABASE = null;
-        async function initSupabase() {
-            try {
-                const resp = await fetch('/api/public/supabase-config', { cache: 'no-store' });
-                if (resp.ok) {
-                    const { url, anonKey } = await resp.json();
-                    if (url && anonKey && window.supabase && window.supabase.createClient) {
-                        window.SUPABASE = window.supabase.createClient(url, anonKey);
-                        console.log('✅ Supabase initialized');
-                    } else {
-                        console.log('ℹ️ Supabase config missing or library not loaded');
-                    }
-                }
-            } catch (e) {
-                console.log('ℹ️ Supabase init skipped:', e.message);
-            }
-        }
-        
+      window.addEventListener('load', () => {
+        initSupabase();
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                initSupabase();
-                navigator.serviceWorker.register('/sw.js').then(() => {
-                    console.log('✅ Service worker registered');
-                }).catch(err => console.log('SW registration failed', err));
-            });
-        } else {
-            window.addEventListener('load', initSupabase);
+          navigator.serviceWorker.register('/sw.js').then(() => {
+            console.log('✅ Service worker registered');
+          }).catch(err => console.log('SW registration failed', err));
         }
+      });
     </script>
     <style>
         /* Login Modal Styles */
@@ -1567,42 +1541,67 @@ State abbreviations (CA)"
             console.log('🌐 User Agent:', navigator.userAgent);
 
             try {
-                // AUTO-LOGIN FOR HEROKU/RENDER - Skip authentication check
-                if (window.location.href.includes('herokuapp.com') || window.location.href.includes('onrender.com')) {
-                    console.log('🌐 Heroku/Render detected - auto-logging in...');
-                    
-                    // COMPLETELY REMOVE LOGIN OVERLAY
-                    const loginOverlay = document.getElementById('loginOverlay');
-                    if (loginOverlay) {
-                        loginOverlay.style.display = 'none';
-                        loginOverlay.style.visibility = 'hidden';
-                        loginOverlay.style.opacity = '0';
-                        loginOverlay.style.pointerEvents = 'none';
-                        loginOverlay.classList.add('hidden');
-                        console.log('🌐 Login overlay completely removed');
-                    }
-                    
-                    // Force show main container immediately
-                    const container = document.querySelector('.container');
-                    if (container) {
-                        container.style.display = 'block';
-                        container.classList.remove('hidden');
-                        console.log('🌐 Main container forced to show');
-                    }
-                    
-                    // Auto-login
-                    autoLoginForHeroku();
-                } else {
-                    // Check if user is logged in (for local development)
-                    console.log('🔍 Starting authentication check...');
-                    checkAuthStatus();
-                }
+                // Standard auth check
+                console.log('🔍 Starting authentication check...');
+                checkAuthStatus();
             
                 console.log('🔑 Loading API key...');
                 loadApiKey();
 
                 console.log('📚 Loading search history...');
                 loadSearchHistory();
+
+                // Initialize Supabase session handling (persist across restarts)
+                if (window.SUPABASE && window.SUPABASE.auth) {
+                    try {
+                        // Subscribe to auth state changes
+                        window.SUPABASE.auth.onAuthStateChange((event, session) => {
+                            console.log('🔄 Supabase auth state change:', event);
+                            if (session && session.user) {
+                                const u = session.user;
+                                currentUser = {
+                                    id: u.id,
+                                    name: u.user_metadata?.name || (u.email || 'User'),
+                                    email: u.email,
+                                    verified: !!u.email_confirmed_at
+                                };
+                                sessionId = session.access_token;
+                                window.LOGIN_STATE.isLoggedIn = true;
+                                window.LOGIN_STATE.currentUser = currentUser;
+                                window.LOGIN_STATE.sessionId = sessionId;
+                                try {
+                                    localStorage.setItem('outtaWebSessionId', sessionId);
+                                    localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                                } catch {}
+                                showApp();
+                            }
+                        });
+
+                        // Load any existing session on page load
+                        window.SUPABASE.auth.getSession().then(({ data: { session } }) => {
+                            if (session && session.user && !window.LOGIN_STATE.isLoggedIn) {
+                                const u = session.user;
+                                currentUser = {
+                                    id: u.id,
+                                    name: u.user_metadata?.name || (u.email || 'User'),
+                                    email: u.email,
+                                    verified: !!u.email_confirmed_at
+                                };
+                                sessionId = session.access_token;
+                                window.LOGIN_STATE.isLoggedIn = true;
+                                window.LOGIN_STATE.currentUser = currentUser;
+                                window.LOGIN_STATE.sessionId = sessionId;
+                                try {
+                                    localStorage.setItem('outtaWebSessionId', sessionId);
+                                    localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                                } catch {}
+                                showApp();
+                            }
+                        });
+                    } catch (e) {
+                        console.log('ℹ️ Supabase session init skipped:', e.message);
+                    }
+                }
 
                 console.log('✅ App initialization completed');
             } catch (error) {
@@ -3434,14 +3433,46 @@ State abbreviations (CA)"
                 return;
             }
 
-            // Try server-side authentication first
+            // 1) Try Supabase first (primary auth)
+            if (window.SUPABASE && window.SUPABASE.auth) {
+                try {
+                    const { data, error } = await window.SUPABASE.auth.signInWithPassword({ email, password });
+                    if (!error && data && data.user) {
+                        const u = data.user;
+                        currentUser = {
+                            id: u.id,
+                            name: u.user_metadata?.name || (u.email || 'User'),
+                            email: u.email,
+                            verified: !!u.email_confirmed_at
+                        };
+                        sessionId = data.session?.access_token || `sb-${Date.now()}`;
+
+                        window.LOGIN_STATE.isLoggedIn = true;
+                        window.LOGIN_STATE.currentUser = currentUser;
+                        window.LOGIN_STATE.sessionId = sessionId;
+
+                        try {
+                            localStorage.setItem('outtaWebSessionId', sessionId);
+                            localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                        } catch {}
+
+                        document.getElementById('loginForm').reset();
+                        showApp();
+                        alert('✅ Login successful! Welcome ' + currentUser.name + '!');
+                        return;
+                    }
+                } catch (e) {
+                    console.log('ℹ️ Supabase sign-in error:', e.message);
+                }
+            }
+
+            // 2) Fallback: server-side authentication (if configured)
             try {
                 const resp = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await resp.json();
                 if (resp.ok && data.success) {
                     console.log('✅ Server login successful for user:', data.user.email);
@@ -3456,18 +3487,7 @@ State abbreviations (CA)"
                     try {
                         localStorage.setItem('outtaWebSessionId', sessionId);
                         localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
-                        console.log('💾 User data saved to localStorage');
-                    } catch (e) {
-                        console.log('⚠️ localStorage not available, using global state only');
-                    }
-
-                    // Attempt Supabase sign-in (non-blocking)
-                    try {
-                        if (window.SUPABASE) {
-                            const { error: sErr } = await window.SUPABASE.auth.signInWithPassword({ email, password });
-                            if (sErr) console.log('ℹ️ Supabase sign-in skipped:', sErr.message);
-                        }
-                    } catch (e) { console.log('ℹ️ Supabase sign-in error:', e.message); }
+                    } catch {}
 
                     document.getElementById('loginForm').reset();
                     showApp();
@@ -3477,10 +3497,10 @@ State abbreviations (CA)"
                     console.log('⚠️ Server login failed:', data && data.message);
                 }
             } catch (err) {
-                console.log('⚠️ Server login error, falling back to local credentials:', err.message);
+                console.log('⚠️ Server login error:', err.message);
             }
 
-            // Fallback to client-side hardcoded users
+            // 3) Last resort: hardcoded dev accounts
             const user = HARDCODED_USERS.find(u =>
                 u.email.toLowerCase() === email && u.password === password
             );
@@ -3498,24 +3518,14 @@ State abbreviations (CA)"
                 try {
                     localStorage.setItem('outtaWebSessionId', sessionId);
                     localStorage.setItem('outtaWebCurrentUser', JSON.stringify(user));
-                } catch (e) {
-                    // ignore
-                }
-
-                // Attempt Supabase sign-in (non-blocking)
-                try {
-                    if (window.SUPABASE) {
-                        const { error: sErr } = await window.SUPABASE.auth.signInWithPassword({ email, password });
-                        if (sErr) console.log('ℹ️ Supabase sign-in skipped:', sErr.message);
-                    }
-                } catch (e) { console.log('ℹ️ Supabase sign-in error:', e.message); }
+                } catch {}
 
                 document.getElementById('loginForm').reset();
                 showApp();
                 alert('✅ Login successful! Welcome ' + user.name + '!');
             } else {
                 console.log('❌ Login failed: Invalid credentials');
-                alert('❌ Login failed! Please check your email and password.\n\nAvailable accounts:\n• admin@outtaweb.com / admin123\n• dantedesignzofficial@gmail.com / yourpassword123');
+                alert('❌ Login failed! Please check your email and password.');
             }
         }
 
@@ -3538,7 +3548,10 @@ State abbreviations (CA)"
                     window.SUPABASE.auth.signUp({
                         email,
                         password,
-                        options: { data: { name } }
+                        options: {
+                            data: { name },
+                            emailRedirectTo: `${window.location.origin}/auth/callback`
+                        }
                     }).then(({ data, error }) => {
                         if (error) throw new Error(error.message);
                         return data;
@@ -4067,13 +4080,20 @@ State abbreviations (CA)"
             });
         }
 
-        function logout() {
+        async function logout() {
             currentUser = null;
             sessionId = null;
             try {
                 localStorage.removeItem('outtaWebSessionId');
                 localStorage.removeItem('outtaWebCurrentUser');
             } catch {}
+            try {
+                if (window.SUPABASE && window.SUPABASE.auth) {
+                    await window.SUPABASE.auth.signOut();
+                }
+            } catch (e) {
+                console.log('ℹ️ Supabase sign-out error:', e.message);
+            }
             showLogin();
         }
 
