@@ -18,6 +18,40 @@ if (hasDb) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Ensure required DB schema exists (users, sessions)
+async function ensureSchema() {
+    if (!hasDb || !pool) return;
+    try {
+        // Users table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGSERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                verified BOOLEAN DEFAULT FALSE,
+                reset_code TEXT
+            );
+        `);
+        // Case-insensitive uniqueness helper index
+        await pool.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_idx ON users (LOWER(email));
+        `);
+        // Sessions table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                email TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+        `);
+        console.log('✅ Database schema ensured (users, sessions)');
+    } catch (e) {
+        console.error('❌ Error ensuring DB schema:', e);
+    }
+}
+
 // Simple in-memory user storage (in production, use a database)
 let users = [
     {
@@ -121,6 +155,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (but do NOT auto-serve index.html for '/')
 app.use(express.static(path.join(__dirname), { index: false }));
+
+// Initialize DB schema on startup (non-blocking)
+if (hasDb) {
+    ensureSchema().catch(() => {});
+}
 
 // Serve PWA manifest with correct content type
 app.get('/manifest.webmanifest', (req, res) => {
