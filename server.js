@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
 const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 
 const hasDb = !!process.env.DATABASE_URL;
 let pool = null;
@@ -49,9 +50,11 @@ async function dbGetUserByEmail(email) {
 }
 
 async function dbCreateUser({ name, email, password }) {
+    // Hash password before storing
+    const hashed = await bcrypt.hash(password, 10);
     const { rows } = await pool.query(
         'INSERT INTO users(name, email, password, verified) VALUES($1,$2,$3,true) RETURNING id, name, email, verified',
-        [name, email, password]
+        [name, email, hashed]
     );
     return rows[0];
 }
@@ -80,7 +83,8 @@ async function dbResetPassword(email, code, newPassword) {
     const { rows } = await pool.query('SELECT id, reset_code FROM users WHERE LOWER(email)=LOWER($1)', [email]);
     const user = rows[0];
     if (!user || user.reset_code !== code) return false;
-    await pool.query('UPDATE users SET password=$1, reset_code=NULL WHERE id=$2', [newPassword, user.id]);
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password=$1, reset_code=NULL WHERE id=$2', [hashed, user.id]);
     return true;
 }
 
@@ -142,13 +146,23 @@ app.post('/api/auth/login', async (req, res) => {
 
         if (hasDb) {
             const user = await dbGetUserByEmail(email);
-            if (user && user.password === password) {
-                const sessionId = await dbCreateSession(user.id, user.email);
-                return res.json({
-                    success: true,
-                    user: { id: user.id, name: user.name, email: user.email, verified: user.verified },
-                    sessionId
-                });
+            if (user) {
+                let valid = false;
+                if (user.password && user.password.startsWith('$2')) {
+                    // hashed
+                    valid = await bcrypt.compare(password, user.password);
+                } else {
+                    // legacy plaintext
+                    valid = user.password === password;
+                }
+                if (valid) {
+                    const sessionId = await dbCreateSession(user.id, user.email);
+                    return res.json({
+                        success: true,
+                        user: { id: user.id, name: user.name, email: user.email, verified: user.verified },
+                        sessionId
+                    });
+                }
             }
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -341,6 +355,17 @@ app.get('/api/places/details', async (req, res) => {
             error: 'Failed to fetch place details',
             details: error.message 
         });
+    }
+});
+
+// DB Health endpoint (simple)
+app.get('/api/db/health', async (req, res) => {
+    if (!hasDb) return res.json({ hasDb: false, connected: false });
+    try {
+        await pool.query('select 1');
+        res.json({ hasDb: true, connected: true });
+    } catch (e) {
+        res.status(500).json({ hasDb: true, connected: false, error: e.message });
     }
 });
 
