@@ -370,6 +370,16 @@ app.get('/api/places/details', async (req, res) => {
     }
 });
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        service: 'Outta Web App',
+        version: '1.0.0'
+    });
+});
+
 // DB Health endpoint (simple)
 app.get('/api/db/health', async (req, res) => {
     if (!hasDb) return res.json({ hasDb: false, connected: false });

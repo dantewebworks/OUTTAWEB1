@@ -1,16 +1,11 @@
 services:
   - type: web
-    name: outtaweb
+    name: outta-web-app
     env: node
     plan: free
-    branch: master
     buildCommand: npm install
     startCommand: npm start
-    autoDeploy: true
-    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        sync: false
 
