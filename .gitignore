@@ -97,3 +97,10 @@ logs
 # Temporary files
 tmp/
 temp/
+
+# Build artifacts
+/dist/
+/build/
+/release/
+*.dmg
+*.app
