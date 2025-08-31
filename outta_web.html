@@ -18,11 +18,12 @@
     
     <!-- Supabase Integration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/config.js"></script>
+    <script src="/api/config"></script>
     <script>
       function initSupabase() {
         try {
-          const url = (window.__ENV__ && window.__ENV__.SUPABASE_URL) || window.NEXT_PUBLIC_SUPABASE_URL || null;
+          const urlRaw = (window.__ENV__ && window.__ENV__.SUPABASE_URL) || window.NEXT_PUBLIC_SUPABASE_URL || null;
+          const url = urlRaw ? urlRaw.replace(/\/+$/, '') : null; // trim trailing slashes
           const anonKey = (window.__ENV__ && window.__ENV__.SUPABASE_ANON_KEY) || window.NEXT_PUBLIC_SUPABASE_ANON_KEY || null;
           if (url && anonKey && window.supabase && window.supabase.createClient) {
             window.SUPABASE = window.supabase.createClient(url, anonKey);
