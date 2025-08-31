@@ -3609,11 +3609,47 @@ State abbreviations (CA)"
                 const supaErr = results[0].status === 'rejected' ? (results[0].reason?.message || results[0].reason) : null;
                 const serverErr = results[results.length - 1].status === 'rejected' ? (results[results.length - 1].reason?.message || results[results.length - 1].reason) : null;
                 console.error('Registration errors:', { supabase: supaErr, server: serverErr });
-                alert('Server error during signup. Please try again.');
+                alert('Sign up failed. Please check your details and try again.');
                 return;
             }
 
-            // Keep existing app logic: prefer server session
+            // If Supabase signup succeeded, prefer it
+            if (supaOk) {
+                try {
+                    const supaData = results[0].value || {};
+                    const sbUser = supaData.user || null;
+                    const sbSession = supaData.session || null;
+
+                    if (sbUser && sbSession && sbSession.access_token) {
+                        currentUser = {
+                            id: sbUser.id,
+                            name: sbUser.user_metadata?.name || (sbUser.email || 'User'),
+                            email: sbUser.email,
+                            verified: !!sbUser.email_confirmed_at
+                        };
+                        sessionId = sbSession.access_token;
+                        window.LOGIN_STATE.isLoggedIn = true;
+                        window.LOGIN_STATE.currentUser = currentUser;
+                        window.LOGIN_STATE.sessionId = sessionId;
+                        try {
+                            localStorage.setItem('outtaWebSessionId', sessionId);
+                            localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                        } catch {}
+                        showApp();
+                        document.getElementById('registerForm').reset();
+                        alert('Registration successful!');
+                        return;
+                    } else {
+                        // Email confirmation required – do not show app yet
+                        alert('We\'ve sent a confirmation link to your email. Please verify your address, then sign in.');
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Supabase signup handling error:', e.message);
+                }
+            }
+
+            // Otherwise, fall back to server registration if it succeeded
             if (serverOk) {
                 const data = results[results.length - 1].value;
                 currentUser = data.user;
@@ -3622,11 +3658,15 @@ State abbreviations (CA)"
                     localStorage.setItem('outtaWebSessionId', sessionId);
                     localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
                 } catch {}
+                showApp();
+                document.getElementById('registerForm').reset();
+                alert('Registration successful!');
+                return;
             }
 
-            showApp();
-            document.getElementById('registerForm').reset();
-            alert('Registration successful!');
+            // If we got here, neither path produced a session
+            alert('Sign up started, but a session was not created. If email confirmation is enabled, check your inbox.');
+            return;
         }
 
         document.getElementById('verifyForm').addEventListener('submit', function (e) {
