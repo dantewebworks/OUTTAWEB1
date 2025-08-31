@@ -2,6 +2,7 @@
   "version": 2,
   "rewrites": [
     { "source": "/config.js", "destination": "/api/config.js" },
+    { "source": "/api/config-fingerprint", "destination": "/api/config-fingerprint.js" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/outta_web.html" }
   ]
