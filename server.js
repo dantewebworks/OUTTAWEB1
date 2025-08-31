@@ -439,17 +439,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Config endpoint for client-side environment variables
-app.get('/config.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.send(`
-        window.ENV = {
-            SUPABASE_URL: '${process.env.NEXT_PUBLIC_SUPABASE_URL || ''}',
-            SUPABASE_ANON_KEY: '${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}',
-            SITE_URL: '${process.env.NEXT_PUBLIC_SITE_URL || ''}'
-        };
-    `);
-});
 
 // DB Health endpoint (simple)
 app.get('/api/db/health', async (req, res) => {

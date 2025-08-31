@@ -859,7 +859,10 @@
                     <input type="password" id="loginPassword" required placeholder="Enter your password">
                 </div>
                 <button type="submit" class="login-btn">Login</button>
-            </form>
+                </form>
+                <div style="margin-top: 12px;">
+                    <button type="button" class="login-btn" style="background:#24292e" onclick="loginWithGitHub()">Continue with GitHub</button>
+                </div>
             
                          <div class="register-link">
                  Don't have an account? <a href="#" onclick="showRegisterForm()">Register here</a>
@@ -3531,6 +3534,25 @@ State abbreviations (CA)"
             }
         }
 
+        // Sign in with GitHub via Supabase OAuth
+        async function loginWithGitHub() {
+            try {
+                if (!window.SUPABASE || !window.SUPABASE.auth) {
+                    alert('Supabase is not configured.');
+                    return;
+                }
+                await window.SUPABASE.auth.signInWithOAuth({
+                    provider: 'github',
+                    options: {
+                        redirectTo: window.location.origin + '/auth/callback'
+                    }
+                });
+                // Page will redirect to Supabase and back to this site
+            } catch (e) {
+                console.log('GitHub OAuth error:', e.message);
+                alert('GitHub sign-in failed: ' + e.message);
+            }
+        }
 
         async function register() {
              const name = document.getElementById('registerName').value;
