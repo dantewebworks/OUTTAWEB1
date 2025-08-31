@@ -132,6 +132,8 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            connectSrc: ["'self'", "https://*.supabase.co"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
@@ -437,6 +439,7 @@ app.get('/health', (req, res) => {
     });
 });
 
+
 // DB Health endpoint (simple)
 app.get('/api/db/health', async (req, res) => {
     if (!hasDb) return res.json({ hasDb: false, connected: false });
@@ -451,6 +454,15 @@ app.get('/api/db/health', async (req, res) => {
 // Serve the main HTML file
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'outta_web.html'));
+});
+
+// Serve manifest and service worker
+app.get('/manifest.webmanifest', (req, res) => {
+    res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
+app.get('/sw.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
 // Serve index.html as alternative
