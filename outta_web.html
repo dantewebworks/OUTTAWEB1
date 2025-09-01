@@ -1152,7 +1152,7 @@ State abbreviations (CA)"
                     </label>
                 </div>
                 
-                <div class="search-settings">
+<div class="search-settings">
                     <h4>Search Settings</h4>
                     <div class="settings-grid">
                         <div class="form-group">
@@ -1164,8 +1164,21 @@ State abbreviations (CA)"
                             <input type="number" id="maxResults" value="1000" min="5" max="1000">
                         </div>
                     </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label>Provider</label>
+                        <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:6px;">
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="placesProvider" value="google" checked>
+                                <span>Google Places</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="placesProvider" value="foursquare">
+                                <span>Foursquare Places</span>
+                            </label>
+                        </div>
+                        <div style="font-size:12px; color:#6c757d; margin-top:6px;">Choose which data source to use for searches.</div>
+                    </div>
                 </div>
-                
                 <div class="niche-selection-section">
                     <h4>Popular Niches (Click to Add)</h4>
                     <div class="niche-categories">
@@ -1540,7 +1553,7 @@ State abbreviations (CA)"
             <div id="searchHistory" style="margin-top:16px"></div>
         </div>
 
-        <div id="api-tab" class="tab-content">
+<div id="api-tab" class="tab-content">
             <div class="api-key-section">
                 <h3>Google Places API Configuration</h3>
                 <p style="margin-bottom: 1rem; color: #666;">
@@ -1553,6 +1566,20 @@ State abbreviations (CA)"
                     <button class="btn btn-danger" onclick="clearApiKey()">Clear API Key</button>
                 </div>
                 <div id="apiStatus"></div>
+            </div>
+
+            <div class="api-key-section" style="margin-top: 20px;">
+                <h3>Foursquare Places API Configuration</h3>
+                <p style="margin-bottom: 1rem; color: #666;">
+                    Enter your Foursquare Places API key. Searches using the Foursquare provider will use this key.
+                </p>
+                <input type="password" id="fsqApiKey" class="api-key-input" placeholder="Enter your Foursquare API key">
+                <div class="api-actions">
+                    <button class="btn btn-primary" onclick="saveFsqApiKey()">Save FSQ Key</button>
+                    <button class="btn btn-success" onclick="testFsqApiKey()">Test FSQ Key</button>
+                    <button class="btn btn-danger" onclick="clearFsqApiKey()">Clear FSQ Key</button>
+                </div>
+                <div id="fsqApiStatus"></div>
             </div>
         </div>
     </div>
@@ -1588,7 +1615,9 @@ State abbreviations (CA)"
         };
         
         // App Variables
-        let apiKey = '';
+let apiKey = '';
+        let fsqApiKey = '';
+        let placesProvider = 'google';
         let searchHistory = [];
 
         // Load API key on page load
@@ -1603,7 +1632,9 @@ State abbreviations (CA)"
                 checkAuthStatus();
             
                 console.log('🔑 Loading API key...');
-                loadApiKey();
+loadApiKey();
+                loadFsqApiKey();
+                loadProviderSelection();
 
                 console.log('📚 Loading search history...');
                 loadSearchHistory();
@@ -1693,8 +1724,18 @@ State abbreviations (CA)"
                 register();
             });
 
-            // Wire exclusions UI (if present)
+// Wire exclusions UI (if present)
             try { wireExclusionsUI(); } catch {}
+
+            // Provider selection events
+            try {
+                document.querySelectorAll('input[name="placesProvider"]').forEach(r => {
+                    r.addEventListener('change', () => {
+                        placesProvider = r.value;
+                        try { localStorage.setItem('placesProvider', placesProvider); } catch {}
+                    });
+                });
+            } catch {}
         });
 
         function handleLocationInput(value) {
@@ -2349,12 +2390,15 @@ State abbreviations (CA)"
             return stateCities[state] || [];
         }
 
-        function findBusinesses() {
+function findBusinesses() {
             const selectedNiches = getSelectedNiches();
             const selectedLocations = getSelectedLocations();
             const stateWideSearch = document.getElementById('stateWideSearch').checked;
             const minResults = parseInt(document.getElementById('minResults').value) || 5;
             const maxResults = parseInt(document.getElementById('maxResults').value) || 1000;
+            const provider = (document.querySelector('input[name="placesProvider"]:checked')?.value) || placesProvider || 'google';
+            placesProvider = provider;
+            try { localStorage.setItem('placesProvider', provider); } catch {}
             
             if (selectedLocations.length === 0) {
                 alert('Please add at least one location');
@@ -2410,10 +2454,10 @@ State abbreviations (CA)"
             resultsContainer.innerHTML = '<div class="loading">Searching for businesses in multiple locations...</div>';
             
             // Search each location and niche combination
-            searchMultipleLocationsAndNiches(locationsToSearch, selectedNiches, minResults, maxResults);
+searchMultipleLocationsAndNiches(locationsToSearch, selectedNiches, minResults, maxResults, provider);
         }
 
-        async function searchMultipleLocationsAndNiches(locations, niches, minResults, maxResults) {
+async function searchMultipleLocationsAndNiches(locations, niches, minResults, maxResults, provider) {
             let allBusinesses = [];
             let processedSearches = 0;
             const totalSearches = locations.length * niches.length;
@@ -2445,7 +2489,12 @@ State abbreviations (CA)"
                     try {
                         // Calculate how many more results we can get from this search
                         const remainingResults = maxResults - allBusinesses.length;
-                        let businesses = await searchGooglePlacesForLocation(niche, location, minResults, remainingResults);
+let businesses = [];
+                        if (provider === 'foursquare') {
+                            businesses = await searchFoursquareForLocation(niche, location, minResults, remainingResults);
+                        } else {
+                            businesses = await searchGooglePlacesForLocation(niche, location, minResults, remainingResults);
+                        }
                         // Filter out excluded leads immediately
                         businesses = filterExcluded(businesses, exclusionSet);
                         allBusinesses = allBusinesses.concat(businesses);
@@ -2678,6 +2727,57 @@ State abbreviations (CA)"
                 console.error(`All API strategies failed for ${location}: ${error.message}`);
                 throw error;
             }
+        }
+
+async function searchFoursquareForLocation(niche, location, minResults, maxResults) {
+            const key = getFsqApiKey();
+            if (!key) throw new Error('Foursquare API key is not set. Please go to the API Key tab to set it.');
+
+            // Build search via serverless proxy to avoid CORS and keep key safe
+            const params = new URLSearchParams();
+            params.set('query', niche);
+            params.set('near', location);
+            params.set('limit', String(Math.max(minResults, Math.min(maxResults, 50))));
+
+            const resp = await fetch(`/api/foursquare/search?${params.toString()}`, {
+                headers: { 'X-FSQ-KEY': key }
+            });
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`Foursquare search failed (${resp.status}): ${text}`);
+            }
+            const data = await resp.json();
+            const results = Array.isArray(data.results) ? data.results : [];
+
+            const businesses = [];
+            for (const place of results) {
+                const website = place.website || null;
+                const phone = place.tel || null;
+                if (!website && phone) {
+                    // Compose a formatted address
+                    let addr = '';
+                    try {
+                        const loc = place.location || {};
+                        const parts = [loc.address, loc.locality, loc.region, loc.postcode, loc.country].filter(Boolean);
+                        addr = parts.join(', ');
+                    } catch {}
+                    businesses.push({
+                        name: place.name,
+                        category: niche,
+                        location: location,
+                        address: addr || 'Address not available',
+                        phone: phone,
+                        email: 'N/A',
+                        ownerManager: 'N/A',
+                        bestContact: 'SMS',
+                        website: 'No Website',
+                        rating: place.rating || 'N/A',
+                        confidence: 100
+                    });
+                    if (businesses.length >= maxResults) break;
+                }
+            }
+            return businesses;
         }
 
         function generateMockBusinesses(niche, location) {
@@ -3483,11 +3583,11 @@ State abbreviations (CA)"
             updateApiKeyDisplay();
         }
 
-        function updateApiKeyDisplay() {
+function updateApiKeyDisplay() {
             const keyInput = document.getElementById('apiKey');
-            if (keyInput) {
-                keyInput.value = apiKey;
-            }
+            if (keyInput) keyInput.value = apiKey;
+            const fsqInput = document.getElementById('fsqApiKey');
+            if (fsqInput) fsqInput.value = fsqApiKey;
         }
 
         function showApiStatus(message, type) {
@@ -3497,9 +3597,60 @@ State abbreviations (CA)"
             }
         }
 
-        function getApiKey() {
+function getApiKey() {
             return apiKey;
         }
+
+        function loadFsqApiKey() {
+            try { fsqApiKey = localStorage.getItem('foursquareApiKey') || ''; } catch {}
+            updateApiKeyDisplay();
+        }
+        function saveFsqApiKey() {
+            const input = document.getElementById('fsqApiKey');
+            fsqApiKey = input.value.trim();
+            if (!fsqApiKey) { showFsqApiStatus('Please enter a valid Foursquare API key.', 'error'); return; }
+            try { localStorage.setItem('foursquareApiKey', fsqApiKey); } catch {}
+            showFsqApiStatus('Foursquare API key saved successfully!', 'success');
+            updateApiKeyDisplay();
+        }
+        async function testFsqApiKey() {
+            if (!fsqApiKey) { showFsqApiStatus('Please save a Foursquare API key first.', 'error'); return; }
+            showFsqApiStatus('Testing Foursquare API key...', 'info');
+            try {
+                const resp = await fetch(`/api/foursquare/search?query=${encodeURIComponent('restaurants')}&near=${encodeURIComponent('New York, NY')}&limit=1`, {
+                    headers: { 'X-FSQ-KEY': fsqApiKey }
+                });
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`HTTP ${resp.status}: ${text}`);
+                }
+                const data = await resp.json();
+                if (data && data.results && Array.isArray(data.results)) {
+                    showFsqApiStatus('✅ Foursquare API key is valid and working!', 'success');
+                } else {
+                    showFsqApiStatus('⚠️ Unexpected response, but the key may still be valid.', 'info');
+                }
+            } catch (e) {
+                showFsqApiStatus(`❌ Foursquare API test failed: ${e.message}`, 'error');
+            }
+        }
+        function clearFsqApiKey() {
+            fsqApiKey = '';
+            try { localStorage.removeItem('foursquareApiKey'); } catch {}
+            showFsqApiStatus('Foursquare API key cleared.', 'success');
+            updateApiKeyDisplay();
+        }
+        function showFsqApiStatus(message, type) {
+            const el = document.getElementById('fsqApiStatus');
+            if (el) el.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+        }
+        function loadProviderSelection() {
+            try { placesProvider = localStorage.getItem('placesProvider') || 'google'; } catch {}
+            const radios = document.querySelectorAll('input[name="placesProvider"]');
+            radios.forEach(r => { r.checked = (r.value === placesProvider); });
+        }
+
+        function getFsqApiKey() { return fsqApiKey; }
 
         // Authentication Functions
         function checkAuthStatus() {

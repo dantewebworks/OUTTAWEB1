@@ -459,6 +459,58 @@ app.get('/api/places/details', async (req, res) => {
     }
 });
 
+// Foursquare Places API proxy endpoints (local dev parity)
+app.get('/api/foursquare/search', async (req, res) => {
+    try {
+        const { query, near, ll, limit } = req.query;
+        const key = process.env.FOURSQUARE_API_KEY || req.headers['x-fsq-key'] || req.query.key;
+        if (!key) return res.status(400).json({ error: 'missing_api_key', message: 'Foursquare API key not provided' });
+        if (!query) return res.status(400).json({ error: 'missing_param', message: 'query is required' });
+        if (!near && !ll) return res.status(400).json({ error: 'missing_param', message: 'near or ll is required' });
+        const params = new URLSearchParams();
+        params.set('query', query);
+        params.set('sort', 'RELEVANCE');
+        params.set('limit', String(limit || 50));
+        params.set('fields', 'fsq_id,name,location,website,tel,rating,categories');
+        if (near) params.set('near', near);
+        if (ll) params.set('ll', ll);
+        const fsqUrl = `https://api.foursquare.com/v3/places/search?${params.toString()}`;
+        const resp = await fetch(fsqUrl, {
+            headers: { 'Accept': 'application/json', 'Authorization': key }
+        });
+        if (!resp.ok) {
+            const text = await resp.text();
+            return res.status(resp.status).json({ error: 'fsq_error', status: resp.status, body: text });
+        }
+        const data = await resp.json();
+        res.json({ results: Array.isArray(data.results) ? data.results : data });
+    } catch (e) {
+        console.error('FSQ search error:', e);
+        res.status(500).json({ error: 'internal_error', message: e.message });
+    }
+});
+app.get('/api/foursquare/details', async (req, res) => {
+    try {
+        const { id, fields } = req.query;
+        const key = process.env.FOURSQUARE_API_KEY || req.headers['x-fsq-key'] || req.query.key;
+        if (!key) return res.status(400).json({ error: 'missing_api_key', message: 'Foursquare API key not provided' });
+        if (!id) return res.status(400).json({ error: 'missing_param', message: 'id is required' });
+        const fsqUrl = `https://api.foursquare.com/v3/places/${encodeURIComponent(id)}?fields=${encodeURIComponent(fields || 'website,tel,location,rating')}`;
+        const resp = await fetch(fsqUrl, {
+            headers: { 'Accept': 'application/json', 'Authorization': key }
+        });
+        if (!resp.ok) {
+            const text = await resp.text();
+            return res.status(resp.status).json({ error: 'fsq_error', status: resp.status, body: text });
+        }
+        const data = await resp.json();
+        res.json(data);
+    } catch (e) {
+        console.error('FSQ details error:', e);
+        res.status(500).json({ error: 'internal_error', message: e.message });
+    }
+});
+
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
     res.status(200).json({ 
