@@ -1,11 +1,14 @@
 {
+  "id": "/",
   "name": "Outta Web",
   "short_name": "OuttaWeb",
   "description": "Find businesses without websites.",
   "lang": "en",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
   "icons": [
@@ -22,6 +25,7 @@
       "purpose": "any maskable"
     }
   ],
+  "categories": ["business", "productivity", "utilities"],
   "shortcuts": [
     {
       "name": "Search",
