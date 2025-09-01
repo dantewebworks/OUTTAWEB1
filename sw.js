@@ -5,7 +5,7 @@ const ASSETS = [
   '/',
   '/outta_web.html',
   '/manifest.webmanifest',
-  '/outtaweblogo.PNG',
+  '/logo.PNG',
   '/styles.css',
   '/sw.js'
 ];
