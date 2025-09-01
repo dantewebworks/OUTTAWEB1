@@ -15,6 +15,9 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/", "destination": "/outta_web.html", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/config.js", "destination": "/api/config.js" },
     { "source": "/api/config-fingerprint", "destination": "/api/config-fingerprint.js" },
