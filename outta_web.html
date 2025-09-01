@@ -12,6 +12,10 @@
     <meta name="application-name" content="Outta Web">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="/outtaweblogo.PNG">
+    <link rel="apple-touch-icon" sizes="180x180" href="/outtaweblogo.PNG">
+    <link rel="apple-touch-icon" sizes="167x167" href="/outtaweblogo.PNG">
+    <link rel="apple-touch-icon" sizes="152x152" href="/outtaweblogo.PNG">
+    <link rel="apple-touch-icon" sizes="120x120" href="/outtaweblogo.PNG">
     <link rel="icon" type="image/png" sizes="192x192" href="/outtaweblogo.PNG">
     <link rel="icon" type="image/png" sizes="512x512" href="/outtaweblogo.PNG">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,12 +44,11 @@
         }
       }
 
-      window.addEventListener('load', () => {
+      document.addEventListener('DOMContentLoaded', () => {
         initSupabase();
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js').then((reg) => {
             console.log('✅ Service worker registered');
-            // If waiting SW exists, prompt to activate
             if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
           }).catch(err => console.log('SW registration failed', err));
         }

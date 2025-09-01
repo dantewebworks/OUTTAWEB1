@@ -4,7 +4,7 @@
   "short_name": "OuttaWeb",
   "description": "Find businesses without websites.",
   "lang": "en",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui"],
