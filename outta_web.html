@@ -1518,7 +1518,26 @@ State abbreviations (CA)"
         <div id="history-tab" class="tab-content">
             <h2>Search History</h2>
             <button class="clear-all-btn" onclick="clearAllHistory()">Clear All History</button>
-            <div id="searchHistory"></div>
+
+            <div class="api-key-section" style="margin-top:16px">
+                <h3>Import Exclusions (CSV)</h3>
+                <p style="margin-bottom: 0.5rem; color: #666;">
+                    Upload a CSV of leads you want to exclude from future results. Matching businesses will be filtered out automatically.
+                </p>
+                <ul style="margin-top: 0; color: #6c757d; font-size: 14px;">
+                    <li>Accepted columns (any combination): Name, Phone, Address, Email.</li>
+                    <li>Matching uses Name+Phone when available; otherwise Name+Address.</li>
+                </ul>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+                    <input id="exclusionsCsvInput" type="file" accept=".csv,text/csv" style="max-width: 320px;" />
+                    <button class="btn btn-primary" id="importExclusionsBtn">Import CSV</button>
+                    <button class="btn btn-danger" id="clearExclusionsBtn" title="Remove all imported exclusions">Clear Imported Exclusions</button>
+                </div>
+                <div id="exclusionsStatus" class="status-message status-info" style="margin-top:10px; display:none;"></div>
+                <div id="exclusionsSummary" style="margin-top:6px; font-size: 13px; color: #666;"></div>
+            </div>
+
+            <div id="searchHistory" style="margin-top:16px"></div>
         </div>
 
         <div id="api-tab" class="tab-content">
@@ -1673,6 +1692,9 @@ State abbreviations (CA)"
                 e.preventDefault();
                 register();
             });
+
+            // Wire exclusions UI (if present)
+            try { wireExclusionsUI(); } catch {}
         });
 
         function handleLocationInput(value) {
@@ -2398,6 +2420,9 @@ State abbreviations (CA)"
             
             console.log(`Starting search with min: ${minResults}, max: ${maxResults} results`);
             
+            // Build exclusion set once per run (imported + from history)
+            const exclusionSet = buildCombinedExclusionSet();
+            
             // Check for duplicate search first
             const preventDuplicates = document.getElementById('preventDuplicates').checked;
             if (preventDuplicates) {
@@ -2420,7 +2445,9 @@ State abbreviations (CA)"
                     try {
                         // Calculate how many more results we can get from this search
                         const remainingResults = maxResults - allBusinesses.length;
-                        const businesses = await searchGooglePlacesForLocation(niche, location, minResults, remainingResults);
+                        let businesses = await searchGooglePlacesForLocation(niche, location, minResults, remainingResults);
+                        // Filter out excluded leads immediately
+                        businesses = filterExcluded(businesses, exclusionSet);
                         allBusinesses = allBusinesses.concat(businesses);
                         processedSearches++;
                         
@@ -2486,7 +2513,8 @@ State abbreviations (CA)"
                 }
             }
             
-            // Remove duplicates
+            // Remove excluded again (safety) and duplicates
+            allBusinesses = filterExcluded(allBusinesses, exclusionSet);
             allBusinesses = removeDuplicateBusinesses(allBusinesses);
             
             // Apply final max limit after removing duplicates
@@ -3165,8 +3193,183 @@ State abbreviations (CA)"
             displaySearchHistory();
         }
 
+        // =====================
+        // Exclusions (CSV + History)
+        // =====================
+        function normalizeText(s) {
+            return (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+        function normalizePhone(s) {
+            return (s || '').toString().replace(/[^0-9]/g, '');
+        }
+        function normalizeAddress(s) {
+            return (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ').replace(/\./g, '');
+        }
+        function makeBusinessKey(name, phone, address) {
+            const n = normalizeText(name);
+            const p = normalizePhone(phone);
+            const a = normalizeAddress(address);
+            if (n && p) return `${n}|p:${p}`;
+            if (n && a) return `${n}|a:${a}`;
+            return n || a || p || null;
+        }
+        function getHistoryExclusionSet() {
+            const set = new Set();
+            try {
+                const hist = JSON.parse(localStorage.getItem('businessSearchHistory') || '[]');
+                for (const entry of hist) {
+                    if (!entry || !Array.isArray(entry.businesses)) continue;
+                    for (const b of entry.businesses) {
+                        const key = makeBusinessKey(b?.name, b?.phone, b?.address);
+                        if (key) set.add(key);
+                    }
+                }
+            } catch {}
+            return set;
+        }
+        function getImportedExclusionSet() {
+            const set = new Set();
+            try {
+                const arr = JSON.parse(localStorage.getItem('excludedBusinessesKeys') || '[]');
+                for (const k of arr) if (k) set.add(k);
+            } catch {}
+            return set;
+        }
+        function saveImportedExclusionSet(set) {
+            try {
+                localStorage.setItem('excludedBusinessesKeys', JSON.stringify(Array.from(set)));
+            } catch {}
+        }
+        function buildCombinedExclusionSet() {
+            const combined = getImportedExclusionSet();
+            const fromHistory = getHistoryExclusionSet();
+            for (const k of fromHistory) combined.add(k);
+            return combined;
+        }
+        function filterExcluded(businesses, exclSet) {
+            if (!exclSet || exclSet.size === 0) return businesses;
+            return (businesses || []).filter(b => {
+                const key = makeBusinessKey(b?.name, b?.phone, b?.address);
+                return key ? !exclSet.has(key) : true;
+            });
+        }
+        function parseCSV(text) {
+            // Minimal CSV parser supporting quotes, commas, newlines
+            const rows = [];
+            let i = 0, field = '', row = [], inQuotes = false;
+            while (i < text.length) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; }
+                        else { inQuotes = false; }
+                    } else {
+                        field += c;
+                    }
+                } else {
+                    if (c === '"') inQuotes = true;
+                    else if (c === ',') { row.push(field); field = ''; }
+                    else if (c === '\n' || c === '\r') {
+                        if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+                        field = ''; row = [];
+                        // handle CRLF
+                        if (c === '\r' && text[i + 1] === '\n') i++;
+                    } else { field += c; }
+                }
+                i++;
+            }
+            if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+        function guessHeaderIndexes(headers) {
+            const idx = { name: -1, phone: -1, address: -1, email: -1 };
+            headers.forEach((h, i) => {
+                const hl = h.toLowerCase();
+                if (idx.name === -1 && /^(name|business|company|business name|company name)$/.test(hl)) idx.name = i;
+                if (idx.phone === -1 && /(phone|telephone|mobile|cell)/.test(hl)) idx.phone = i;
+                if (idx.address === -1 && /(address|street|location)/.test(hl)) idx.address = i;
+                if (idx.email === -1 && /(email|e-mail)/.test(hl)) idx.email = i;
+            });
+            // fallback by position
+            if (idx.name === -1) idx.name = 0;
+            return idx;
+        }
+        async function importExclusionsFromCSVFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Failed to read CSV file'));
+                reader.onload = () => {
+                    try {
+                        const text = reader.result.toString();
+                        const rows = parseCSV(text);
+                        if (!rows || rows.length === 0) return resolve({ added: 0, total: 0 });
+                        const headers = rows[0].map(h => h.trim());
+                        const idx = guessHeaderIndexes(headers);
+                        const set = getImportedExclusionSet();
+                        let added = 0;
+                        for (let r = 1; r < rows.length; r++) {
+                            const row = rows[r];
+                            if (!row || row.length === 0) continue;
+                            const name = row[idx.name] || '';
+                            const phone = idx.phone >= 0 ? row[idx.phone] : '';
+                            const address = idx.address >= 0 ? row[idx.address] : '';
+                            const key = makeBusinessKey(name, phone, address);
+                            if (key && !set.has(key)) { set.add(key); added++; }
+                        }
+                        saveImportedExclusionSet(set);
+                        resolve({ added, total: set.size });
+                    } catch (e) { reject(e); }
+                };
+                reader.readAsText(file);
+            });
+        }
+        function wireExclusionsUI() {
+            const input = document.getElementById('exclusionsCsvInput');
+            const btn = document.getElementById('importExclusionsBtn');
+            const clearBtn = document.getElementById('clearExclusionsBtn');
+            const status = document.getElementById('exclusionsStatus');
+            const show = (msg, type='info') => {
+                if (!status) return;
+                status.className = `status-message status-${type}`;
+                status.style.display = 'block';
+                status.textContent = msg;
+            };
+            if (btn) {
+                btn.addEventListener('click', async () => {
+                    try {
+                        if (!input || !input.files || input.files.length === 0) {
+                            show('Please choose a CSV file to import.', 'error');
+                            return;
+                        }
+                        show('Importing exclusions...', 'info');
+                        const file = input.files[0];
+                        const { added, total } = await importExclusionsFromCSVFile(file);
+                        show(`Imported ${added} new exclusions. Total imported: ${total}.`, 'success');
+                        displaySearchHistory();
+                    } catch (e) {
+                        show(`Import failed: ${e.message}`, 'error');
+                    }
+                });
+            }
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    try { localStorage.removeItem('excludedBusinessesKeys'); } catch {}
+                    show('Imported exclusions cleared.', 'success');
+                    displaySearchHistory();
+                });
+            }
+        }
+
         function displaySearchHistory() {
             const container = document.getElementById('searchHistory');
+            
+            // Update summary of imported exclusions
+            try {
+                const excl = JSON.parse(localStorage.getItem('excludedBusinessesKeys') || '[]');
+                const histCount = getHistoryExclusionSet().size;
+                const el = document.getElementById('exclusionsSummary');
+                if (el) el.innerHTML = `Imported exclusions: <strong>${excl.length}</strong> | From history: <strong>${histCount}</strong>`;
+            } catch {}
             
             if (searchHistory.length === 0) {
                 container.innerHTML = '<p>No search history found.</p>';
