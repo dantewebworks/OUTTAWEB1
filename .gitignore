@@ -104,3 +104,4 @@ temp/
 /release/
 *.dmg
 *.app
+.vercel

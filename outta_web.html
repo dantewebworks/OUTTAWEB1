@@ -3852,7 +3852,7 @@ function getApiKey() {
             try {
                 const csvText = await file.text();
                 const parseResult = parseInstagramCsv(csvText);
-                const { businesses, headers } = parseResult;
+                const { businesses, headers: originalHeaders } = parseResult;
                 
                 if (businesses.length === 0) {
                     alert('No valid businesses found in CSV file.');
@@ -3946,8 +3946,8 @@ function getApiKey() {
                     }
                 }
                 
-                // Store headers for CSV generation
-                window.csvHeaders = [...Object.keys(headers), 'instagram'];
+                // Store headers for CSV generation using the parsed result
+                window.csvHeaders = [...parseResult.headers, 'instagram_url', 'instagram_handle', 'match_confidence', 'match_status'];
                 
                 // Hide processing UI
                 statusDiv.style.display = 'none';
@@ -4054,11 +4054,11 @@ function getApiKey() {
                 if (!line) continue;
                 
                 const values = parseCSVLine(line);
-                if (values.length < headers.length) continue;
+                if (values.length < originalHeaders.length) continue;
                 
                 // Store all original data
                 const originalRow = {};
-                headers.forEach((header, index) => {
+                originalHeaders.forEach((header, index) => {
                     originalRow[header] = values[index] || '';
                 });
                 originalData.push(originalRow);
