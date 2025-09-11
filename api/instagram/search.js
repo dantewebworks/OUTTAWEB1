@@ -103,15 +103,27 @@ module.exports = async (req, res) => {
     };
 
     const isValidInstagramProfile = (link) => {
-      const rejectSegments = ['/p/', '/explore/', '/tags/', '/reel/', '/stories/', '/share/', '/search/'];
+      // Must be instagram.com domain
+      if (!link.includes('instagram.com')) {
+        return false;
+      }
+      
+      // Must be HTTPS Instagram URL
+      if (!link.match(/^https?:\/\/(www\.)?instagram\.com\//)) {
+        return false;
+      }
+      
+      // Reject non-profile URLs
+      const rejectSegments = ['/p/', '/explore/', '/tags/', '/reel/', '/stories/', '/share/', '/search/', '/tv/'];
       return !rejectSegments.some(segment => link.includes(segment));
     };
 
     const extractUsername = (link) => {
+      // Strict Instagram profile URL matching
       const match = link.match(/^https?:\/\/(www\.)?instagram\.com\/([^/?#]+)\/?$/);
       if (match) {
         const username = match[2].toLowerCase();
-        const blacklist = ['p', 'explore', 'tags', 'stories', 'reel'];
+        const blacklist = ['p', 'explore', 'tags', 'stories', 'reel', 'tv', 'about', 'help', 'privacy', 'terms'];
         if (username.length >= 2 && !blacklist.includes(username)) {
           return username;
         }
@@ -125,27 +137,27 @@ module.exports = async (req, res) => {
       return fanIndicators.some(indicator => text.includes(indicator));
     };
 
-    // Progressive search strategy
+    // Progressive search strategy - Always include 'Instagram' keyword for better targeting
     const buildSearchQueries = (name, city, state) => {
       const queries = [];
       const normalizedName = normalizeText(name);
       
-      // Strategy 1: Full location context
+      // Strategy 1: Full location context with Instagram keyword
       if (city && state) {
-        queries.push(`"${name}" "${city}" "${state}" site:instagram.com`);
+        queries.push(`"${name}" "${city}" "${state}" Instagram site:instagram.com`);
       }
       
-      // Strategy 2: City only
+      // Strategy 2: City only with Instagram keyword  
       if (city) {
-        queries.push(`"${name}" "${city}" site:instagram.com`);
+        queries.push(`"${name}" "${city}" Instagram site:instagram.com`);
       }
       
-      // Strategy 3: Name only
-      queries.push(`"${name}" site:instagram.com`);
+      // Strategy 3: Name with Instagram keyword
+      queries.push(`"${name}" Instagram site:instagram.com`);
       
-      // Strategy 4: Normalized name variants
+      // Strategy 4: Normalized name variants with Instagram keyword
       if (normalizedName && normalizedName !== name.toLowerCase()) {
-        queries.push(`"${normalizedName}" site:instagram.com`);
+        queries.push(`"${normalizedName}" Instagram site:instagram.com`);
       }
       
       return queries;

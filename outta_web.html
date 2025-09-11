@@ -3965,12 +3965,12 @@ function getApiKey() {
         // Enhanced header detection system
         function detectHeaders(headers) {
             const aliases = {
-                businessName: ['business name', 'business_name', 'name', 'company', 'company name', 'store', 'restaurant', 'shop'],
-                address: ['address', 'street', 'location', 'addr', 'street address'],
-                city: ['city', 'town', 'municipality'],
-                state: ['state', 'province', 'region'],
-                phone: ['phone', 'telephone', 'tel', 'mobile', 'number', 'phone number'],
-                website: ['website', 'url', 'web', 'site']
+                businessName: ['business name', 'business_name', 'businessname', 'name', 'company', 'company name', 'company_name', 'companyname', 'store', 'restaurant', 'shop', 'establishment', 'business', 'client', 'client name', 'client_name', 'organization', 'firm', 'entity'],
+                address: ['address', 'street', 'location', 'addr', 'street address', 'address1', 'full address'],
+                city: ['city', 'town', 'municipality', 'locale'],
+                state: ['state', 'province', 'region', 'st'],
+                phone: ['phone', 'telephone', 'tel', 'mobile', 'number', 'phone number', 'contact', 'contact number'],
+                website: ['website', 'url', 'web', 'site', 'homepage', 'web address']
             };
             
             const mapping = {};
@@ -3991,6 +3991,14 @@ function getApiKey() {
                 if (foundIndex === -1) {
                     for (const alias of fieldAliases) {
                         foundIndex = lowerHeaders.findIndex(h => h.includes(alias));
+                        if (foundIndex !== -1) break;
+                    }
+                }
+                
+                // Try reverse partial matches (header contains our field name)
+                if (foundIndex === -1) {
+                    for (const alias of fieldAliases) {
+                        foundIndex = lowerHeaders.findIndex(h => alias.includes(h) && h.length > 2);
                         if (foundIndex !== -1) break;
                     }
                 }
