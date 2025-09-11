@@ -1570,7 +1570,7 @@ State abbreviations (CA)"
 
         <div id="instagram-tab" class="tab-content">
             <h2>Instagram Lead Finder</h2>
-            <p style="color: #666; margin-bottom: 20px;">Upload a CSV file with business information to find their Instagram accounts automatically.</p>
+            <p style="color: #666; margin-bottom: 20px;">Upload a CSV with business data to automatically find their official Instagram accounts. Only one Instagram account per business will be returned.</p>
 
             <div class="api-key-section" style="margin-bottom: 20px;">
                 <h3>Google Custom Search API Configuration</h3>
@@ -1608,8 +1608,8 @@ State abbreviations (CA)"
 
                 <div style="margin-bottom: 16px;">
                     <label>Confidence Threshold (%)</label>
-                    <input type="number" id="confidenceThreshold" min="50" max="100" value="80" style="width: 80px; margin-left: 8px;">
-                    <span style="margin-left: 8px; color: #666; font-size: 14px;">Only return results above this confidence score</span>
+                    <input type="number" id="confidenceThreshold" min="40" max="100" value="60" style="width: 80px; margin-left: 8px;">
+                    <span style="margin-left: 8px; color: #666; font-size: 14px;">Minimum confidence for returning Instagram accounts (40-100%). Higher = more strict.</span>
                 </div>
 
                 <div id="instagramProcessingStatus" style="display: none; margin-bottom: 16px;">
@@ -3887,10 +3887,13 @@ function getApiKey() {
                             confidenceThreshold
                         );
                         
+                        // Format for Bytebot compatibility
+                        const instagramValue = instagramResult.status === 'found' ? instagramResult.instagramUrl : 'No Instagram found';
+                        
                         results.push({
                             ...business,
-                            instagram: instagramResult.instagramHandle,
-                            instagramUrl: instagramResult.instagramUrl,
+                            instagram: instagramValue,
+                            instagramHandle: instagramResult.instagramHandle,
                             confidenceScore: instagramResult.confidenceScore
                         });
                         
@@ -4030,16 +4033,25 @@ function getApiKey() {
             
             results.forEach((result, index) => {
                 const bgColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
-                const instagramDisplay = result.instagramUrl ? 
-                    `<a href="${result.instagramUrl}" target="_blank">${result.instagram}</a>` : 
-                    result.instagram;
+                let instagramDisplay = 'No Instagram found';
+                
+                if (result.instagram && result.instagram !== 'No Instagram found') {
+                    // Check if it's already a URL or just a handle
+                    if (result.instagram.startsWith('http')) {
+                        instagramDisplay = `<a href="${result.instagram}" target="_blank" style="color: #007bff; text-decoration: none;">${result.instagramHandle || result.instagram}</a>`;
+                    } else {
+                        instagramDisplay = `<a href="${result.instagram}" target="_blank" style="color: #007bff; text-decoration: none;">${result.instagram}</a>`;
+                    }
+                }
+                
+                const confidenceDisplay = result.confidenceScore > 0 ? `${result.confidenceScore}%` : 'N/A';
                 
                 html += `
                     <tr style="background: ${bgColor};">
                         <td style="padding: 8px; border: 1px solid #ddd;">${result.businessName}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${result.city}, ${result.state}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${instagramDisplay}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${result.confidenceScore}%</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${confidenceDisplay}</td>
                     </tr>
                 `;
             });
@@ -4062,7 +4074,8 @@ function getApiKey() {
                 return;
             }
             
-            let csv = 'Business Name,Address,City,State,Phone Number,Instagram,Instagram URL,Confidence Score\n';
+            // Optimized CSV format for Bytebot outreach
+            let csv = 'Business Name,Address,City,State,Phone Number,Instagram URL\n';
             
             window.instagramResults.forEach(result => {
                 const fields = [
@@ -4071,9 +4084,7 @@ function getApiKey() {
                     result.city || '',
                     result.state || '',
                     result.phone || '',
-                    result.instagram || '',
-                    result.instagramUrl || '',
-                    result.confidenceScore || '0'
+                    result.instagram || 'No Instagram found'
                 ];
                 
                 // Escape commas and quotes in CSV
