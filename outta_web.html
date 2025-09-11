@@ -883,6 +883,22 @@
             font-size: 14px;
             display: none;
         }
+        
+        /* Animation for Instagram results indicator */
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 
@@ -1719,6 +1735,9 @@ loadApiKey();
 
                 console.log('📚 Loading search history...');
                 loadSearchHistory();
+                
+                console.log('📊 Restoring Instagram results...');
+                restoreSavedInstagramResults();
 
                 // Initialize Supabase session handling (persist across restarts)
                 if (window.SUPABASE && window.SUPABASE.auth) {
@@ -4529,6 +4548,108 @@ function getApiKey() {
             localStorage.removeItem('savedInstagramResults');
             $('#savedResultsModal').modal('hide');
             alert('All saved results have been deleted');
+        }
+        
+        function restoreSavedInstagramResults() {
+            try {
+                const savedResults = JSON.parse(localStorage.getItem('savedInstagramResults') || '[]');
+                
+                if (savedResults.length === 0) {
+                    console.log('📊 No saved Instagram results to restore');
+                    return;
+                }
+                
+                // Get the most recent saved result (first in the array)
+                const mostRecent = savedResults[0];
+                
+                if (!mostRecent || !mostRecent.results) {
+                    console.log('📊 No valid recent results to restore');
+                    return;
+                }
+                
+                console.log(`📊 Restoring ${mostRecent.results.length} Instagram results from ${new Date(mostRecent.timestamp).toLocaleString()}`);
+                
+                // Load the most recent result into current state
+                window.instagramResults = mostRecent.results;
+                
+                // Display the results in the Instagram tab
+                displayInstagramResults(mostRecent.results);
+                
+                // Also add a subtle notification about the restored results
+                const instagramTab = document.getElementById('instagram-tab');
+                if (instagramTab) {
+                    // Add a small notification at the top of the Instagram tab
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        background: #e3f2fd;
+                        color: #1565c0;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        margin-bottom: 15px;
+                        font-size: 14px;
+                        border-left: 4px solid #2196f3;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    `;
+                    notification.innerHTML = `
+                        <span>📊 Restored results from ${new Date(mostRecent.timestamp).toLocaleString()}</span>
+                        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #1565c0; cursor: pointer; padding: 0; margin: 0;">×</button>
+                    `;
+                    
+                    // Insert at the beginning of the Instagram tab content
+                    instagramTab.insertBefore(notification, instagramTab.firstChild);
+                    
+                    // Auto-remove the notification after 10 seconds
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 10000);
+                }
+                
+                console.log('📊 Instagram results restored successfully');
+                
+                // Optional: If user is not currently on Instagram tab and results were restored,
+                // don't auto-switch but provide a subtle hint in the tab button
+                const instagramTabBtn = document.querySelector('button[onclick="showTab(\'instagram\')"');
+                if (instagramTabBtn && !instagramTabBtn.classList.contains('active')) {
+                    // Add a small indicator to show there are restored results
+                    const indicator = document.createElement('span');
+                    indicator.style.cssText = `
+                        background: #28a745;
+                        color: white;
+                        border-radius: 50%;
+                        width: 8px;
+                        height: 8px;
+                        display: inline-block;
+                        margin-left: 5px;
+                        animation: pulse 2s infinite;
+                    `;
+                    indicator.title = 'Restored Instagram results available';
+                    
+                    // Only add if not already present
+                    if (!instagramTabBtn.querySelector('span[title="Restored Instagram results available"]')) {
+                        instagramTabBtn.appendChild(indicator);
+                        
+                        // Remove indicator when user switches to Instagram tab
+                        const observer = new MutationObserver((mutations) => {
+                            mutations.forEach((mutation) => {
+                                if (mutation.target === instagramTabBtn && instagramTabBtn.classList.contains('active')) {
+                                    if (indicator.parentNode) {
+                                        indicator.parentNode.removeChild(indicator);
+                                    }
+                                    observer.disconnect();
+                                }
+                            });
+                        });
+                        observer.observe(instagramTabBtn, { attributes: true, attributeFilter: ['class'] });
+                    }
+                }
+                
+            } catch (error) {
+                console.error('📊 Error restoring saved Instagram results:', error);
+            }
         }
 
         // Authentication Functions
