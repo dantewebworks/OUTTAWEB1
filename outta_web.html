@@ -639,6 +639,20 @@
             border-radius: 8px;
         }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
         .niche-selection-section h4 {
             margin: 0 0 20px 0;
             color: #495057;
@@ -1112,6 +1126,7 @@ State abbreviations (CA)"
         <div class="tabs">
             <div class="tab active" onclick="switchTab('search')">Search</div>
             <div class="tab" onclick="switchTab('history')">History</div>
+            <div class="tab" onclick="switchTab('instagram')">Instagram</div>
             <div class="tab" onclick="switchTab('api')">API Key</div>
         </div>
 
@@ -1553,6 +1568,67 @@ State abbreviations (CA)"
             <div id="searchHistory" style="margin-top:16px"></div>
         </div>
 
+        <div id="instagram-tab" class="tab-content">
+            <h2>Instagram Lead Finder</h2>
+            <p style="color: #666; margin-bottom: 20px;">Upload a CSV file with business information to find their Instagram accounts automatically.</p>
+
+            <div class="api-key-section" style="margin-bottom: 20px;">
+                <h3>Google Custom Search API Configuration</h3>
+                <p style="margin-bottom: 1rem; color: #666;">
+                    Instagram search requires Google Custom Search API credentials.
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label>Google Search API Key</label>
+                        <input type="password" id="googleSearchApiKey" class="api-key-input" placeholder="Enter Google Custom Search API key">
+                    </div>
+                    <div>
+                        <label>Search Engine ID</label>
+                        <input type="text" id="searchEngineId" class="api-key-input" placeholder="Enter Custom Search Engine ID">
+                    </div>
+                </div>
+                <div class="api-actions">
+                    <button class="btn btn-primary" onclick="saveInstagramApiKeys()">Save Keys</button>
+                    <button class="btn btn-success" onclick="testInstagramApi()">Test API</button>
+                    <button class="btn btn-danger" onclick="clearInstagramApiKeys()">Clear Keys</button>
+                </div>
+                <div id="instagramApiStatus"></div>
+            </div>
+
+            <div class="api-key-section">
+                <h3>CSV Upload</h3>
+                <p style="margin-bottom: 1rem; color: #666;">
+                    Upload a CSV file with columns: Business Name, Address, City, State, Phone Number
+                </p>
+                
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+                    <input type="file" id="instagramCsvInput" accept=".csv" style="max-width: 320px;">
+                    <button class="btn btn-primary" onclick="processInstagramCsv()">Process CSV</button>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label>Confidence Threshold (%)</label>
+                    <input type="number" id="confidenceThreshold" min="50" max="100" value="80" style="width: 80px; margin-left: 8px;">
+                    <span style="margin-left: 8px; color: #666; font-size: 14px;">Only return results above this confidence score</span>
+                </div>
+
+                <div id="instagramProcessingStatus" style="display: none; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="spinner" style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <span>Processing: <span id="currentProgress">0</span> / <span id="totalProgress">0</span> businesses</span>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <div id="progressBar" style="width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                            <div id="progressFill" style="height: 100%; background: #007bff; width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    <div id="processingDetails" style="margin-top: 8px; font-size: 14px; color: #666;"></div>
+                </div>
+
+                <div id="instagramResults" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
 <div id="api-tab" class="tab-content">
             <div class="api-key-section">
                 <h3>Google Places API Configuration</h3>
@@ -1619,6 +1695,10 @@ let apiKey = '';
         let fsqApiKey = '';
         let placesProvider = 'google';
         let searchHistory = [];
+        
+        // Instagram API Variables
+        let googleSearchApiKey = '';
+        let searchEngineId = '';
 
         // Load API key on page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -1634,6 +1714,7 @@ let apiKey = '';
                 console.log('🔑 Loading API key...');
 loadApiKey();
                 loadFsqApiKey();
+                loadInstagramApiKeys();
                 loadProviderSelection();
 
                 console.log('📚 Loading search history...');
@@ -3651,6 +3732,361 @@ function getApiKey() {
         }
 
         function getFsqApiKey() { return fsqApiKey; }
+
+        // Instagram API Functions
+        function loadInstagramApiKeys() {
+            try {
+                googleSearchApiKey = localStorage.getItem('googleSearchApiKey') || '';
+                searchEngineId = localStorage.getItem('searchEngineId') || '';
+            } catch {}
+            updateInstagramApiKeyDisplay();
+        }
+
+        function saveInstagramApiKeys() {
+            const keyInput = document.getElementById('googleSearchApiKey');
+            const engineInput = document.getElementById('searchEngineId');
+            
+            googleSearchApiKey = keyInput.value.trim();
+            searchEngineId = engineInput.value.trim();
+            
+            if (!googleSearchApiKey || !searchEngineId) {
+                showInstagramApiStatus('Please enter both API key and Search Engine ID.', 'error');
+                return;
+            }
+            
+            try {
+                localStorage.setItem('googleSearchApiKey', googleSearchApiKey);
+                localStorage.setItem('searchEngineId', searchEngineId);
+            } catch {}
+            
+            showInstagramApiStatus('Instagram API credentials saved successfully!', 'success');
+            updateInstagramApiKeyDisplay();
+        }
+
+        function clearInstagramApiKeys() {
+            googleSearchApiKey = '';
+            searchEngineId = '';
+            
+            try {
+                localStorage.removeItem('googleSearchApiKey');
+                localStorage.removeItem('searchEngineId');
+            } catch {}
+            
+            showInstagramApiStatus('Instagram API credentials cleared.', 'success');
+            updateInstagramApiKeyDisplay();
+        }
+
+        function updateInstagramApiKeyDisplay() {
+            const keyInput = document.getElementById('googleSearchApiKey');
+            const engineInput = document.getElementById('searchEngineId');
+            
+            if (keyInput) keyInput.value = googleSearchApiKey;
+            if (engineInput) engineInput.value = searchEngineId;
+        }
+
+        function showInstagramApiStatus(message, type) {
+            const statusDiv = document.getElementById('instagramApiStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            }
+        }
+
+        async function testInstagramApi() {
+            if (!googleSearchApiKey || !searchEngineId) {
+                showInstagramApiStatus('Please save both API key and Search Engine ID first.', 'error');
+                return;
+            }
+            
+            showInstagramApiStatus('Testing Instagram API...', 'info');
+            
+            try {
+                const response = await fetch('/api/instagram/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': googleSearchApiKey,
+                        'x-search-engine-id': searchEngineId
+                    },
+                    body: JSON.stringify({
+                        businessName: 'Starbucks',
+                        city: 'Seattle',
+                        state: 'WA',
+                        confidenceThreshold: 50
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.instagramHandle && data.instagramHandle !== 'No Instagram Found') {
+                    showInstagramApiStatus(`✅ API test successful! Found: ${data.instagramHandle} (${data.confidenceScore}% confidence)`, 'success');
+                } else {
+                    showInstagramApiStatus('✅ API is working, but no Instagram found for test business (normal).', 'success');
+                }
+            } catch (error) {
+                console.error('Instagram API test failed:', error);
+                showInstagramApiStatus(`❌ API test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function processInstagramCsv() {
+            const fileInput = document.getElementById('instagramCsvInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file.');
+                return;
+            }
+            
+            if (!googleSearchApiKey || !searchEngineId) {
+                alert('Please save your Instagram API credentials first.');
+                return;
+            }
+            
+            const confidenceThreshold = parseInt(document.getElementById('confidenceThreshold').value) || 80;
+            
+            try {
+                const csvText = await file.text();
+                const businesses = parseInstagramCsv(csvText);
+                
+                if (businesses.length === 0) {
+                    alert('No valid businesses found in CSV file.');
+                    return;
+                }
+                
+                // Show processing UI
+                const statusDiv = document.getElementById('instagramProcessingStatus');
+                const progressDiv = document.getElementById('currentProgress');
+                const totalDiv = document.getElementById('totalProgress');
+                const progressBar = document.getElementById('progressFill');
+                const detailsDiv = document.getElementById('processingDetails');
+                
+                statusDiv.style.display = 'block';
+                totalDiv.textContent = businesses.length;
+                
+                const results = [];
+                let processed = 0;
+                
+                for (const business of businesses) {
+                    try {
+                        progressDiv.textContent = processed + 1;
+                        const percentage = Math.round(((processed + 1) / businesses.length) * 100);
+                        progressBar.style.width = percentage + '%';
+                        detailsDiv.textContent = `Searching for: ${business.businessName}`;
+                        
+                        const instagramResult = await searchInstagramForBusiness(
+                            business.businessName,
+                            business.address,
+                            business.city,
+                            business.state,
+                            business.phone,
+                            confidenceThreshold
+                        );
+                        
+                        results.push({
+                            ...business,
+                            instagram: instagramResult.instagramHandle,
+                            instagramUrl: instagramResult.instagramUrl,
+                            confidenceScore: instagramResult.confidenceScore
+                        });
+                        
+                        processed++;
+                        
+                        // Add small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                    } catch (error) {
+                        console.error(`Error processing ${business.businessName}:`, error);
+                        results.push({
+                            ...business,
+                            instagram: 'Error: ' + error.message,
+                            instagramUrl: null,
+                            confidenceScore: 0
+                        });
+                        processed++;
+                    }
+                }
+                
+                // Hide processing UI
+                statusDiv.style.display = 'none';
+                
+                // Display results and provide download
+                displayInstagramResults(results);
+                
+            } catch (error) {
+                console.error('Error processing CSV:', error);
+                alert('Error processing CSV file: ' + error.message);
+                document.getElementById('instagramProcessingStatus').style.display = 'none';
+            }
+        }
+
+        function parseInstagramCsv(csvText) {
+            const lines = csvText.split('\n');
+            if (lines.length < 2) {
+                throw new Error('CSV file must have at least a header and one data row.');
+            }
+            
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const businesses = [];
+            
+            // Find column indices
+            const nameIndex = headers.findIndex(h => h.includes('name') || h.includes('business'));
+            const addressIndex = headers.findIndex(h => h.includes('address'));
+            const cityIndex = headers.findIndex(h => h.includes('city'));
+            const stateIndex = headers.findIndex(h => h.includes('state'));
+            const phoneIndex = headers.findIndex(h => h.includes('phone'));
+            
+            if (nameIndex === -1 || cityIndex === -1 || stateIndex === -1) {
+                throw new Error('CSV must contain columns for Business Name, City, and State.');
+            }
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                
+                if (values.length <= Math.max(nameIndex, cityIndex, stateIndex)) continue;
+                
+                businesses.push({
+                    businessName: values[nameIndex] || '',
+                    address: addressIndex >= 0 ? values[addressIndex] || '' : '',
+                    city: values[cityIndex] || '',
+                    state: values[stateIndex] || '',
+                    phone: phoneIndex >= 0 ? values[phoneIndex] || '' : ''
+                });
+            }
+            
+            return businesses.filter(b => b.businessName && b.city && b.state);
+        }
+
+        async function searchInstagramForBusiness(businessName, address, city, state, phone, confidenceThreshold) {
+            try {
+                const response = await fetch('/api/instagram/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': googleSearchApiKey,
+                        'x-search-engine-id': searchEngineId
+                    },
+                    body: JSON.stringify({
+                        businessName,
+                        address,
+                        city,
+                        state,
+                        phone,
+                        confidenceThreshold
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+                
+                return await response.json();
+                
+            } catch (error) {
+                console.error('Instagram search error:', error);
+                return {
+                    instagramHandle: 'No Instagram Found',
+                    instagramUrl: null,
+                    confidenceScore: 0
+                };
+            }
+        }
+
+        function displayInstagramResults(results) {
+            const container = document.getElementById('instagramResults');
+            
+            const successCount = results.filter(r => r.instagram && !r.instagram.includes('No Instagram') && !r.instagram.includes('Error:')).length;
+            const errorCount = results.filter(r => r.instagram && r.instagram.includes('Error:')).length;
+            
+            let html = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3>Processing Complete!</h3>
+                    <p><strong>Total businesses processed:</strong> ${results.length}</p>
+                    <p><strong>Instagram accounts found:</strong> ${successCount}</p>
+                    <p><strong>Errors:</strong> ${errorCount}</p>
+                    <button class="btn btn-success" onclick="downloadInstagramResults()">Download Results CSV</button>
+                </div>
+                
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #007bff; color: white; position: sticky; top: 0;">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Business Name</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Location</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Instagram</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            results.forEach((result, index) => {
+                const bgColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
+                const instagramDisplay = result.instagramUrl ? 
+                    `<a href="${result.instagramUrl}" target="_blank">${result.instagram}</a>` : 
+                    result.instagram;
+                
+                html += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 8px; border: 1px solid #ddd;">${result.businessName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${result.city}, ${result.state}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${instagramDisplay}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${result.confidenceScore}%</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            
+            // Store results globally for download
+            window.instagramResults = results;
+        }
+
+        function downloadInstagramResults() {
+            if (!window.instagramResults) {
+                alert('No results to download.');
+                return;
+            }
+            
+            let csv = 'Business Name,Address,City,State,Phone Number,Instagram,Instagram URL,Confidence Score\n';
+            
+            window.instagramResults.forEach(result => {
+                const fields = [
+                    result.businessName || '',
+                    result.address || '',
+                    result.city || '',
+                    result.state || '',
+                    result.phone || '',
+                    result.instagram || '',
+                    result.instagramUrl || '',
+                    result.confidenceScore || '0'
+                ];
+                
+                // Escape commas and quotes in CSV
+                const escapedFields = fields.map(field => {
+                    const str = String(field).replace(/"/g, '""');
+                    return `"${str}"`;
+                });
+                
+                csv += escapedFields.join(',') + '\n';
+            });
+            
+            downloadCSV(csv, `instagram_results_${new Date().toISOString().split('T')[0]}.csv`);
+        }
 
         // Authentication Functions
         function checkAuthStatus() {
