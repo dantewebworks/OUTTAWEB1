@@ -18,8 +18,8 @@ module.exports = async (req, res) => {
       state, 
       phone,
       website,
-      thresholdAccept = 0.80,
-      thresholdReview = 0.60
+      thresholdAccept = 0.50,
+      thresholdReview = 0.30
     } = req.method === 'GET' ? req.query : req.body;
 
     const apiKey = process.env.GOOGLE_SEARCH_API_KEY || process.env.GOOGLE_API_KEY || req.headers['x-api-key'];
@@ -137,23 +137,33 @@ module.exports = async (req, res) => {
       return fanIndicators.some(indicator => text.includes(indicator));
     };
 
-    // Search strategy using exact format: BUSINESS NAME + CITY + STATE + Instagram
+    // Search strategy using exact format with fallbacks for better results
     const buildSearchQueries = (name, city, state) => {
       const queries = [];
       
-      // Primary strategy: Full location context (BUSINESS NAME + CITY + STATE + Instagram)
+      // Strategy 1: Exact format as requested (BUSINESS NAME + CITY + STATE + Instagram)
       if (name && city && state) {
         queries.push(`${name} ${city} ${state} Instagram site:instagram.com`);
       }
       
-      // Fallback 1: Business name + city + Instagram (if state missing)
+      // Strategy 2: Business name + city + Instagram (if state missing)
       if (name && city) {
         queries.push(`${name} ${city} Instagram site:instagram.com`);
       }
       
-      // Fallback 2: Business name + Instagram only (if location missing)
+      // Strategy 3: Business name + Instagram only
       if (name) {
         queries.push(`${name} Instagram site:instagram.com`);
+      }
+      
+      // Strategy 4: Quoted business name for exact matches (fallback)
+      if (name && city && state) {
+        queries.push(`"${name}" "${city}" "${state}" Instagram site:instagram.com`);
+      }
+      
+      // Strategy 5: Quoted business name only (fallback)
+      if (name) {
+        queries.push(`"${name}" Instagram site:instagram.com`);
       }
       
       return queries;
@@ -180,20 +190,44 @@ module.exports = async (req, res) => {
       }
     };
 
-    // Scoring algorithm
+    // Improved scoring algorithm - more lenient for better detection
     const scoreCandidate = (candidate, businessName, city, state, phone, website) => {
       const { username, title, snippet, link } = candidate;
       const fullText = (title + ' ' + snippet).toLowerCase();
+      const businessLower = businessName.toLowerCase();
       const normalizedBusinessName = normalizeText(businessName);
       
-      // Component 1: Name similarity (weight 0.50)
-      const nameScore = Math.max(
-        calculateSimilarity(normalizedBusinessName, normalizeText(title)),
-        calculateSimilarity(normalizedBusinessName, normalizeText(snippet))
-      );
+      // Base score for finding any Instagram profile (gives 0.3 baseline)
+      let baseScore = 0.30;
+      
+      // Component 1: Name similarity (weight 0.40) - check multiple variations
+      let nameScore = 0;
+      
+      // Check exact business name match
+      if (fullText.includes(businessLower)) nameScore = Math.max(nameScore, 0.9);
+      
+      // Check individual words from business name
+      const businessWords = businessLower.split(/\s+/).filter(word => word.length > 2);
+      let wordMatches = 0;
+      businessWords.forEach(word => {
+        if (fullText.includes(word)) wordMatches++;
+      });
+      if (businessWords.length > 0) {
+        nameScore = Math.max(nameScore, (wordMatches / businessWords.length) * 0.8);
+      }
+      
+      // Traditional similarity scoring as backup
+      const titleSimilarity = calculateSimilarity(normalizedBusinessName, normalizeText(title));
+      const snippetSimilarity = calculateSimilarity(normalizedBusinessName, normalizeText(snippet));
+      nameScore = Math.max(nameScore, Math.max(titleSimilarity, snippetSimilarity));
       
       // Component 2: Username similarity (weight 0.20)
-      const usernameScore = calculateSimilarity(normalizedBusinessName, username);
+      let usernameScore = calculateSimilarity(normalizedBusinessName, username);
+      
+      // Check if username contains business words
+      businessWords.forEach(word => {
+        if (username.includes(word)) usernameScore = Math.max(usernameScore, 0.6);
+      });
       
       // Component 3: Location score (weight 0.15)
       let locationScore = 0;
@@ -207,12 +241,14 @@ module.exports = async (req, res) => {
       if (website && fullText.includes(website.replace(/https?:\/\/(www\.)?/, ''))) contactScore += 0.5;
       contactScore = Math.min(contactScore, 1.0);
       
-      // Calculate final weighted score
-      const finalScore = (0.5 * nameScore) + (0.2 * usernameScore) + (0.15 * locationScore) + (0.15 * contactScore);
+      // Calculate final weighted score with base score
+      const componentScore = (0.4 * nameScore) + (0.2 * usernameScore) + (0.15 * locationScore) + (0.15 * contactScore);
+      const finalScore = Math.min(baseScore + componentScore, 1.0);
       
       return {
         finalScore,
         components: {
+          baseScore,
           nameScore,
           usernameScore,
           locationScore,
@@ -301,7 +337,7 @@ module.exports = async (req, res) => {
           candidate.scoreComponents = scoring.components;
           
           console.log(`    ✅ Valid candidate: @${username}`);
-          console.log(`    📊 Score: ${scoring.finalScore.toFixed(3)} (name:${scoring.components.nameScore.toFixed(2)} user:${scoring.components.usernameScore.toFixed(2)} loc:${scoring.components.locationScore.toFixed(2)} contact:${scoring.components.contactScore.toFixed(2)})`);
+          console.log(`    📊 Score: ${scoring.finalScore.toFixed(3)} (base:${scoring.components.baseScore.toFixed(2)} name:${scoring.components.nameScore.toFixed(2)} user:${scoring.components.usernameScore.toFixed(2)} loc:${scoring.components.locationScore.toFixed(2)} contact:${scoring.components.contactScore.toFixed(2)})`);
           
           allCandidates.push(candidate);
         }
