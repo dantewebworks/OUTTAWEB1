@@ -137,27 +137,23 @@ module.exports = async (req, res) => {
       return fanIndicators.some(indicator => text.includes(indicator));
     };
 
-    // Progressive search strategy - Always include 'Instagram' keyword for better targeting
+    // Search strategy using exact format: BUSINESS NAME + CITY + STATE + Instagram
     const buildSearchQueries = (name, city, state) => {
       const queries = [];
-      const normalizedName = normalizeText(name);
       
-      // Strategy 1: Full location context with Instagram keyword
-      if (city && state) {
-        queries.push(`"${name}" "${city}" "${state}" Instagram site:instagram.com`);
+      // Primary strategy: Full location context (BUSINESS NAME + CITY + STATE + Instagram)
+      if (name && city && state) {
+        queries.push(`${name} ${city} ${state} Instagram site:instagram.com`);
       }
       
-      // Strategy 2: City only with Instagram keyword  
-      if (city) {
-        queries.push(`"${name}" "${city}" Instagram site:instagram.com`);
+      // Fallback 1: Business name + city + Instagram (if state missing)
+      if (name && city) {
+        queries.push(`${name} ${city} Instagram site:instagram.com`);
       }
       
-      // Strategy 3: Name with Instagram keyword
-      queries.push(`"${name}" Instagram site:instagram.com`);
-      
-      // Strategy 4: Normalized name variants with Instagram keyword
-      if (normalizedName && normalizedName !== name.toLowerCase()) {
-        queries.push(`"${normalizedName}" Instagram site:instagram.com`);
+      // Fallback 2: Business name + Instagram only (if location missing)
+      if (name) {
+        queries.push(`${name} Instagram site:instagram.com`);
       }
       
       return queries;
@@ -268,7 +264,12 @@ module.exports = async (req, res) => {
           console.log(`    Link: ${item.link}`);
           console.log(`    Snippet: ${item.snippet || 'N/A'}`);
           
-          // Validate Instagram profile
+          // Strict Instagram URL validation - must contain instagram.com
+          if (!item.link.includes('instagram.com')) {
+            console.log('    ❌ Rejected: URL does not contain instagram.com');
+            continue;
+          }
+          
           if (!isValidInstagramProfile(item.link)) {
             console.log('    ❌ Rejected: Not a valid Instagram profile');
             continue;
@@ -334,8 +335,8 @@ module.exports = async (req, res) => {
       console.log('🚫 RESULT: No Instagram Found - No valid candidates');
       
       return res.json({
-        instagram_handle: '',
-        instagram_url: '',
+        instagram_handle: 'No Instagram found',
+        instagram_url: 'No Instagram found',
         match_confidence: 0.0,
         match_status: 'no_instagram',
         debug_info: {
@@ -353,20 +354,17 @@ module.exports = async (req, res) => {
     
     console.log(`Best candidate: @${bestCandidate.username} (score: ${bestCandidate.score.toFixed(3)})`);
     
-    // Apply decision rules
+    // Apply stricter decision rules - only return high confidence matches
     let matchStatus, reason;
     if (bestCandidate.score >= thresholdAccept) {
       matchStatus = 'accepted';
       reason = `High confidence match (score: ${bestCandidate.score.toFixed(3)} >= ${thresholdAccept})`;
       console.log('✅ RESULT: ACCEPTED - High confidence match');
-    } else if (bestCandidate.score >= thresholdReview) {
-      matchStatus = 'needs_review';
-      reason = `Medium confidence match (score: ${bestCandidate.score.toFixed(3)}, needs review)`;
-      console.log('⚠️ RESULT: NEEDS REVIEW - Medium confidence match');
     } else {
+      // For cleaner results, treat medium and low confidence as "No Instagram found"
       matchStatus = 'no_instagram';
-      reason = `Low confidence match (score: ${bestCandidate.score.toFixed(3)} < ${thresholdReview})`;
-      console.log('🚫 RESULT: NO INSTAGRAM - Low confidence match');
+      reason = `Insufficient confidence (score: ${bestCandidate.score.toFixed(3)} < ${thresholdAccept})`;
+      console.log('🚫 RESULT: NO INSTAGRAM - Insufficient confidence for reliable match');
     }
     
     debugLog.final_decision = {
@@ -382,10 +380,10 @@ module.exports = async (req, res) => {
       }
     };
     
-    // Format response
+    // Format response with proper handle extraction
     const response = {
-      instagram_handle: matchStatus === 'no_instagram' ? '' : bestCandidate.username,
-      instagram_url: matchStatus === 'no_instagram' ? '' : bestCandidate.link,
+      instagram_handle: matchStatus === 'no_instagram' ? 'No Instagram found' : `@${bestCandidate.username}`,
+      instagram_url: matchStatus === 'no_instagram' ? 'No Instagram found' : bestCandidate.link,
       match_confidence: parseFloat(bestCandidate.score.toFixed(3)),
       match_status: matchStatus,
       debug_info: {

@@ -3897,12 +3897,13 @@ function getApiKey() {
                         
                         console.log('Instagram API Response:', instagramResult);
                         
-                        if (instagramResult && (instagramResult.match_status === 'accepted' || instagramResult.match_status === 'needs_review')) {
+                        if (instagramResult && instagramResult.match_status === 'accepted') {
                             instagramValue = instagramResult.instagram_url || 'No Instagram Found';
                             instagramHandle = instagramResult.instagram_handle || 'No Instagram Found';
-                        } else if (instagramResult && instagramResult.instagram_url) {
-                            instagramValue = instagramResult.instagram_url;
-                            instagramHandle = instagramResult.instagram_handle || 'No Instagram Found';
+                        } else {
+                            // For any non-accepted status, treat as no Instagram found
+                            instagramValue = 'No Instagram Found';
+                            instagramHandle = 'No Instagram Found';
                         }
                         
                         // Ensure no undefined values
