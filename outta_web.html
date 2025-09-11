@@ -4143,8 +4143,14 @@ function getApiKey() {
         function displayInstagramResults(results) {
             const container = document.getElementById('instagramResults');
             
-            const successCount = results.filter(r => r.instagram && !r.instagram.includes('No Instagram') && !r.instagram.includes('Error:')).length;
-            const errorCount = results.filter(r => r.instagram && r.instagram.includes('Error:')).length;
+            const successCount = results.filter(r => 
+                (r.instagram_url && r.instagram_url !== 'No Instagram Found' && r.match_status !== 'error') ||
+                (r.instagram && !r.instagram.includes('No Instagram') && !r.instagram.includes('Error:'))
+            ).length;
+            const errorCount = results.filter(r => 
+                r.match_status === 'error' || 
+                (r.instagram && r.instagram.includes('Error:'))
+            ).length;
             
             let html = `
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -4172,8 +4178,16 @@ function getApiKey() {
                 const bgColor = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
                 let instagramDisplay = 'No Instagram found';
                 
-                if (result.instagram && result.instagram !== 'No Instagram found') {
+                // Use the new format with instagram_url and instagram_handle
+                if (result.instagram_url && result.instagram_url !== 'No Instagram Found') {
                     // Check if it's already a URL or just a handle
+                    if (result.instagram_url.startsWith('http')) {
+                        instagramDisplay = `<a href="${result.instagram_url}" target="_blank" style="color: #007bff; text-decoration: none;">${result.instagram_handle || result.instagram_url}</a>`;
+                    } else {
+                        instagramDisplay = `<a href="${result.instagram_url}" target="_blank" style="color: #007bff; text-decoration: none;">${result.instagram_url}</a>`;
+                    }
+                } else if (result.instagram && result.instagram !== 'No Instagram found') {
+                    // Fallback to old format for backwards compatibility
                     if (result.instagram.startsWith('http')) {
                         instagramDisplay = `<a href="${result.instagram}" target="_blank" style="color: #007bff; text-decoration: none;">${result.instagramHandle || result.instagram}</a>`;
                     } else {
@@ -4181,12 +4195,17 @@ function getApiKey() {
                     }
                 }
                 
-                const confidenceDisplay = result.confidenceScore > 0 ? `${result.confidenceScore}%` : 'N/A';
+                // Use match_confidence instead of confidenceScore
+                const confidenceDisplay = result.match_confidence > 0 ? `${Math.round(result.match_confidence * 100)}%` : 'N/A';
+                
+                // Use processed field names with fallbacks
+                const businessName = result._processedBusinessName || result.businessName || 'N/A';
+                const cityState = `${result._processedCity || result.city || 'N/A'}, ${result._processedState || result.state || 'N/A'}`;
                 
                 html += `
                     <tr style="background: ${bgColor};">
-                        <td style="padding: 8px; border: 1px solid #ddd;">${result.businessName}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${result.city}, ${result.state}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${businessName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${cityState}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${instagramDisplay}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${confidenceDisplay}</td>
                     </tr>
@@ -4222,9 +4241,12 @@ function getApiKey() {
                 });
             });
             
-            // Convert to array and ensure Instagram is at the end
-            const columnOrder = Array.from(allColumns).filter(col => col !== 'instagram');
-            columnOrder.push('instagram');
+            // Ensure proper column order - original CSV columns first, then Instagram data
+            const originalColumns = Array.from(allColumns).filter(col => 
+                !['instagram_url', 'instagram_handle', 'match_confidence', 'match_status'].includes(col)
+            );
+            const instagramColumns = ['instagram_url', 'instagram_handle', 'match_confidence', 'match_status'];
+            const columnOrder = [...originalColumns, ...instagramColumns.filter(col => allColumns.has(col))];
             
             console.log('CSV export columns:', columnOrder);
             
@@ -4236,9 +4258,14 @@ function getApiKey() {
                 const fields = columnOrder.map(column => {
                     let value = result[column] || '';
                     
-                    // Clean up the instagram column value
-                    if (column === 'instagram' && !value) {
-                        value = 'No Instagram found';
+                    // Clean up special values
+                    if ((column === 'instagram_url' || column === 'instagram_handle') && !value) {
+                        value = 'No Instagram Found';
+                    }
+                    
+                    // Convert confidence to percentage
+                    if (column === 'match_confidence' && typeof value === 'number') {
+                        value = Math.round(value * 100) + '%';
                     }
                     
                     // Escape commas and quotes in CSV
