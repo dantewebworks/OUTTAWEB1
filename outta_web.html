@@ -3887,6 +3887,7 @@ function getApiKey() {
                             business.city,
                             business.state,
                             business.phone,
+                            business.website,
                             confidenceThreshold
                         );
                         
@@ -3896,12 +3897,12 @@ function getApiKey() {
                         
                         console.log('Instagram API Response:', instagramResult);
                         
-                        if (instagramResult && instagramResult.status === 'found') {
-                            instagramValue = instagramResult.instagramUrl || 'No Instagram Found';
-                            instagramHandle = instagramResult.instagramHandle || 'No Instagram Found';
-                        } else if (instagramResult && instagramResult.instagramUrl) {
-                            instagramValue = instagramResult.instagramUrl;
-                            instagramHandle = instagramResult.instagramHandle || 'No Instagram Found';
+                        if (instagramResult && (instagramResult.match_status === 'accepted' || instagramResult.match_status === 'needs_review')) {
+                            instagramValue = instagramResult.instagram_url || 'No Instagram Found';
+                            instagramHandle = instagramResult.instagram_handle || 'No Instagram Found';
+                        } else if (instagramResult && instagramResult.instagram_url) {
+                            instagramValue = instagramResult.instagram_url;
+                            instagramHandle = instagramResult.instagram_handle || 'No Instagram Found';
                         }
                         
                         // Ensure no undefined values
@@ -3916,12 +3917,15 @@ function getApiKey() {
                         
                         results.push({
                             ...business.originalData, // Preserve all original CSV data
-                            instagram: instagramValue,
-                            instagramHandle: instagramHandle,
+                            instagram_url: instagramValue,
+                            instagram_handle: instagramHandle,
+                            match_confidence: instagramResult.match_confidence || 0.0,
+                            match_status: instagramResult.match_status || 'no_instagram',
                             // Keep processed fields for internal use
                             _processedBusinessName: business.businessName,
                             _processedCity: business.city,
-                            _processedState: business.state
+                            _processedState: business.state,
+                            _debugInfo: instagramResult.debug_info || {}
                         });
                         
                         processed++;
@@ -3933,8 +3937,10 @@ function getApiKey() {
                         console.error(`Error processing ${business.businessName}:`, error);
                         results.push({
                             ...business.originalData,
-                            instagram: 'No Instagram Found',
-                            instagramHandle: 'No Instagram Found'
+                            instagram_url: '',
+                            instagram_handle: '',
+                            match_confidence: 0.0,
+                            match_status: 'error'
                         });
                         processed++;
                     }
@@ -3956,6 +3962,46 @@ function getApiKey() {
             }
         }
 
+        // Enhanced header detection system
+        function detectHeaders(headers) {
+            const aliases = {
+                businessName: ['business name', 'business_name', 'name', 'company', 'company name', 'store', 'restaurant', 'shop'],
+                address: ['address', 'street', 'location', 'addr', 'street address'],
+                city: ['city', 'town', 'municipality'],
+                state: ['state', 'province', 'region'],
+                phone: ['phone', 'telephone', 'tel', 'mobile', 'number', 'phone number'],
+                website: ['website', 'url', 'web', 'site']
+            };
+            
+            const mapping = {};
+            const lowerHeaders = headers.map(h => h.toLowerCase().trim());
+            
+            console.log('Detecting headers from:', lowerHeaders);
+            
+            for (const [field, fieldAliases] of Object.entries(aliases)) {
+                let foundIndex = -1;
+                
+                // Try exact matches first
+                for (const alias of fieldAliases) {
+                    foundIndex = lowerHeaders.indexOf(alias);
+                    if (foundIndex !== -1) break;
+                }
+                
+                // Try partial matches if no exact match
+                if (foundIndex === -1) {
+                    for (const alias of fieldAliases) {
+                        foundIndex = lowerHeaders.findIndex(h => h.includes(alias));
+                        if (foundIndex !== -1) break;
+                    }
+                }
+                
+                mapping[field] = foundIndex;
+                console.log(`${field}:`, foundIndex >= 0 ? headers[foundIndex] : 'NOT FOUND');
+            }
+            
+            return mapping;
+        }
+        
         function parseInstagramCsv(csvText) {
             const lines = csvText.split('\n');
             if (lines.length < 2) {
@@ -3985,34 +4031,19 @@ function getApiKey() {
                 return result;
             };
             
-            const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
-            console.log('Detected CSV headers:', headers);
+            const originalHeaders = parseCSVLine(lines[0]);
+            console.log('Original CSV headers:', originalHeaders);
             
-            // Flexible column detection with multiple possible names
-            const findColumnIndex = (possibleNames) => {
-                for (const name of possibleNames) {
-                    const index = headers.findIndex(h => h.includes(name.toLowerCase()));
-                    if (index !== -1) return index;
-                }
-                return -1;
-            };
+            // Use enhanced header detection
+            const headerMapping = detectHeaders(originalHeaders);
             
-            const nameIndex = findColumnIndex(['name', 'business', 'company', 'store', 'restaurant', 'shop']);
-            const addressIndex = findColumnIndex(['address', 'street', 'location', 'addr']);
-            const cityIndex = findColumnIndex(['city', 'town', 'municipality']);
-            const stateIndex = findColumnIndex(['state', 'province', 'region']);
-            const phoneIndex = findColumnIndex(['phone', 'telephone', 'tel', 'mobile', 'number']);
-            
-            console.log('Column mapping:', {
-                name: nameIndex >= 0 ? headers[nameIndex] : 'not found',
-                address: addressIndex >= 0 ? headers[addressIndex] : 'not found',
-                city: cityIndex >= 0 ? headers[cityIndex] : 'not found',
-                state: stateIndex >= 0 ? headers[stateIndex] : 'not found',
-                phone: phoneIndex >= 0 ? headers[phoneIndex] : 'not found'
-            });
-            
-            if (nameIndex === -1) {
-                throw new Error('CSV must contain a Business Name column (name, business, company, etc.).');
+            // Validate required fields
+            if (headerMapping.businessName === -1) {
+                const suggestions = originalHeaders.filter(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('company'));
+                const errorMsg = suggestions.length > 0 
+                    ? `No Business Name column found. Did you mean: ${suggestions.join(', ')}?`
+                    : 'No Business Name column found. Please ensure your CSV has a column like "Business Name", "Company", or "Name".';
+                throw new Error(errorMsg);
             }
             
             const businesses = [];
@@ -4032,12 +4063,13 @@ function getApiKey() {
                 });
                 originalData.push(originalRow);
                 
-                // Extract required fields
-                const businessName = values[nameIndex] || '';
-                const address = addressIndex >= 0 ? values[addressIndex] || '' : '';
-                const city = cityIndex >= 0 ? values[cityIndex] || '' : '';
-                const state = stateIndex >= 0 ? values[stateIndex] || '' : '';
-                const phone = phoneIndex >= 0 ? values[phoneIndex] || '' : '';
+                // Extract fields using header mapping
+                const businessName = headerMapping.businessName >= 0 ? values[headerMapping.businessName] || '' : '';
+                const address = headerMapping.address >= 0 ? values[headerMapping.address] || '' : '';
+                const city = headerMapping.city >= 0 ? values[headerMapping.city] || '' : '';
+                const state = headerMapping.state >= 0 ? values[headerMapping.state] || '' : '';
+                const phone = headerMapping.phone >= 0 ? values[headerMapping.phone] || '' : '';
+                const website = headerMapping.website >= 0 ? values[headerMapping.website] || '' : '';
                 
                 if (businessName.trim()) {
                     businesses.push({
@@ -4046,18 +4078,22 @@ function getApiKey() {
                         city: city.trim(),
                         state: state.trim(),
                         phone: phone.trim(),
+                        website: website.trim(),
                         originalData: originalRow,
+                        headerMapping: headerMapping,
                         rowIndex: i
                     });
                 }
             }
             
             console.log(`Parsed ${businesses.length} businesses from CSV`);
-            return { businesses, headers, originalData };
+            return { businesses, headers: originalHeaders, headerMapping, originalData };
         }
 
-        async function searchInstagramForBusiness(businessName, address, city, state, phone, confidenceThreshold) {
+        async function searchInstagramForBusiness(businessName, address, city, state, phone, website, confidenceThreshold) {
             try {
+                console.log(`🔍 Searching Instagram for: ${businessName}`);
+                
                 const response = await fetch('/api/instagram/search', {
                     method: 'POST',
                     headers: {
@@ -4071,23 +4107,35 @@ function getApiKey() {
                         city,
                         state,
                         phone,
-                        confidenceThreshold
+                        website,
+                        thresholdAccept: confidenceThreshold / 100,
+                        thresholdReview: (confidenceThreshold - 20) / 100
                     })
                 });
                 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    console.error('API Error:', errorData);
                     throw new Error(errorData.message || `HTTP ${response.status}`);
                 }
                 
-                return await response.json();
+                const result = await response.json();
+                console.log(`📊 Result for ${businessName}:`, {
+                    handle: result.instagram_handle,
+                    confidence: result.match_confidence,
+                    status: result.match_status
+                });
+                
+                return result;
                 
             } catch (error) {
-                console.error('Instagram search error:', error);
+                console.error('Instagram search error for', businessName, ':', error);
                 return {
-                    instagramHandle: 'No Instagram Found',
-                    instagramUrl: null,
-                    confidenceScore: 0
+                    instagram_handle: '',
+                    instagram_url: '',
+                    match_confidence: 0.0,
+                    match_status: 'error',
+                    error: error.message
                 };
             }
         }
