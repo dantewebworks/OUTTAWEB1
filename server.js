@@ -549,32 +549,25 @@ app.all('/api/instagram/search', async (req, res) => {
             });
         }
 
-        // Clean and format the business name for searching
-        const cleanBusinessName = businessName.replace(/[^\w\s]/g, '').trim();
+        console.log('=== Instagram Search Debug Info ===');
+        console.log('Business Name:', businessName);
+        console.log('City:', city);
+        console.log('State:', state);
         
-        // Build comprehensive search query with location context for better accuracy
-        let searchQuery = `"${cleanBusinessName}"`;
+        // Format query exactly as requested: "<Business Name> <City> <State> site:instagram.com"
+        let searchQuery = businessName.trim();
         
-        // Add location context to improve search accuracy
-        if (city && state) {
-            searchQuery += ` "${city}" OR "${state}"`;
-        } else if (city) {
-            searchQuery += ` "${city}"`;
-        } else if (state) {
-            searchQuery += ` "${state}"`;
+        if (city && city.trim()) {
+            searchQuery += ` ${city.trim()}`;
         }
         
-        // Add address if available for more precision
-        if (address && address.trim()) {
-            const cleanAddress = address.replace(/[^\w\s]/g, '').trim();
-            if (cleanAddress) {
-                searchQuery += ` "${cleanAddress}"`;
-            }
+        if (state && state.trim()) {
+            searchQuery += ` ${state.trim()}`;
         }
         
         searchQuery += ' site:instagram.com';
         
-        console.log('Enhanced search query:', searchQuery);
+        console.log('Final search query:', searchQuery);
 
         console.log('Instagram search query:', searchQuery);
 

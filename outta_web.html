@@ -3890,14 +3890,34 @@ function getApiKey() {
                             confidenceThreshold
                         );
                         
-                        // Format with all original data preserved
-                        const instagramValue = instagramResult.status === 'found' ? instagramResult.instagramUrl : 'No Instagram found';
+                        // Handle the response and avoid undefined values
+                        let instagramValue = 'No Instagram Found';
+                        let instagramHandle = 'No Instagram Found';
+                        
+                        console.log('Instagram API Response:', instagramResult);
+                        
+                        if (instagramResult && instagramResult.status === 'found') {
+                            instagramValue = instagramResult.instagramUrl || 'No Instagram Found';
+                            instagramHandle = instagramResult.instagramHandle || 'No Instagram Found';
+                        } else if (instagramResult && instagramResult.instagramUrl) {
+                            instagramValue = instagramResult.instagramUrl;
+                            instagramHandle = instagramResult.instagramHandle || 'No Instagram Found';
+                        }
+                        
+                        // Ensure no undefined values
+                        if (instagramValue === undefined || instagramValue === null) {
+                            instagramValue = 'No Instagram Found';
+                        }
+                        if (instagramHandle === undefined || instagramHandle === null) {
+                            instagramHandle = 'No Instagram Found';
+                        }
+                        
+                        console.log(`Final result for ${business.businessName}: ${instagramValue}`);
                         
                         results.push({
                             ...business.originalData, // Preserve all original CSV data
                             instagram: instagramValue,
-                            instagramHandle: instagramResult.instagramHandle,
-                            confidenceScore: instagramResult.confidenceScore,
+                            instagramHandle: instagramHandle,
                             // Keep processed fields for internal use
                             _processedBusinessName: business.businessName,
                             _processedCity: business.city,
@@ -3913,9 +3933,8 @@ function getApiKey() {
                         console.error(`Error processing ${business.businessName}:`, error);
                         results.push({
                             ...business.originalData,
-                            instagram: 'Error: ' + error.message,
-                            instagramHandle: 'Error',
-                            confidenceScore: 0
+                            instagram: 'No Instagram Found',
+                            instagramHandle: 'No Instagram Found'
                         });
                         processed++;
                     }
