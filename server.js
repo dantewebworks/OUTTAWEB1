@@ -551,8 +551,30 @@ app.all('/api/instagram/search', async (req, res) => {
 
         // Clean and format the business name for searching
         const cleanBusinessName = businessName.replace(/[^\w\s]/g, '').trim();
-        // Use exact format as requested: "<Business Name> site:instagram.com"
-        const searchQuery = `"${cleanBusinessName}" site:instagram.com`;
+        
+        // Build comprehensive search query with location context for better accuracy
+        let searchQuery = `"${cleanBusinessName}"`;
+        
+        // Add location context to improve search accuracy
+        if (city && state) {
+            searchQuery += ` "${city}" OR "${state}"`;
+        } else if (city) {
+            searchQuery += ` "${city}"`;
+        } else if (state) {
+            searchQuery += ` "${state}"`;
+        }
+        
+        // Add address if available for more precision
+        if (address && address.trim()) {
+            const cleanAddress = address.replace(/[^\w\s]/g, '').trim();
+            if (cleanAddress) {
+                searchQuery += ` "${cleanAddress}"`;
+            }
+        }
+        
+        searchQuery += ' site:instagram.com';
+        
+        console.log('Enhanced search query:', searchQuery);
 
         console.log('Instagram search query:', searchQuery);
 
@@ -601,6 +623,15 @@ app.all('/api/instagram/search', async (req, res) => {
             
             // Skip common non-business handles
             if (handle.includes('explore') || handle.includes('accounts') || handle.includes('hashtag')) continue;
+            
+            // Skip extremely short handles (likely truncated or invalid) - minimum 2 characters
+            if (handle.length < 2) continue;
+            
+            // Skip single letter handles (like @p) which are definitely not business accounts
+            if (handle.length === 1) continue;
+            
+            // Skip handles that are just numbers or very generic patterns
+            if (/^\d+$/.test(handle) || /^[a-z]$/.test(handle)) continue;
 
             const title = (item.title || '').toLowerCase();
             const snippet = (item.snippet || '').toLowerCase();

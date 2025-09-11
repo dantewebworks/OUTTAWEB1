@@ -37,8 +37,30 @@ module.exports = async (req, res) => {
 
     // Clean and format the business name for searching
     const cleanBusinessName = businessName.replace(/[^\w\s]/g, '').trim();
-    // Use exact format as requested: "<Business Name> site:instagram.com"
-    const searchQuery = `"${cleanBusinessName}" site:instagram.com`;
+    
+    // Build comprehensive search query with location context for better accuracy
+    let searchQuery = `"${cleanBusinessName}"`;
+    
+    // Add location context to improve search accuracy
+    if (city && state) {
+      searchQuery += ` "${city}" OR "${state}"`;
+    } else if (city) {
+      searchQuery += ` "${city}"`;
+    } else if (state) {
+      searchQuery += ` "${state}"`;
+    }
+    
+    // Add address if available for more precision
+    if (address && address.trim()) {
+      const cleanAddress = address.replace(/[^\w\s]/g, '').trim();
+      if (cleanAddress) {
+        searchQuery += ` "${cleanAddress}"`;
+      }
+    }
+    
+    searchQuery += ' site:instagram.com';
+    
+    console.log('Enhanced search query:', searchQuery);
 
     console.log('Instagram search query:', searchQuery);
 
@@ -87,6 +109,15 @@ module.exports = async (req, res) => {
       
       // Skip common non-business handles
       if (handle.includes('explore') || handle.includes('accounts') || handle.includes('hashtag')) continue;
+      
+      // Skip extremely short handles (likely truncated or invalid) - minimum 2 characters
+      if (handle.length < 2) continue;
+      
+      // Skip single letter handles (like @p) which are definitely not business accounts
+      if (handle.length === 1) continue;
+      
+      // Skip handles that are just numbers or very generic patterns
+      if (/^\d+$/.test(handle) || /^[a-z]$/.test(handle)) continue;
 
       const title = (item.title || '').toLowerCase();
       const snippet = (item.snippet || '').toLowerCase();
@@ -103,19 +134,36 @@ module.exports = async (req, res) => {
       const handleLower = handle.toLowerCase().replace(/[^a-z0-9]/g, '');
       const businessNameClean = lowerBusinessName.replace(/[^a-z0-9]/g, '');
       
-      if (title.includes(lowerBusinessName) || handleLower.includes(businessNameClean)) {
+      // Check for exact match first
+      if (title.includes(lowerBusinessName)) {
+        score += 60;
+        reasons.push('Exact business name in title');
+      } else if (handleLower.includes(businessNameClean) && businessNameClean.length > 2) {
         score += 50;
-        reasons.push('Exact business name match');
+        reasons.push('Business name in handle');
       }
 
-      // Secondary: Partial business name match (all words must be present)
+      // Enhanced business name matching
       const titleWordsMatchCount = businessWords.filter(word => fullText.includes(word)).length;
+      const handleWordsMatchCount = businessWords.filter(word => handleLower.includes(word.replace(/[^a-z0-9]/g, ''))).length;
+      
+      // All business words must be present for high confidence
       if (titleWordsMatchCount === businessWords.length && businessWords.length > 0) {
-        score += 30;
-        reasons.push('All business name words found');
-      } else if (titleWordsMatchCount > 0) {
-        score += (titleWordsMatchCount / businessWords.length) * 20;
-        reasons.push(`${titleWordsMatchCount}/${businessWords.length} business words found`);
+        score += 40;
+        reasons.push('All business name words in text');
+      } else if (handleWordsMatchCount === businessWords.length && businessWords.length > 0) {
+        score += 35;
+        reasons.push('All business name words in handle');
+      } else if (titleWordsMatchCount > 0 || handleWordsMatchCount > 0) {
+        const maxMatch = Math.max(titleWordsMatchCount, handleWordsMatchCount);
+        score += (maxMatch / businessWords.length) * 25;
+        reasons.push(`${maxMatch}/${businessWords.length} business words found`);
+      }
+      
+      // Boost score significantly if business name is uncommon/unique
+      if (businessWords.length > 1 && businessWords.some(word => word.length > 6)) {
+        score += 10;
+        reasons.push('Unique business name detected');
       }
 
       // Location relevance (if provided)

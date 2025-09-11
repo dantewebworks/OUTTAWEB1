@@ -1570,7 +1570,7 @@ State abbreviations (CA)"
 
         <div id="instagram-tab" class="tab-content">
             <h2>Instagram Lead Finder</h2>
-            <p style="color: #666; margin-bottom: 20px;">Upload a CSV with business data to automatically find their official Instagram accounts. Only one Instagram account per business will be returned.</p>
+            <p style="color: #666; margin-bottom: 20px;">Upload any CSV file with business data. The app automatically detects columns for Business Name, Address, City, State, and Phone Number regardless of naming or order. Returns only official Instagram accounts.</p>
 
             <div class="api-key-section" style="margin-bottom: 20px;">
                 <h3>Google Custom Search API Configuration</h3>
@@ -1598,7 +1598,7 @@ State abbreviations (CA)"
             <div class="api-key-section">
                 <h3>CSV Upload</h3>
                 <p style="margin-bottom: 1rem; color: #666;">
-                    Upload a CSV file with columns: Business Name, Address, City, State, Phone Number
+                    Upload any CSV file - columns will be automatically detected. Looks for: Business Name (required), Address, City, State, Phone Number. Column names can vary (e.g., "Company", "Store Name", "Telephone", etc.)
                 </p>
                 
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
@@ -3851,12 +3851,15 @@ function getApiKey() {
             
             try {
                 const csvText = await file.text();
-                const businesses = parseInstagramCsv(csvText);
+                const parseResult = parseInstagramCsv(csvText);
+                const { businesses, headers } = parseResult;
                 
                 if (businesses.length === 0) {
                     alert('No valid businesses found in CSV file.');
                     return;
                 }
+                
+                console.log(`Processing ${businesses.length} businesses with flexible CSV parsing`);
                 
                 // Show processing UI
                 const statusDiv = document.getElementById('instagramProcessingStatus');
@@ -3887,32 +3890,39 @@ function getApiKey() {
                             confidenceThreshold
                         );
                         
-                        // Format for Bytebot compatibility
+                        // Format with all original data preserved
                         const instagramValue = instagramResult.status === 'found' ? instagramResult.instagramUrl : 'No Instagram found';
                         
                         results.push({
-                            ...business,
+                            ...business.originalData, // Preserve all original CSV data
                             instagram: instagramValue,
                             instagramHandle: instagramResult.instagramHandle,
-                            confidenceScore: instagramResult.confidenceScore
+                            confidenceScore: instagramResult.confidenceScore,
+                            // Keep processed fields for internal use
+                            _processedBusinessName: business.businessName,
+                            _processedCity: business.city,
+                            _processedState: business.state
                         });
                         
                         processed++;
                         
                         // Add small delay to avoid rate limiting
-                        await new Promise(resolve => setTimeout(resolve, 200));
+                        await new Promise(resolve => setTimeout(resolve, 300));
                         
                     } catch (error) {
                         console.error(`Error processing ${business.businessName}:`, error);
                         results.push({
-                            ...business,
+                            ...business.originalData,
                             instagram: 'Error: ' + error.message,
-                            instagramUrl: null,
+                            instagramHandle: 'Error',
                             confidenceScore: 0
                         });
                         processed++;
                     }
                 }
+                
+                // Store headers for CSV generation
+                window.csvHeaders = [...Object.keys(headers), 'instagram'];
                 
                 // Hide processing UI
                 statusDiv.style.display = 'none';
@@ -3933,38 +3943,98 @@ function getApiKey() {
                 throw new Error('CSV file must have at least a header and one data row.');
             }
             
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const businesses = [];
+            // Parse CSV with better handling of quoted fields
+            const parseCSVLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"' && (i === 0 || line[i-1] === ',')) {
+                        inQuotes = true;
+                    } else if (char === '"' && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
+                        inQuotes = false;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else if (char !== '"' || inQuotes) {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result;
+            };
             
-            // Find column indices
-            const nameIndex = headers.findIndex(h => h.includes('name') || h.includes('business'));
-            const addressIndex = headers.findIndex(h => h.includes('address'));
-            const cityIndex = headers.findIndex(h => h.includes('city'));
-            const stateIndex = headers.findIndex(h => h.includes('state'));
-            const phoneIndex = headers.findIndex(h => h.includes('phone'));
+            const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+            console.log('Detected CSV headers:', headers);
             
-            if (nameIndex === -1 || cityIndex === -1 || stateIndex === -1) {
-                throw new Error('CSV must contain columns for Business Name, City, and State.');
+            // Flexible column detection with multiple possible names
+            const findColumnIndex = (possibleNames) => {
+                for (const name of possibleNames) {
+                    const index = headers.findIndex(h => h.includes(name.toLowerCase()));
+                    if (index !== -1) return index;
+                }
+                return -1;
+            };
+            
+            const nameIndex = findColumnIndex(['name', 'business', 'company', 'store', 'restaurant', 'shop']);
+            const addressIndex = findColumnIndex(['address', 'street', 'location', 'addr']);
+            const cityIndex = findColumnIndex(['city', 'town', 'municipality']);
+            const stateIndex = findColumnIndex(['state', 'province', 'region']);
+            const phoneIndex = findColumnIndex(['phone', 'telephone', 'tel', 'mobile', 'number']);
+            
+            console.log('Column mapping:', {
+                name: nameIndex >= 0 ? headers[nameIndex] : 'not found',
+                address: addressIndex >= 0 ? headers[addressIndex] : 'not found',
+                city: cityIndex >= 0 ? headers[cityIndex] : 'not found',
+                state: stateIndex >= 0 ? headers[stateIndex] : 'not found',
+                phone: phoneIndex >= 0 ? headers[phoneIndex] : 'not found'
+            });
+            
+            if (nameIndex === -1) {
+                throw new Error('CSV must contain a Business Name column (name, business, company, etc.).');
             }
+            
+            const businesses = [];
+            const originalData = []; // Store all original data
             
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                const values = parseCSVLine(line);
+                if (values.length < headers.length) continue;
                 
-                if (values.length <= Math.max(nameIndex, cityIndex, stateIndex)) continue;
-                
-                businesses.push({
-                    businessName: values[nameIndex] || '',
-                    address: addressIndex >= 0 ? values[addressIndex] || '' : '',
-                    city: values[cityIndex] || '',
-                    state: values[stateIndex] || '',
-                    phone: phoneIndex >= 0 ? values[phoneIndex] || '' : ''
+                // Store all original data
+                const originalRow = {};
+                headers.forEach((header, index) => {
+                    originalRow[header] = values[index] || '';
                 });
+                originalData.push(originalRow);
+                
+                // Extract required fields
+                const businessName = values[nameIndex] || '';
+                const address = addressIndex >= 0 ? values[addressIndex] || '' : '';
+                const city = cityIndex >= 0 ? values[cityIndex] || '' : '';
+                const state = stateIndex >= 0 ? values[stateIndex] || '' : '';
+                const phone = phoneIndex >= 0 ? values[phoneIndex] || '' : '';
+                
+                if (businessName.trim()) {
+                    businesses.push({
+                        businessName: businessName.trim(),
+                        address: address.trim(),
+                        city: city.trim(),
+                        state: state.trim(),
+                        phone: phone.trim(),
+                        originalData: originalRow,
+                        rowIndex: i
+                    });
+                }
             }
             
-            return businesses.filter(b => b.businessName && b.city && b.state);
+            console.log(`Parsed ${businesses.length} businesses from CSV`);
+            return { businesses, headers, originalData };
         }
 
         async function searchInstagramForBusiness(businessName, address, city, state, phone, confidenceThreshold) {
@@ -4074,26 +4144,42 @@ function getApiKey() {
                 return;
             }
             
-            // Optimized CSV format for Bytebot outreach
-            let csv = 'Business Name,Address,City,State,Phone Number,Instagram URL\n';
-            
+            // Get all unique columns from the results (preserving original CSV structure)
+            const allColumns = new Set();
             window.instagramResults.forEach(result => {
-                const fields = [
-                    result.businessName || '',
-                    result.address || '',
-                    result.city || '',
-                    result.state || '',
-                    result.phone || '',
-                    result.instagram || 'No Instagram found'
-                ];
-                
-                // Escape commas and quotes in CSV
-                const escapedFields = fields.map(field => {
-                    const str = String(field).replace(/"/g, '""');
+                Object.keys(result).forEach(key => {
+                    // Skip internal processing fields
+                    if (!key.startsWith('_') && key !== 'instagramHandle' && key !== 'confidenceScore') {
+                        allColumns.add(key);
+                    }
+                });
+            });
+            
+            // Convert to array and ensure Instagram is at the end
+            const columnOrder = Array.from(allColumns).filter(col => col !== 'instagram');
+            columnOrder.push('instagram');
+            
+            console.log('CSV export columns:', columnOrder);
+            
+            // Create header row
+            let csv = columnOrder.map(col => `"${col}"`).join(',') + '\n';
+            
+            // Add data rows
+            window.instagramResults.forEach(result => {
+                const fields = columnOrder.map(column => {
+                    let value = result[column] || '';
+                    
+                    // Clean up the instagram column value
+                    if (column === 'instagram' && !value) {
+                        value = 'No Instagram found';
+                    }
+                    
+                    // Escape commas and quotes in CSV
+                    const str = String(value).replace(/"/g, '""');
                     return `"${str}"`;
                 });
                 
-                csv += escapedFields.join(',') + '\n';
+                csv += fields.join(',') + '\n';
             });
             
             downloadCSV(csv, `instagram_results_${new Date().toISOString().split('T')[0]}.csv`);
