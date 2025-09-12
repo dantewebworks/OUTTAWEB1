@@ -39,11 +39,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          // Optionally update cached shell
-          caches.open(CACHE_NAME).then((cache) => cache.put('/outta_web.html', res.clone()));
+          // Update cached shell for both root and outta_web.html
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/outta_web.html', res.clone());
+            cache.put('/', res.clone());
+          });
           return res;
         })
-        .catch(() => caches.match('/outta_web.html'))
+        .catch(() => caches.match('/outta_web.html') || caches.match('/'))
     );
     return;
   }
