@@ -3727,14 +3727,14 @@ function getApiKey() {
         }
 
         function loadFsqApiKey() {
-            try { fsqApiKey = localStorage.getItem('foursquareApiKey') || ''; } catch {}
+            try { fsqApiKey = localStorage.getItem('fsqApiKey') || ''; } catch {}
             updateApiKeyDisplay();
         }
         function saveFsqApiKey() {
             const input = document.getElementById('fsqApiKey');
             fsqApiKey = input.value.trim();
             if (!fsqApiKey) { showFsqApiStatus('Please enter a valid Foursquare API key.', 'error'); return; }
-            try { localStorage.setItem('foursquareApiKey', fsqApiKey); } catch {}
+            try { localStorage.setItem('fsqApiKey', fsqApiKey); } catch {}
             showFsqApiStatus('Foursquare API key saved successfully!', 'success');
             updateApiKeyDisplay();
         }
@@ -3761,7 +3761,7 @@ function getApiKey() {
         }
         function clearFsqApiKey() {
             fsqApiKey = '';
-            try { localStorage.removeItem('foursquareApiKey'); } catch {}
+            try { localStorage.removeItem('fsqApiKey'); } catch {}
             showFsqApiStatus('Foursquare API key cleared.', 'success');
             updateApiKeyDisplay();
         }
@@ -5884,6 +5884,7 @@ function getApiKey() {
                         }
                         
                         console.log('📥 Importing data from:', importedData.exportDate);
+                        console.log('📥 Import data contents:', importedData);
                         
                         // Import localStorage data
                         let importedCount = 0;
@@ -5892,7 +5893,7 @@ function getApiKey() {
                                 try {
                                     localStorage.setItem(key, value);
                                     importedCount++;
-                                    console.log(`📥 Imported ${key}`);
+                                    console.log(`📥 Imported ${key}: ${value ? (value.length > 50 ? value.substring(0, 50) + '...' : value) : 'null'}`);
                                 } catch (error) {
                                     console.warn(`Failed to import ${key}:`, error);
                                 }
@@ -5908,6 +5909,9 @@ function getApiKey() {
                             window.LOGIN_STATE.currentUser = currentUser;
                             window.LOGIN_STATE.sessionId = sessionId;
                             
+                            // Update user info display
+                            updateUserInfo();
+                            
                             console.log('📥 Imported user:', currentUser.email);
                         }
                         
@@ -5922,19 +5926,76 @@ function getApiKey() {
                             }
                         }
                         
-                        // Reload all data
-                        loadApiKey();
-                        loadFsqApiKey();
-                        loadInstagramApiKeys();
-                        loadSearchHistory();
-                        restoreSavedInstagramResults();
+                        // Force reload all global variables from localStorage
+                        console.log('📥 Reloading all data from localStorage...');
                         
-                        alert(`📥 Data import completed successfully!\n\nImported ${importedCount} settings from ${importedData.exportDate}`);
+                        // Reload API keys into global variables
+                        apiKey = localStorage.getItem('googlePlacesApiKey') || '';
+                        fsqApiKey = localStorage.getItem('fsqApiKey') || '';
+                        googleSearchApiKey = localStorage.getItem('googleSearchApiKey') || '';
+                        searchEngineId = localStorage.getItem('searchEngineId') || '';
                         
-                        // Refresh the page to ensure all data is loaded
-                        if (confirm('Would you like to refresh the page to ensure all imported data is loaded correctly?')) {
-                            window.location.reload();
+                        console.log('📥 Reloaded API keys:', {
+                            google: apiKey ? 'Present (' + apiKey.substring(0, 10) + '...)' : 'Missing',
+                            fsq: fsqApiKey ? 'Present (' + fsqApiKey.substring(0, 10) + '...)' : 'Missing',
+                            googleSearch: googleSearchApiKey ? 'Present' : 'Missing',
+                            searchEngine: searchEngineId ? 'Present' : 'Missing'
+                        });
+                        
+                        // Reload search history
+                        const historyData = localStorage.getItem('businessSearchHistory');
+                        if (historyData) {
+                            try {
+                                searchHistory = JSON.parse(historyData);
+                                console.log('📥 Reloaded search history:', searchHistory.length, 'entries');
+                            } catch (error) {
+                                console.warn('Failed to parse search history:', error);
+                            }
                         }
+                        
+                        // Update all UI displays
+                        console.log('📥 Updating UI displays...');
+                        updateApiKeyDisplay();
+                        updateInstagramApiKeyDisplay();
+                        displaySearchHistory();
+                        loadProviderSelection();
+                        
+                        // Restore Instagram results if any
+                        try {
+                            restoreSavedInstagramResults();
+                        } catch (error) {
+                            console.warn('Failed to restore Instagram results:', error);
+                        }
+                        
+                        // Force refresh the current tab if it's API or History
+                        const activeTab = document.querySelector('.tab-content.active');
+                        if (activeTab) {
+                            if (activeTab.id === 'api-tab') {
+                                console.log('📥 Refreshing API tab display...');
+                                updateApiKeyDisplay();
+                            } else if (activeTab.id === 'history-tab') {
+                                console.log('📥 Refreshing history tab display...');
+                                displaySearchHistory();
+                            } else if (activeTab.id === 'instagram-tab') {
+                                console.log('📥 Refreshing Instagram tab display...');
+                                updateInstagramApiKeyDisplay();
+                            }
+                        }
+                        
+                        console.log('📥 Import process completed!');
+                        
+                        // Show detailed success message
+                        const historyCount = searchHistory ? searchHistory.length : 0;
+                        const instagramData = localStorage.getItem('savedInstagramResults');
+                        const instagramCount = instagramData ? JSON.parse(instagramData).length : 0;
+                        
+                        alert(`📥 Data import completed successfully!\n\n` +
+                              `• Imported ${importedCount} settings from ${importedData.exportDate}\n` +
+                              `• Google API Key: ${apiKey ? '✓ Imported' : '✗ Not found'}\n` +
+                              `• Foursquare API Key: ${fsqApiKey ? '✓ Imported' : '✗ Not found'}\n` +
+                              `• Search History: ${historyCount} entries\n` +
+                              `• Instagram Results: ${instagramCount} saved results\n\n` +
+                              `All data should now be visible in the app!`);
                         
                     } catch (error) {
                         console.error('📥 Import failed:', error);
