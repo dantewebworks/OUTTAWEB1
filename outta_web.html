@@ -1673,11 +1673,11 @@ State abbreviations (CA)"
                 <h4 style="margin: 0 0 10px 0;">📡 API Status</h4>
                 <div id="contactApiStatus" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                     <div class="api-status-item">
-                        <span class="status-label">Google Places:</span>
+                        <span class="status-label">API Method:</span>
                         <span id="placesApiStatus" class="status-indicator">❓ Not checked</span>
                     </div>
                     <div class="api-status-item">
-                        <span class="status-label">Google Search:</span>
+                        <span class="status-label">Google Custom Search:</span>
                         <span id="searchApiStatus" class="status-indicator">❓ Not checked</span>
                     </div>
                 </div>
@@ -1689,47 +1689,7 @@ State abbreviations (CA)"
                     <div class="form-group">
                         <label for="contactNiche">Select Business Niche</label>
                         <select id="contactNiche" class="form-control" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;">
-                            <option value="">Choose a niche...</option>
-                            <option value="barber shops">Barber Shops</option>
-                            <option value="hair salons">Hair Salons</option>
-                            <option value="nail salons">Nail Salons</option>
-                            <option value="spas">Spas</option>
-                            <option value="massage therapy">Massage Therapy</option>
-                            <option value="tattoo shops">Tattoo Shops</option>
-                            <option value="restaurants">Restaurants</option>
-                            <option value="pizza places">Pizza Places</option>
-                            <option value="coffee shops">Coffee Shops</option>
-                            <option value="bakeries">Bakeries</option>
-                            <option value="gyms">Gyms & Fitness</option>
-                            <option value="yoga studios">Yoga Studios</option>
-                            <option value="personal trainers">Personal Trainers</option>
-                            <option value="plumbers">Plumbers</option>
-                            <option value="electricians">Electricians</option>
-                            <option value="HVAC contractors">HVAC Contractors</option>
-                            <option value="landscapers">Landscapers</option>
-                            <option value="painters">Painters</option>
-                            <option value="roofers">Roofers</option>
-                            <option value="auto repair">Auto Repair</option>
-                            <option value="car wash">Car Wash</option>
-                            <option value="tire shops">Tire Shops</option>
-                            <option value="dentists">Dentists</option>
-                            <option value="chiropractors">Chiropractors</option>
-                            <option value="physical therapy">Physical Therapy</option>
-                            <option value="veterinarians">Veterinarians</option>
-                            <option value="pet groomers">Pet Groomers</option>
-                            <option value="photographers">Photographers</option>
-                            <option value="wedding planners">Wedding Planners</option>
-                            <option value="interior designers">Interior Designer</option>
-                            <option value="real estate agents">Real Estate Agents</option>
-                            <option value="lawyers">Lawyers</option>
-                            <option value="accountants">Accountants</option>
-                            <option value="insurance agents">Insurance Agents</option>
-                            <option value="cleaning services">Cleaning Services</option>
-                            <option value="daycare centers">Daycare Centers</option>
-                            <option value="tutoring services">Tutoring Services</option>
-                            <option value="music lessons">Music Lessons</option>
-                            <option value="dance studios">Dance Studios</option>
-                            <option value="martial arts">Martial Arts</option>
+                            <!-- Niches will be populated by JavaScript -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -5899,21 +5859,10 @@ function getApiKey() {
         async function checkContactApiStatus() {
             console.log('🔍 Checking API status for contact search...');
             
-            const placesKey = apiKey || localStorage.getItem('googlePlacesApiKey');
             const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
             const engineId = searchEngineId || localStorage.getItem('searchEngineId');
             
-            // Update Places API status
-            const placesStatus = document.getElementById('placesApiStatus');
-            if (placesKey) {
-                placesStatus.innerHTML = '✅ Configured';
-                placesStatus.className = 'status-indicator status-success';
-            } else {
-                placesStatus.innerHTML = '❌ Missing';
-                placesStatus.className = 'status-indicator status-error';
-            }
-            
-            // Update Search API status
+            // Update Google Custom Search API status
             const searchStatus = document.getElementById('searchApiStatus');
             if (searchKey && engineId) {
                 searchStatus.innerHTML = '✅ Configured';
@@ -5922,6 +5871,11 @@ function getApiKey() {
                 searchStatus.innerHTML = '❌ Missing';
                 searchStatus.className = 'status-indicator status-error';
             }
+            
+            // Update Places API status (just show what we're using)
+            const placesStatus = document.getElementById('placesApiStatus');
+            placesStatus.innerHTML = '🔍 Using Custom Search';
+            placesStatus.className = 'status-indicator status-info';
         }
         
         // Start contact search process
@@ -5946,9 +5900,10 @@ function getApiKey() {
                 return;
             }
             
-            const placesKey = apiKey || localStorage.getItem('googlePlacesApiKey');
-            if (!placesKey) {
-                alert('Google Places API key is required. Please configure it in the API Key tab.');
+            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            if (!searchKey || !engineId) {
+                alert('Google Custom Search API key and Search Engine ID are required. Please configure them in the Instagram tab first.');
                 return;
             }
             
@@ -5966,9 +5921,8 @@ function getApiKey() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-google-places-key': placesKey,
-                        'x-google-search-key': googleSearchApiKey || localStorage.getItem('googleSearchApiKey'),
-                        'x-search-engine-id': searchEngineId || localStorage.getItem('searchEngineId')
+                        'x-google-search-key': searchKey,
+                        'x-search-engine-id': engineId
                     },
                     body: JSON.stringify({
                         niche: niche,
@@ -6190,6 +6144,53 @@ function getApiKey() {
         // Initialize contact search when tab is switched
         function initializeContactSearch() {
             checkContactApiStatus();
+            populateContactNiches();
+        }
+        
+        // Populate Contact Finder niche dropdown with all available niches
+        function populateContactNiches() {
+            const selectElement = document.getElementById('contactNiche');
+            if (!selectElement) return;
+            
+            // Clear existing options
+            selectElement.innerHTML = '<option value="">Choose a niche...</option>';
+            
+            // Get all niches from the Search tab
+            const allNiches = [
+                // Personal Services
+                'barber shops', 'hair salons', 'nail salons', 'spas', 'massage therapy', 'tattoo shops', 'piercing studios', 'tanning salons',
+                // Home Services  
+                'plumbers', 'electricians', 'HVAC contractors', 'roofers', 'painters', 'landscapers', 'cleaning services', 'handyman services',
+                // Automotive
+                'auto repair', 'car wash', 'tire shops', 'auto detailing', 'oil change', 'brake repair', 'transmission repair', 'auto body shops',
+                // Professional Services
+                'interior designers', 'photographers', 'personal trainers', 'tutors', 'accountants', 'lawyers', 'real estate agents', 'consultants',
+                // Food & Beverage
+                'restaurants', 'food trucks', 'catering', 'bakeries', 'coffee shops', 'pizza places', 'food delivery', 'meal prep',
+                // Health & Wellness
+                'chiropractors', 'dentists', 'physical therapy', 'yoga studios', 'gyms', 'nutritionists', 'acupuncture', 'mental health',
+                // Additional Services
+                'pet groomers', 'veterinarians', 'daycare centers', 'tutoring centers', 'music lessons', 'dance studios', 'martial arts', 'swimming lessons',
+                // Service Businesses
+                'dry cleaners', 'laundromats', 'tailors', 'shoe repair', 'jewelry repair', 'watch repair', 'key makers', 'locksmiths',
+                // Retail & Specialty
+                'florists', 'gift shops', 'antique stores', 'thrift stores', 'pawn shops', 'bookstores', 'libraries', 'art galleries',
+                // Construction & Professional
+                'construction companies', 'contractors', 'architects', 'engineers', 'surveyors', 'inspectors', 'appraisers', 'notaries'
+            ];
+            
+            // Sort niches alphabetically
+            allNiches.sort();
+            
+            // Add each niche as an option
+            allNiches.forEach(niche => {
+                const option = document.createElement('option');
+                option.value = niche;
+                option.textContent = niche.charAt(0).toUpperCase() + niche.slice(1); // Capitalize first letter
+                selectElement.appendChild(option);
+            });
+            
+            console.log(`✅ Populated Contact Finder with ${allNiches.length} niches`);
         }
         
         // ======= END BUSINESS CONTACT FINDER FUNCTIONALITY =======
