@@ -1670,7 +1670,26 @@ State abbreviations (CA)"
             <p style="color: #666; margin-bottom: 20px;">Find Instagram accounts, emails, and phone numbers for businesses in specific niches and locations using your existing Google APIs.</p>
 
             <div class="api-status-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                <h4 style="margin: 0 0 10px 0;">📡 API Status</h4>
+                <h4 style="margin: 0 0 15px 0;">🔑 Google Custom Search API Configuration</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label for="contactGoogleSearchKey">Google Custom Search API Key</label>
+                        <input type="password" id="contactGoogleSearchKey" class="form-control" placeholder="Enter your Google Custom Search API key" style="padding: 10px; border: 2px solid #e9ecef; border-radius: 6px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSearchEngineId">Search Engine ID</label>
+                        <input type="password" id="contactSearchEngineId" class="form-control" placeholder="Enter your Search Engine ID" style="padding: 10px; border: 2px solid #e9ecef; border-radius: 6px;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="saveContactApiKeys()" style="padding: 8px 16px;">💾 Save Keys</button>
+                    <button class="btn btn-success" onclick="testContactApiKeys()" style="padding: 8px 16px;">🧪 Test Keys</button>
+                    <button class="btn btn-secondary" onclick="loadKeysFromInstagram()" style="padding: 8px 16px;">📋 Copy from Instagram Tab</button>
+                </div>
+                
+                <h4 style="margin: 10px 0 10px 0;">📡 API Status</h4>
                 <div id="contactApiStatus" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                     <div class="api-status-item">
                         <span class="status-label">API Method:</span>
@@ -1694,7 +1713,8 @@ State abbreviations (CA)"
                     </div>
                     <div class="form-group">
                         <label for="contactLocation">Location</label>
-                        <input type="text" id="contactLocation" class="form-control" placeholder="Enter city, state (e.g., Los Angeles, CA)" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;">
+                        <input type="text" id="contactLocation" class="form-control" placeholder="Enter city, state (e.g., Los Angeles, CA)" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;" oninput="handleContactLocationInput(this.value)">
+                        <div class="location-recommendations" id="contactLocationRecommendations" style="display: none;"></div>
                     </div>
                 </div>
 
@@ -5859,8 +5879,9 @@ function getApiKey() {
         async function checkContactApiStatus() {
             console.log('🔍 Checking API status for contact search...');
             
-            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
-            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            // Get keys from Contact Finder form or global variables
+            const searchKey = document.getElementById('contactGoogleSearchKey')?.value || googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = document.getElementById('contactSearchEngineId')?.value || searchEngineId || localStorage.getItem('searchEngineId');
             
             // Update Google Custom Search API status
             const searchStatus = document.getElementById('searchApiStatus');
@@ -5874,7 +5895,7 @@ function getApiKey() {
             
             // Update Places API status (just show what we're using)
             const placesStatus = document.getElementById('placesApiStatus');
-            placesStatus.innerHTML = '🔍 Using Custom Search';
+            placesStatus.innerHTML = '🔍 Using Custom Search Only';
             placesStatus.className = 'status-indicator status-info';
         }
         
@@ -5900,10 +5921,10 @@ function getApiKey() {
                 return;
             }
             
-            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
-            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            const searchKey = document.getElementById('contactGoogleSearchKey')?.value || googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = document.getElementById('contactSearchEngineId')?.value || searchEngineId || localStorage.getItem('searchEngineId');
             if (!searchKey || !engineId) {
-                alert('Google Custom Search API key and Search Engine ID are required. Please configure them in the Instagram tab first.');
+                alert('Google Custom Search API key and Search Engine ID are required. Please configure them above.');
                 return;
             }
             
@@ -6145,6 +6166,165 @@ function getApiKey() {
         function initializeContactSearch() {
             checkContactApiStatus();
             populateContactNiches();
+            loadContactApiKeys();
+            updateContactLocationRecommendations();
+        }
+        
+        // Load API keys into Contact Finder form
+        function loadContactApiKeys() {
+            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            
+            if (searchKey) {
+                document.getElementById('contactGoogleSearchKey').value = searchKey;
+            }
+            if (engineId) {
+                document.getElementById('contactSearchEngineId').value = engineId;
+            }
+        }
+        
+        // Save API keys from Contact Finder form
+        function saveContactApiKeys() {
+            const searchKey = document.getElementById('contactGoogleSearchKey').value.trim();
+            const engineId = document.getElementById('contactSearchEngineId').value.trim();
+            
+            if (!searchKey || !engineId) {
+                alert('Please enter both API key and Search Engine ID.');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('googleSearchApiKey', searchKey);
+            localStorage.setItem('searchEngineId', engineId);
+            
+            // Update global variables
+            googleSearchApiKey = searchKey;
+            searchEngineId = engineId;
+            
+            alert('✅ API keys saved successfully!');
+            checkContactApiStatus();
+        }
+        
+        // Test API keys from Contact Finder
+        async function testContactApiKeys() {
+            const searchKey = document.getElementById('contactGoogleSearchKey').value.trim();
+            const engineId = document.getElementById('contactSearchEngineId').value.trim();
+            
+            if (!searchKey || !engineId) {
+                alert('Please enter both API key and Search Engine ID first.');
+                return;
+            }
+            
+            try {
+                const testUrl = `https://www.googleapis.com/customsearch/v1?key=${searchKey}&cx=${engineId}&q=test&num=1`;
+                const response = await fetch(testUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.items) {
+                        alert('✅ API keys are working correctly!');
+                    } else {
+                        alert('⚠️ API keys work but no search results. This might be normal.');
+                    }
+                } else {
+                    const errorData = await response.json();
+                    alert(`❌ API test failed: ${errorData.error?.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert(`❌ API test failed: ${error.message}`);
+            }
+        }
+        
+        // Copy API keys from Instagram tab
+        function loadKeysFromInstagram() {
+            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            
+            if (searchKey && engineId) {
+                document.getElementById('contactGoogleSearchKey').value = searchKey;
+                document.getElementById('contactSearchEngineId').value = engineId;
+                alert('✅ API keys copied from Instagram tab!');
+            } else {
+                alert('⚠️ No API keys found in Instagram tab. Please configure them there first.');
+            }
+        }
+        
+        // Handle location input with autocomplete
+        function handleContactLocationInput(value) {
+            const container = document.getElementById('contactLocationRecommendations');
+            
+            if (!value || value.length < 2) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            // Get location recommendations
+            const recommendations = getLocationRecommendations(value);
+            
+            if (recommendations.length > 0) {
+                let html = '<div style="background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; position: absolute; width: 100%; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+                
+                recommendations.forEach(location => {
+                    html += `<div onclick="selectContactLocation('${location}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; hover:background-color: #f5f5f5;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='white'">${location}</div>`;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Select location from autocomplete
+        function selectContactLocation(location) {
+            document.getElementById('contactLocation').value = location;
+            document.getElementById('contactLocationRecommendations').style.display = 'none';
+        }
+        
+        // Get location recommendations (reuse from search tab)
+        function getLocationRecommendations(query) {
+            const allLocations = [
+                // Popular Cities
+                'Los Angeles, CA', 'New York, NY', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
+                'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
+                'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
+                'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
+                'Boston, MA', 'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Oklahoma City, OK',
+                'Portland, OR', 'Las Vegas, NV', 'Memphis, TN', 'Louisville, KY', 'Baltimore, MD',
+                'Milwaukee, WI', 'Albuquerque, NM', 'Tucson, AZ', 'Fresno, CA', 'Sacramento, CA',
+                'Mesa, AZ', 'Kansas City, MO', 'Atlanta, GA', 'Long Beach, CA', 'Colorado Springs, CO',
+                'Raleigh, NC', 'Miami, FL', 'Virginia Beach, VA', 'Omaha, NE', 'Oakland, CA',
+                'Minneapolis, MN', 'Tulsa, OK', 'Arlington, TX', 'Tampa, FL', 'New Orleans, LA',
+                
+                // California Cities
+                'Anaheim, CA', 'Santa Ana, CA', 'Riverside, CA', 'Stockton, CA', 'Irvine, CA',
+                'Chula Vista, CA', 'Fremont, CA', 'San Bernardino, CA', 'Modesto, CA', 'Fontana, CA',
+                'Oxnard, CA', 'Moreno Valley, CA', 'Huntington Beach, CA', 'Glendale, CA', 'Santa Clarita, CA',
+                
+                // Texas Cities
+                'Plano, TX', 'Laredo, TX', 'Lubbock, TX', 'Garland, TX', 'Irving, TX',
+                'Amarillo, TX', 'Grand Prairie, TX', 'Brownsville, TX', 'McKinney, TX', 'Frisco, TX',
+                
+                // Florida Cities
+                'Orlando, FL', 'St. Petersburg, FL', 'Hialeah, FL', 'Tallahassee, FL', 'Cape Coral, FL',
+                'Fort Lauderdale, FL', 'Port St. Lucie, FL', 'Pembroke Pines, FL', 'Hollywood, FL', 'Miramar, FL',
+                
+                // Other Major Cities
+                'Cleveland, OH', 'Cincinnati, OH', 'Toledo, OH', 'Akron, OH', 'Dayton, OH',
+                'Pittsburgh, PA', 'Allentown, PA', 'Erie, PA', 'Reading, PA', 'Scranton, PA',
+                'Albany, NY', 'Buffalo, NY', 'Rochester, NY', 'Syracuse, NY', 'Yonkers, NY'
+            ];
+            
+            return allLocations.filter(location => 
+                location.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 8);
+        }
+        
+        // Update contact location recommendations
+        function updateContactLocationRecommendations() {
+            // This function can be called to refresh recommendations if needed
+            console.log('Contact location recommendations ready');
         }
         
         // Populate Contact Finder niche dropdown with all available niches
