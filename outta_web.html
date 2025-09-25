@@ -5929,6 +5929,8 @@ function getApiKey() {
             }
             
             console.log(`🚀 Starting contact search for ${niche} in ${location}`);
+            console.log(`🔑 Using API Key: ${searchKey ? 'Present' : 'Missing'}`);
+            console.log(`🆔 Using Engine ID: ${engineId ? 'Present' : 'Missing'}`);
             
             // Show progress and disable button
             isContactSearchActive = true;
@@ -5937,6 +5939,23 @@ function getApiKey() {
             document.getElementById('contactSearchBtn').innerHTML = '🔄 Searching...';
             
             try {
+                console.log('📡 Making POST request to /api/business/test (for debugging)');
+                
+                // Test endpoint first
+                const testResponse = await fetch('/api/business/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ test: 'test' })
+                });
+                
+                if (!testResponse.ok) {
+                    throw new Error(`Test endpoint failed: HTTP ${testResponse.status}`);
+                }
+                
+                console.log('✅ Test endpoint working, now trying actual endpoint');
+                
                 // Make API call to our new endpoint
                 const response = await fetch('/api/business/contact-search', {
                     method: 'POST',

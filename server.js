@@ -733,17 +733,30 @@ app.all('/api/instagram/search', async (req, res) => {
     }
 });
 
+// Test endpoint for debugging 405 issues
+app.all('/api/business/test', (req, res) => {
+    console.log(`✅ Test endpoint reached with method: ${req.method}`);
+    res.json({ 
+        success: true, 
+        method: req.method,
+        message: 'Test endpoint working'
+    });
+});
+
 // Business Contact Search API endpoint
 app.all('/api/business/contact-search', async (req, res) => {
     try {
         // Enable CORS for all origins
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-google-places-key, x-google-search-key, x-search-engine-id');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-google-search-key, x-search-engine-id');
 
         if (req.method === 'OPTIONS') {
             return res.status(200).end();
         }
+        
+        console.log(`📥 Received ${req.method} request to /api/business/contact-search`);
+        console.log(`📋 Headers:`, req.headers['x-google-search-key'] ? 'API keys present' : 'No API keys in headers');
 
         const { 
             niche,
