@@ -1142,6 +1142,7 @@ State abbreviations (CA)"
         <div class="tabs">
             <div class="tab active" onclick="switchTab('search')">Search</div>
             <div class="tab" onclick="switchTab('history')">History</div>
+            <div class="tab" onclick="switchTab('contacts')">Contact Finder</div>
             <div class="tab" onclick="switchTab('instagram')">Instagram</div>
             <div class="tab" onclick="switchTab('api')">API Key</div>
         </div>
@@ -1643,6 +1644,127 @@ State abbreviations (CA)"
 
                 <div id="instagramResults" style="margin-top: 20px;"></div>
             </div>
+        </div>
+
+        <div id="contacts-tab" class="tab-content">
+            <h2>🔍 Business Contact Finder</h2>
+            <p style="color: #666; margin-bottom: 20px;">Find Instagram accounts, emails, and phone numbers for businesses in specific niches and locations using your existing Google APIs.</p>
+
+            <div class="api-status-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0;">📡 API Status</h4>
+                <div id="contactApiStatus" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div class="api-status-item">
+                        <span class="status-label">Google Places:</span>
+                        <span id="placesApiStatus" class="status-indicator">❓ Not checked</span>
+                    </div>
+                    <div class="api-status-item">
+                        <span class="status-label">Google Search:</span>
+                        <span id="searchApiStatus" class="status-indicator">❓ Not checked</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="checkContactApiStatus()" style="margin-top: 10px;">🔄 Check API Status</button>
+            </div>
+
+            <div class="contact-search-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="contactNiche">Select Business Niche</label>
+                        <select id="contactNiche" class="form-control" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;">
+                            <option value="">Choose a niche...</option>
+                            <option value="barber shops">Barber Shops</option>
+                            <option value="hair salons">Hair Salons</option>
+                            <option value="nail salons">Nail Salons</option>
+                            <option value="spas">Spas</option>
+                            <option value="massage therapy">Massage Therapy</option>
+                            <option value="tattoo shops">Tattoo Shops</option>
+                            <option value="restaurants">Restaurants</option>
+                            <option value="pizza places">Pizza Places</option>
+                            <option value="coffee shops">Coffee Shops</option>
+                            <option value="bakeries">Bakeries</option>
+                            <option value="gyms">Gyms & Fitness</option>
+                            <option value="yoga studios">Yoga Studios</option>
+                            <option value="personal trainers">Personal Trainers</option>
+                            <option value="plumbers">Plumbers</option>
+                            <option value="electricians">Electricians</option>
+                            <option value="HVAC contractors">HVAC Contractors</option>
+                            <option value="landscapers">Landscapers</option>
+                            <option value="painters">Painters</option>
+                            <option value="roofers">Roofers</option>
+                            <option value="auto repair">Auto Repair</option>
+                            <option value="car wash">Car Wash</option>
+                            <option value="tire shops">Tire Shops</option>
+                            <option value="dentists">Dentists</option>
+                            <option value="chiropractors">Chiropractors</option>
+                            <option value="physical therapy">Physical Therapy</option>
+                            <option value="veterinarians">Veterinarians</option>
+                            <option value="pet groomers">Pet Groomers</option>
+                            <option value="photographers">Photographers</option>
+                            <option value="wedding planners">Wedding Planners</option>
+                            <option value="interior designers">Interior Designer</option>
+                            <option value="real estate agents">Real Estate Agents</option>
+                            <option value="lawyers">Lawyers</option>
+                            <option value="accountants">Accountants</option>
+                            <option value="insurance agents">Insurance Agents</option>
+                            <option value="cleaning services">Cleaning Services</option>
+                            <option value="daycare centers">Daycare Centers</option>
+                            <option value="tutoring services">Tutoring Services</option>
+                            <option value="music lessons">Music Lessons</option>
+                            <option value="dance studios">Dance Studios</option>
+                            <option value="martial arts">Martial Arts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactLocation">Location</label>
+                        <input type="text" id="contactLocation" class="form-control" placeholder="Enter city, state (e.g., Los Angeles, CA)" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="maxContactResults">Maximum Results</label>
+                        <input type="number" id="maxContactResults" class="form-control" value="50" min="1" max="100" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 6px;">
+                        <small style="color: #6c757d;">Limit: 1-100 businesses</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Search Options</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                                <input type="checkbox" id="includeInstagram" checked>
+                                <span>🔍 Find Instagram accounts</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                                <input type="checkbox" id="includeEmail" checked>
+                                <span>📧 Find email addresses</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                                <input type="checkbox" id="includePhone" checked>
+                                <span>📞 Get phone numbers</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg" onclick="startContactSearch()" id="contactSearchBtn" style="width: 100%; padding: 15px; font-size: 16px; font-weight: bold;">
+                    🚀 Find Business Contacts
+                </button>
+            </div>
+
+            <div id="contactProgress" class="progress-container" style="display: none; margin: 20px 0;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0; color: #007bff;">🔍 Searching for Business Contacts...</h4>
+                    <p style="margin: 5px 0; color: #6c757d;">This may take a few minutes depending on the number of businesses found.</p>
+                </div>
+                <div class="progress-bar-container" style="background: #f0f0f0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
+                    <div id="contactProgressBar" class="progress-bar" style="height: 100%; background: linear-gradient(90deg, #007bff, #0056b3); width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="text-align: center;">
+                    <span style="font-weight: bold;">Progress: <span id="contactCurrentProgress">0</span> / <span id="contactTotalProgress">0</span></span>
+                    <span style="margin-left: 20px; color: #6c757d;">Status: <span id="contactProgressStatus">Starting...</span></span>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="contactResults" style="margin-top: 30px;"></div>
         </div>
 
 <div id="api-tab" class="tab-content">
@@ -2324,6 +2446,11 @@ loadApiKey();
             
             // Add active class to clicked tab
             event.target.classList.add('active');
+            
+            // Initialize specific tab functionality
+            if (tabName === 'contacts') {
+                initializeContactSearch();
+            }
         }
 
         function loadApiKey() {
@@ -5736,6 +5863,311 @@ function getApiKey() {
             console.log('🚀 Ultra simple login completed');
             alert('🚀 Ultra simple login successful! Welcome ' + user.name + '!\n\nThis bypassed all storage mechanisms.');
         }
+
+        // ======= BUSINESS CONTACT FINDER FUNCTIONALITY =======
+        
+        // Global variables for contact search
+        let contactSearchResults = [];
+        let isContactSearchActive = false;
+        
+        // Check API status for contact search
+        async function checkContactApiStatus() {
+            console.log('🔍 Checking API status for contact search...');
+            
+            const placesKey = apiKey || localStorage.getItem('googlePlacesApiKey');
+            const searchKey = googleSearchApiKey || localStorage.getItem('googleSearchApiKey');
+            const engineId = searchEngineId || localStorage.getItem('searchEngineId');
+            
+            // Update Places API status
+            const placesStatus = document.getElementById('placesApiStatus');
+            if (placesKey) {
+                placesStatus.innerHTML = '✅ Configured';
+                placesStatus.className = 'status-indicator status-success';
+            } else {
+                placesStatus.innerHTML = '❌ Missing';
+                placesStatus.className = 'status-indicator status-error';
+            }
+            
+            // Update Search API status
+            const searchStatus = document.getElementById('searchApiStatus');
+            if (searchKey && engineId) {
+                searchStatus.innerHTML = '✅ Configured';
+                searchStatus.className = 'status-indicator status-success';
+            } else {
+                searchStatus.innerHTML = '❌ Missing';
+                searchStatus.className = 'status-indicator status-error';
+            }
+        }
+        
+        // Start contact search process
+        async function startContactSearch() {
+            if (isContactSearchActive) {
+                console.log('⚠️ Contact search already in progress');
+                return;
+            }
+            
+            const niche = document.getElementById('contactNiche').value;
+            const location = document.getElementById('contactLocation').value.trim();
+            const maxResults = parseInt(document.getElementById('maxContactResults').value) || 50;
+            
+            // Validation
+            if (!niche) {
+                alert('Please select a business niche.');
+                return;
+            }
+            
+            if (!location) {
+                alert('Please enter a location.');
+                return;
+            }
+            
+            const placesKey = apiKey || localStorage.getItem('googlePlacesApiKey');
+            if (!placesKey) {
+                alert('Google Places API key is required. Please configure it in the API Key tab.');
+                return;
+            }
+            
+            console.log(`🚀 Starting contact search for ${niche} in ${location}`);
+            
+            // Show progress and disable button
+            isContactSearchActive = true;
+            showContactProgress();
+            document.getElementById('contactSearchBtn').disabled = true;
+            document.getElementById('contactSearchBtn').innerHTML = '🔄 Searching...';
+            
+            try {
+                // Make API call to our new endpoint
+                const response = await fetch('/api/business/contact-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-google-places-key': placesKey,
+                        'x-google-search-key': googleSearchApiKey || localStorage.getItem('googleSearchApiKey'),
+                        'x-search-engine-id': searchEngineId || localStorage.getItem('searchEngineId')
+                    },
+                    body: JSON.stringify({
+                        niche: niche,
+                        location: location,
+                        maxResults: maxResults
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Contact search completed:', data);
+                
+                contactSearchResults = data.results || [];
+                displayContactResults(contactSearchResults, data.message);
+                
+            } catch (error) {
+                console.error('❌ Contact search failed:', error);
+                alert(`Contact search failed: ${error.message}`);
+                document.getElementById('contactResults').innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                        <h4>❌ Search Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                // Hide progress and re-enable button
+                hideContactProgress();
+                isContactSearchActive = false;
+                document.getElementById('contactSearchBtn').disabled = false;
+                document.getElementById('contactSearchBtn').innerHTML = '🚀 Find Business Contacts';
+            }
+        }
+        
+        // Show contact search progress
+        function showContactProgress() {
+            const progressDiv = document.getElementById('contactProgress');
+            progressDiv.style.display = 'block';
+            
+            // Update progress status
+            document.getElementById('contactProgressStatus').textContent = 'Initializing search...';
+            document.getElementById('contactCurrentProgress').textContent = '0';
+            document.getElementById('contactTotalProgress').textContent = '?';
+            document.getElementById('contactProgressBar').style.width = '0%';
+        }
+        
+        // Hide contact search progress
+        function hideContactProgress() {
+            const progressDiv = document.getElementById('contactProgress');
+            progressDiv.style.display = 'none';
+        }
+        
+        // Display contact search results
+        function displayContactResults(results, message) {
+            const resultsDiv = document.getElementById('contactResults');
+            
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div style="background: #fff3cd; color: #856404; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                        <h4>📭 No Results Found</h4>
+                        <p>${message || 'No businesses found for the specified criteria.'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div style="background: #d4edda; color: #155724; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                    <h4>✅ Contact Search Complete</h4>
+                    <p>${message || `Found ${results.length} businesses with contact information.`}</p>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+                    <h3>📊 Contact Results (${results.length})</h3>
+                    <div>
+                        <button class="btn btn-success" onclick="exportContactResults('csv')" style="margin-right: 10px;">
+                            📊 Export CSV
+                        </button>
+                        <button class="btn btn-primary" onclick="exportContactResults('json')">
+                            📋 Export JSON
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="results-table" style="width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Business Name</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Phone</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Email</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Instagram</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Address</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e1e5e9;">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            results.forEach((business, index) => {
+                const phoneDisplay = business.phone && business.phone !== 'Not found' ? business.phone : '❌ Not found';
+                const emailDisplay = business.email && business.email !== 'Not found' ? business.email : '❌ Not found';
+                const instagramDisplay = business.instagram && business.instagram !== 'Not found' 
+                    ? `<a href="${business.instagramUrl || '#'}" target="_blank" style="color: #007bff; text-decoration: none;">${business.instagram}</a>` 
+                    : '❌ Not found';
+                const ratingDisplay = business.rating ? `⭐ ${business.rating}` : 'No rating';
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #e1e5e9;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'">
+                        <td style="padding: 12px; font-weight: 600;">${business.businessName || 'N/A'}</td>
+                        <td style="padding: 12px;">${phoneDisplay}</td>
+                        <td style="padding: 12px;">${emailDisplay}</td>
+                        <td style="padding: 12px;">${instagramDisplay}</td>
+                        <td style="padding: 12px; font-size: 12px; color: #6c757d;">${business.address || 'N/A'}</td>
+                        <td style="padding: 12px;">${ratingDisplay}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px; color: #6c757d;">
+                    <h5 style="margin: 0 0 10px 0;">📈 Search Summary:</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <div><strong>Total Found:</strong> ${results.length}</div>
+                        <div><strong>With Phone:</strong> ${results.filter(b => b.phone && b.phone !== 'Not found').length}</div>
+                        <div><strong>With Email:</strong> ${results.filter(b => b.email && b.email !== 'Not found').length}</div>
+                        <div><strong>With Instagram:</strong> ${results.filter(b => b.instagram && b.instagram !== 'Not found').length}</div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Export contact results
+        function exportContactResults(format) {
+            if (!contactSearchResults || contactSearchResults.length === 0) {
+                alert('No results to export.');
+                return;
+            }
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `business-contacts-${timestamp}`;
+            
+            if (format === 'csv') {
+                exportContactResultsCSV(filename);
+            } else if (format === 'json') {
+                exportContactResultsJSON(filename);
+            }
+        }
+        
+        // Export to CSV
+        function exportContactResultsCSV(filename) {
+            const headers = ['Business Name', 'Phone', 'Email', 'Instagram Handle', 'Instagram URL', 'Address', 'City', 'State', 'Rating', 'Review Count', 'Niche', 'Search Location'];
+            const csvContent = [headers.join(',')];
+            
+            contactSearchResults.forEach(business => {
+                const row = [
+                    `"${(business.businessName || '').replace(/"/g, '""')}"`,
+                    `"${(business.phone || '').replace(/"/g, '""')}"`,
+                    `"${(business.email || '').replace(/"/g, '""')}"`,
+                    `"${(business.instagram || '').replace(/"/g, '""')}"`,
+                    `"${(business.instagramUrl || '').replace(/"/g, '""')}"`,
+                    `"${(business.address || '').replace(/"/g, '""')}"`,
+                    `"${(business.city || '').replace(/"/g, '""')}"`,
+                    `"${(business.state || '').replace(/"/g, '""')}"`,
+                    business.rating || '',
+                    business.reviewCount || '',
+                    `"${(business.niche || '').replace(/"/g, '""')}"`,
+                    `"${(business.searchLocation || '').replace(/"/g, '""')}"`
+                ];
+                csvContent.push(row.join(','));
+            });
+            
+            const csvString = csvContent.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename + '.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // Export to JSON
+        function exportContactResultsJSON(filename) {
+            const jsonString = JSON.stringify({
+                exportDate: new Date().toISOString(),
+                totalResults: contactSearchResults.length,
+                results: contactSearchResults
+            }, null, 2);
+            
+            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename + '.json');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // Initialize contact search when tab is switched
+        function initializeContactSearch() {
+            checkContactApiStatus();
+        }
+        
+        // ======= END BUSINESS CONTACT FINDER FUNCTIONALITY =======
 
         function autoLoginForHeroku() {
             console.log('🌐 Auto-login for Heroku triggered...');

@@ -733,6 +733,281 @@ app.all('/api/instagram/search', async (req, res) => {
     }
 });
 
+// Business Contact Search API endpoint
+app.all('/api/business/contact-search', async (req, res) => {
+    try {
+        // Enable CORS for all origins
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-google-places-key, x-google-search-key, x-search-engine-id');
+
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
+
+        const { 
+            niche,
+            location,
+            maxResults = 50
+        } = req.method === 'GET' ? req.query : req.body;
+
+        const googlePlacesKey = process.env.GOOGLE_PLACES_API_KEY || req.headers['x-google-places-key'];
+        const googleSearchKey = process.env.GOOGLE_SEARCH_API_KEY || req.headers['x-google-search-key'];
+        const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || req.headers['x-search-engine-id'];
+
+        if (!googlePlacesKey) {
+            return res.status(400).json({ 
+                error: 'missing_places_key', 
+                message: 'Google Places API key is required' 
+            });
+        }
+
+        if (!niche || !location) {
+            return res.status(400).json({ 
+                error: 'missing_params', 
+                message: 'niche and location are required' 
+            });
+        }
+
+        console.log(`🔍 Starting business contact search for ${niche} in ${location}`);
+
+        // Step 1: Search for businesses using Google Places API
+        const businessQuery = `${niche} in ${location}`;
+        const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(businessQuery)}&key=${googlePlacesKey}&type=establishment`;
+        
+        const placesResponse = await fetch(placesUrl);
+        
+        if (!placesResponse.ok) {
+            const errorText = await placesResponse.text();
+            console.error('Google Places API error:', errorText);
+            return res.status(placesResponse.status).json({ 
+                error: 'places_api_error', 
+                message: 'Google Places API request failed',
+                details: errorText
+            });
+        }
+
+        const placesData = await placesResponse.json();
+
+        if (!placesData.results || placesData.results.length === 0) {
+            return res.json({
+                results: [],
+                message: `No businesses found for ${niche} in ${location}`,
+                total: 0
+            });
+        }
+
+        console.log(`📍 Found ${placesData.results.length} businesses from Google Places`);
+
+        // Limit results to maxResults
+        const businesses = placesData.results.slice(0, maxResults);
+        const contactResults = [];
+
+        // Step 2: For each business, get detailed info and search for contacts
+        for (let i = 0; i < businesses.length; i++) {
+            const business = businesses[i];
+            console.log(`\n[${i+1}/${businesses.length}] Processing: ${business.name}`);
+
+            try {
+                // Get detailed business information
+                const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${business.place_id}&fields=name,formatted_address,formatted_phone_number,international_phone_number,website,rating,user_ratings_total,business_status,address_components&key=${googlePlacesKey}`;
+                
+                const detailsResponse = await fetch(detailsUrl);
+                const detailsData = await detailsResponse.json();
+                
+                if (detailsData.result) {
+                    const businessDetails = detailsData.result;
+                    
+                    // Extract city and state from address components
+                    let city = '';
+                    let state = '';
+                    if (businessDetails.address_components) {
+                        for (const component of businessDetails.address_components) {
+                            if (component.types.includes('locality')) {
+                                city = component.long_name;
+                            }
+                            if (component.types.includes('administrative_area_level_1')) {
+                                state = component.short_name;
+                            }
+                        }
+                    }
+
+                    // Initialize contact info
+                    let contactInfo = {
+                        businessName: businessDetails.name,
+                        address: businessDetails.formatted_address,
+                        city: city,
+                        state: state,
+                        phone: businessDetails.formatted_phone_number || businessDetails.international_phone_number || 'Not found',
+                        website: businessDetails.website || 'Not found',
+                        email: 'Searching...',
+                        instagram: 'Searching...',
+                        rating: businessDetails.rating,
+                        reviewCount: businessDetails.user_ratings_total,
+                        businessStatus: businessDetails.business_status,
+                        niche: niche,
+                        searchLocation: location
+                    };
+
+                    // Step 3: Search for Instagram if we have Google Custom Search credentials
+                    if (googleSearchKey && searchEngineId) {
+                        try {
+                            console.log(`📷 Searching Instagram for ${businessDetails.name}`);
+                            
+                            const instagramResponse = await fetch('/api/instagram/search', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-api-key': googleSearchKey,
+                                    'x-search-engine-id': searchEngineId
+                                },
+                                body: JSON.stringify({
+                                    businessName: businessDetails.name,
+                                    address: businessDetails.formatted_address,
+                                    city: city,
+                                    state: state,
+                                    phone: businessDetails.formatted_phone_number,
+                                    website: businessDetails.website,
+                                    thresholdAccept: 0.50
+                                })
+                            });
+                            
+                            if (instagramResponse.ok) {
+                                const instagramData = await instagramResponse.json();
+                                contactInfo.instagram = instagramData.instagram_handle && instagramData.instagram_handle !== 'No Instagram found' 
+                                    ? instagramData.instagram_handle 
+                                    : 'Not found';
+                                contactInfo.instagramUrl = instagramData.instagram_url && instagramData.instagram_url !== 'No Instagram found' 
+                                    ? instagramData.instagram_url 
+                                    : null;
+                                contactInfo.instagramConfidence = instagramData.match_confidence || 0;
+                            } else {
+                                contactInfo.instagram = 'Search failed';
+                            }
+                        } catch (error) {
+                            console.error('Instagram search error:', error);
+                            contactInfo.instagram = 'Search failed';
+                        }
+                    } else {
+                        contactInfo.instagram = 'No Search API configured';
+                    }
+
+                    // Step 4: Search for email using Google Custom Search
+                    if (googleSearchKey && searchEngineId) {
+                        try {
+                            console.log(`📧 Searching email for ${businessDetails.name}`);
+                            
+                            // Search for business email using multiple strategies
+                            const emailSearchQueries = [
+                                `"${businessDetails.name}" email contact ${city} ${state}`,
+                                `"${businessDetails.name}" "@" contact ${city}`,
+                                `${businessDetails.name} email ${city} ${state}`
+                            ];
+
+                            let foundEmail = null;
+                            
+                            for (const emailQuery of emailSearchQueries) {
+                                if (foundEmail) break;
+                                
+                                const emailSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchKey}&cx=${searchEngineId}&q=${encodeURIComponent(emailQuery)}&num=5`;
+                                
+                                try {
+                                    const emailResponse = await fetch(emailSearchUrl);
+                                    
+                                    if (emailResponse.ok) {
+                                        const emailData = await emailResponse.json();
+                                        
+                                        if (emailData.items) {
+                                            // Extract emails from search results
+                                            for (const item of emailData.items) {
+                                                const text = (item.title + ' ' + item.snippet).toLowerCase();
+                                                const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                                                const emails = text.match(emailRegex);
+                                                
+                                                if (emails) {
+                                                    // Filter out common non-business emails
+                                                    const businessEmails = emails.filter(email => 
+                                                        !email.includes('noreply') && 
+                                                        !email.includes('no-reply') &&
+                                                        !email.includes('donotreply') &&
+                                                        !email.includes('@gmail.com') &&
+                                                        !email.includes('@yahoo.com') &&
+                                                        !email.includes('@hotmail.com') &&
+                                                        !email.includes('@outlook.com')
+                                                    );
+                                                    
+                                                    if (businessEmails.length > 0) {
+                                                        foundEmail = businessEmails[0];
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Email search query error:', error);
+                                }
+                                
+                                // Small delay between search queries
+                                await new Promise(resolve => setTimeout(resolve, 200));
+                            }
+                            
+                            contactInfo.email = foundEmail || 'Not found';
+                            
+                        } catch (error) {
+                            console.error('Email search error:', error);
+                            contactInfo.email = 'Search failed';
+                        }
+                    } else {
+                        contactInfo.email = 'No Search API configured';
+                    }
+
+                    contactResults.push(contactInfo);
+                    console.log(`✅ Processed ${businessDetails.name}: Instagram=${contactInfo.instagram}, Email=${contactInfo.email}, Phone=${contactInfo.phone}`);
+                }
+            } catch (error) {
+                console.error(`Error processing business ${business.name}:`, error);
+                // Add basic info even if detailed search fails
+                contactResults.push({
+                    businessName: business.name,
+                    address: business.formatted_address || 'Not available',
+                    phone: 'Search failed',
+                    email: 'Search failed',
+                    instagram: 'Search failed',
+                    rating: business.rating,
+                    niche: niche,
+                    searchLocation: location
+                });
+            }
+            
+            // Small delay between businesses to avoid rate limiting
+            if (i < businesses.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        console.log(`\n🎉 Contact search completed! Found ${contactResults.length} businesses`);
+
+        return res.json({
+            results: contactResults,
+            total: contactResults.length,
+            searchParameters: {
+                niche,
+                location,
+                maxResults
+            },
+            message: `Found ${contactResults.length} businesses for ${niche} in ${location}`
+        });
+
+    } catch (error) {
+        console.error('Business contact search error:', error);
+        res.status(500).json({ 
+            error: 'internal_error', 
+            message: error.message 
+        });
+    }
+});
+
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
     res.status(200).json({ 
