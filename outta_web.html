@@ -899,6 +899,24 @@
                 transform: scale(1);
             }
         }
+        
+        @keyframes bounce {
+            0% {
+                transform: translateY(0px) scale(1);
+            }
+            30% {
+                transform: translateY(-10px) scale(1.05);
+            }
+            50% {
+                transform: translateY(0px) scale(1);
+            }
+            70% {
+                transform: translateY(-5px) scale(1.02);
+            }
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+        }
     </style>
 </head>
 
@@ -1128,6 +1146,7 @@ State abbreviations (CA)"
                 <a href="#home" onclick="switchTab('search'); return false;">Home</a>
                 <a href="#docs" onclick="switchTab('history'); return false;">Docs</a>
                 <a href="#api" onclick="switchTab('api'); return false;">API Key</a>
+                <button onclick="showDataMigrationModal()" class="btn" style="background:#ff6b35; color:white; margin-right: 10px;" title="Fix PWA data sync issues">📱 Data Migration</button>
                 <button id="installAppBtn" class="btn" style="display:none; background:#0d6efd; color:white;">Install App</button>
             </div>
             <div id="userInfo" class="user-info hidden">
@@ -1914,6 +1933,12 @@ loadApiKey();
                 }
 
                 console.log('✅ App initialization completed');
+                
+                // Check for potential PWA data sync issues after a short delay
+                setTimeout(() => {
+                    checkForPWADataIssues();
+                }, 2000);
+                
             } catch (error) {
                 console.error('❌ Error during app initialization:', error);
                 alert('⚠️ Error during app initialization. Check console for details.');
@@ -3829,14 +3854,14 @@ function getApiKey() {
         }
 
         function loadFsqApiKey() {
-            try { fsqApiKey = localStorage.getItem('foursquareApiKey') || ''; } catch {}
+            try { fsqApiKey = localStorage.getItem('fsqApiKey') || ''; } catch {}
             updateApiKeyDisplay();
         }
         function saveFsqApiKey() {
             const input = document.getElementById('fsqApiKey');
             fsqApiKey = input.value.trim();
             if (!fsqApiKey) { showFsqApiStatus('Please enter a valid Foursquare API key.', 'error'); return; }
-            try { localStorage.setItem('foursquareApiKey', fsqApiKey); } catch {}
+            try { localStorage.setItem('fsqApiKey', fsqApiKey); } catch {}
             showFsqApiStatus('Foursquare API key saved successfully!', 'success');
             updateApiKeyDisplay();
         }
@@ -3863,7 +3888,7 @@ function getApiKey() {
         }
         function clearFsqApiKey() {
             fsqApiKey = '';
-            try { localStorage.removeItem('foursquareApiKey'); } catch {}
+            try { localStorage.removeItem('fsqApiKey'); } catch {}
             showFsqApiStatus('Foursquare API key cleared.', 'success');
             updateApiKeyDisplay();
         }
@@ -6206,6 +6231,495 @@ function getApiKey() {
                     loginOverlay.classList.add('hidden');
                 }
             }, 100);
+        }
+
+        // =====================
+        // DATA MIGRATION & SYNC FUNCTIONS
+        // =====================
+        
+        function exportAllData() {
+            console.log('📤 Exporting all app data...');
+            
+            const allData = {
+                exportDate: new Date().toISOString(),
+                appVersion: 'OuttaWeb-v1.0',
+                userData: {
+                    currentUser: currentUser,
+                    sessionId: sessionId
+                },
+                localStorage: {},
+                settings: {
+                    placesProvider: placesProvider
+                }
+            };
+            
+            // Export all localStorage data
+            const keysToExport = [
+                'googlePlacesApiKey',
+                'fsqApiKey',
+                'googleSearchApiKey',
+                'searchEngineId',
+                'businessSearchHistory',
+                'excludedBusinessesKeys',
+                'savedInstagramResults',
+                'placesProvider',
+                'outtaWebCurrentUser',
+                'outtaWebSessionId'
+            ];
+            
+            keysToExport.forEach(key => {
+                try {
+                    const value = localStorage.getItem(key);
+                    if (value !== null) {
+                        allData.localStorage[key] = value;
+                    }
+                } catch (error) {
+                    console.warn(`Failed to export ${key}:`, error);
+                }
+            });
+            
+            // Create download
+            const jsonString = JSON.stringify(allData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `outtaweb_data_export_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('📤 Data exported successfully! You can now import this file in the PWA version.');
+            console.log('📤 Export completed:', allData);
+        }
+        
+        function importAllData() {
+            console.log('📥 Starting data import...');
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (!importedData.appVersion || !importedData.exportDate) {
+                            throw new Error('Invalid OuttaWeb export file');
+                        }
+                        
+                        console.log('📥 Importing data from:', importedData.exportDate);
+                        console.log('📥 Import data contents:', importedData);
+                        
+                        // Import localStorage data
+                        let importedCount = 0;
+                        if (importedData.localStorage) {
+                            Object.entries(importedData.localStorage).forEach(([key, value]) => {
+                                try {
+                                    localStorage.setItem(key, value);
+                                    importedCount++;
+                                    console.log(`📥 Imported ${key}: ${value ? (value.length > 50 ? value.substring(0, 50) + '...' : value) : 'null'}`);
+                                } catch (error) {
+                                    console.warn(`Failed to import ${key}:`, error);
+                                }
+                            });
+                        }
+                        
+                        // Import user data
+                        if (importedData.userData && importedData.userData.currentUser) {
+                            currentUser = importedData.userData.currentUser;
+                            sessionId = importedData.userData.sessionId || 'imported-' + Date.now();
+                            
+                            window.LOGIN_STATE.isLoggedIn = true;
+                            window.LOGIN_STATE.currentUser = currentUser;
+                            window.LOGIN_STATE.sessionId = sessionId;
+                            
+                            // Update user info display
+                            updateUserInfo();
+                            
+                            console.log('📥 Imported user:', currentUser.email);
+                        }
+                        
+                        // Import settings
+                        if (importedData.settings) {
+                            if (importedData.settings.placesProvider) {
+                                placesProvider = importedData.settings.placesProvider;
+                                try {
+                                    const radio = document.querySelector(`input[name="placesProvider"][value="${placesProvider}"]`);
+                                    if (radio) radio.checked = true;
+                                } catch {}
+                            }
+                        }
+                        
+                        // Force reload all global variables from localStorage
+                        console.log('📥 Reloading all data from localStorage...');
+                        
+                        // Reload API keys into global variables
+                        apiKey = localStorage.getItem('googlePlacesApiKey') || '';
+                        fsqApiKey = localStorage.getItem('fsqApiKey') || '';
+                        googleSearchApiKey = localStorage.getItem('googleSearchApiKey') || '';
+                        searchEngineId = localStorage.getItem('searchEngineId') || '';
+                        
+                        console.log('📥 Reloaded API keys:', {
+                            google: apiKey ? 'Present (' + apiKey.substring(0, 10) + '...)' : 'Missing',
+                            fsq: fsqApiKey ? 'Present (' + fsqApiKey.substring(0, 10) + '...)' : 'Missing',
+                            googleSearch: googleSearchApiKey ? 'Present' : 'Missing',
+                            searchEngine: searchEngineId ? 'Present' : 'Missing'
+                        });
+                        
+                        // Reload search history
+                        const historyData = localStorage.getItem('businessSearchHistory');
+                        if (historyData) {
+                            try {
+                                searchHistory = JSON.parse(historyData);
+                                console.log('📥 Reloaded search history:', searchHistory.length, 'entries');
+                            } catch (error) {
+                                console.warn('Failed to parse search history:', error);
+                            }
+                        }
+                        
+                        // Update all UI displays
+                        console.log('📥 Updating UI displays...');
+                        updateApiKeyDisplay();
+                        updateInstagramApiKeyDisplay();
+                        displaySearchHistory();
+                        loadProviderSelection();
+                        
+                        // Restore Instagram results if any
+                        try {
+                            restoreSavedInstagramResults();
+                        } catch (error) {
+                            console.warn('Failed to restore Instagram results:', error);
+                        }
+                        
+                        // Force refresh the current tab if it's API or History
+                        const activeTab = document.querySelector('.tab-content.active');
+                        if (activeTab) {
+                            if (activeTab.id === 'api-tab') {
+                                console.log('📥 Refreshing API tab display...');
+                                updateApiKeyDisplay();
+                            } else if (activeTab.id === 'history-tab') {
+                                console.log('📥 Refreshing history tab display...');
+                                displaySearchHistory();
+                            } else if (activeTab.id === 'instagram-tab') {
+                                console.log('📥 Refreshing Instagram tab display...');
+                                updateInstagramApiKeyDisplay();
+                            }
+                        }
+                        
+                        console.log('📥 Import process completed!');
+                        
+                        // Show detailed success message
+                        const historyCount = searchHistory ? searchHistory.length : 0;
+                        const instagramData = localStorage.getItem('savedInstagramResults');
+                        const instagramCount = instagramData ? JSON.parse(instagramData).length : 0;
+                        
+                        alert(`📥 Data import completed successfully!\n\n` +
+                              `• Imported ${importedCount} settings from ${importedData.exportDate}\n` +
+                              `• Google API Key: ${apiKey ? '✓ Imported' : '✗ Not found'}\n` +
+                              `• Foursquare API Key: ${fsqApiKey ? '✓ Imported' : '✗ Not found'}\n` +
+                              `• Search History: ${historyCount} entries\n` +
+                              `• Instagram Results: ${instagramCount} saved results\n\n` +
+                              `All data should now be visible in the app!`);
+                        
+                    } catch (error) {
+                        console.error('📥 Import failed:', error);
+                        alert('❌ Import failed: ' + error.message + '\n\nPlease ensure you\'re importing a valid OuttaWeb export file.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        function checkDataConsistency() {
+            console.log('🔍 Checking data consistency between storage methods...');
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                localStorage: {
+                    available: false,
+                    keys: [],
+                    apiKeys: {},
+                    searchHistory: null,
+                    userSession: null
+                },
+                globalState: {
+                    currentUser: currentUser,
+                    sessionId: sessionId,
+                    loginState: window.LOGIN_STATE
+                },
+                inconsistencies: []
+            };
+            
+            // Check localStorage availability and contents
+            try {
+                report.localStorage.available = true;
+                
+                // Get all OuttaWeb related keys
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('outta') || key.includes('business') || key.includes('google') || key.includes('fsq'))) {
+                        report.localStorage.keys.push(key);
+                    }
+                }
+                
+                // Check specific data
+                report.localStorage.apiKeys = {
+                    google: localStorage.getItem('googlePlacesApiKey') ? 'Present' : 'Missing',
+                    foursquare: localStorage.getItem('fsqApiKey') ? 'Present' : 'Missing',
+                    googleSearch: localStorage.getItem('googleSearchApiKey') ? 'Present' : 'Missing'
+                };
+                
+                const historyData = localStorage.getItem('businessSearchHistory');
+                report.localStorage.searchHistory = historyData ? JSON.parse(historyData).length + ' entries' : 'None';
+                
+                const userData = localStorage.getItem('outtaWebCurrentUser');
+                report.localStorage.userSession = userData ? 'Present' : 'Missing';
+                
+            } catch (error) {
+                report.localStorage.error = error.message;
+            }
+            
+            // Check for inconsistencies
+            if (report.localStorage.available) {
+                const storedUser = localStorage.getItem('outtaWebCurrentUser');
+                if (storedUser && currentUser) {
+                    try {
+                        const parsed = JSON.parse(storedUser);
+                        if (parsed.email !== currentUser.email) {
+                            report.inconsistencies.push('User email mismatch between localStorage and global state');
+                        }
+                    } catch {}
+                } else if (storedUser && !currentUser) {
+                    report.inconsistencies.push('User in localStorage but not in global state');
+                } else if (!storedUser && currentUser) {
+                    report.inconsistencies.push('User in global state but not in localStorage');
+                }
+            }
+            
+            console.log('🔍 Data consistency report:', report);
+            
+            const summary = `Data Consistency Report\n` +
+                `========================\n` +
+                `Timestamp: ${report.timestamp}\n` +
+                `localStorage Available: ${report.localStorage.available}\n` +
+                `localStorage Keys: ${report.localStorage.keys.length}\n` +
+                `Google API Key: ${report.localStorage.apiKeys?.google || 'N/A'}\n` +
+                `Search History: ${report.localStorage.searchHistory || 'N/A'}\n` +
+                `Current User: ${currentUser ? currentUser.email : 'Not logged in'}\n` +
+                `Inconsistencies: ${report.inconsistencies.length}\n\n`;
+                
+            if (report.inconsistencies.length > 0) {
+                alert(summary + 'Issues found:\n' + report.inconsistencies.join('\n'));
+            } else {
+                alert(summary + '✅ No issues found!');
+            }
+            
+            return report;
+        }
+        
+        function syncDataAcrossContexts() {
+            console.log('🔄 Attempting to sync data across different contexts...');
+            
+            try {
+                // If we have data in global state but not in localStorage, save it
+                if (currentUser && window.LOGIN_STATE.isLoggedIn) {
+                    try {
+                        localStorage.setItem('outtaWebCurrentUser', JSON.stringify(currentUser));
+                        if (sessionId) {
+                            localStorage.setItem('outtaWebSessionId', sessionId);
+                        }
+                        console.log('🔄 Synced user data to localStorage');
+                    } catch (error) {
+                        console.warn('🔄 Could not sync to localStorage:', error);
+                    }
+                }
+                
+                // If we have API keys in global variables but not in storage, save them
+                if (apiKey && !localStorage.getItem('googlePlacesApiKey')) {
+                    try {
+                        localStorage.setItem('googlePlacesApiKey', apiKey);
+                        console.log('🔄 Synced Google API key to localStorage');
+                    } catch {}
+                }
+                
+                if (fsqApiKey && !localStorage.getItem('fsqApiKey')) {
+                    try {
+                        localStorage.setItem('fsqApiKey', fsqApiKey);
+                        console.log('🔄 Synced Foursquare API key to localStorage');
+                    } catch {}
+                }
+                
+                // Sync search history if we have it in memory but not in storage
+                if (searchHistory && searchHistory.length > 0 && !localStorage.getItem('businessSearchHistory')) {
+                    try {
+                        localStorage.setItem('businessSearchHistory', JSON.stringify(searchHistory));
+                        console.log('🔄 Synced search history to localStorage');
+                    } catch {}
+                }
+                
+                alert('🔄 Data sync completed! Check console for details.');
+                
+            } catch (error) {
+                console.error('🔄 Data sync failed:', error);
+                alert('❌ Data sync failed: ' + error.message);
+            }
+        }
+        
+        function checkForPWADataIssues() {
+            console.log('📱 Checking for PWA data sync issues...');
+            
+            // Only run this check if we're likely in a PWA context
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone || 
+                         document.referrer.includes('android-app://') ||
+                         window.location.search.includes('pwa=true');
+            
+            if (!isPWA) {
+                console.log('📱 Not in PWA mode, skipping data sync check');
+                return;
+            }
+            
+            console.log('📱 PWA mode detected, checking for data issues...');
+            
+            // Check if we have minimal data (suggests fresh install)
+            const hasApiKey = !!localStorage.getItem('googlePlacesApiKey');
+            const hasSearchHistory = !!localStorage.getItem('businessSearchHistory');
+            const hasUserData = !!localStorage.getItem('outtaWebCurrentUser');
+            const hasAnyData = hasApiKey || hasSearchHistory || hasUserData;
+            
+            if (!hasAnyData) {
+                console.log('📱 No data found in PWA - potential sync issue');
+                
+                // Show a subtle notification about data migration
+                setTimeout(() => {
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #ff6b35;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                        z-index: 1000;
+                        max-width: 300px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    `;
+                    
+                    notification.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="font-size: 20px;">📱</div>
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 5px;">PWA Data Missing?</div>
+                                <div style="font-size: 12px; opacity: 0.9;">Click here to migrate your data from the web version</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    notification.onclick = () => {
+                        notification.remove();
+                        showDataMigrationModal();
+                    };
+                    
+                    // Auto-hide after 10 seconds
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.style.opacity = '0';
+                            notification.style.transform = 'translateX(100%)';
+                            setTimeout(() => notification.remove(), 300);
+                        }
+                    }, 10000);
+                    
+                    document.body.appendChild(notification);
+                    
+                    // Add bounce animation
+                    setTimeout(() => {
+                        notification.style.animation = 'bounce 0.6s ease-out';
+                    }, 100);
+                    
+                }, 1000);
+            } else {
+                console.log('📱 Data found in PWA - no sync issues detected');
+            }
+        }
+        
+        function showDataMigrationModal() {
+            const modalHtml = `
+                <div id="dataMigrationModal" class="login-overlay" style="display: flex; z-index: 2000;">
+                    <div class="login-modal" style="max-width: 600px; width: 95%;">
+                        <div class="login-logo">
+                            <img src="outtaweblogo.PNG" alt="Outta Web Logo">
+                            <span class="logo-text">DATA MIGRATION</span>
+                        </div>
+                        <h2>PWA Data Migration Tools</h2>
+                        <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                            If your data isn't showing up in the PWA version, use these tools to transfer your data between the web and app versions.
+                        </p>
+                        
+                        <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <strong>💡 How to fix missing data:</strong><br>
+                            1. Use "Export Data" on the web version (where your data exists)<br>
+                            2. Use "Import Data" on the PWA version (where data is missing)<br>
+                            3. Or use "Sync Data" to attempt automatic synchronization
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <button class="login-btn" onclick="exportAllData()" style="background: #28a745;">
+                                📤 Export Data
+                            </button>
+                            <button class="login-btn" onclick="importAllData()" style="background: #007bff;">
+                                📥 Import Data
+                            </button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <button class="login-btn" onclick="syncDataAcrossContexts()" style="background: #6f42c1;">
+                                🔄 Sync Data
+                            </button>
+                            <button class="login-btn" onclick="checkDataConsistency()" style="background: #17a2b8;">
+                                🔍 Check Data
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 14px;">Current Data Status:</h4>
+                            <div style="font-size: 13px; color: #666;">
+                                <div>User: ${currentUser ? currentUser.email : 'Not logged in'}</div>
+                                <div>Search History: ${searchHistory ? searchHistory.length + ' entries' : '0 entries'}</div>
+                                <div>API Keys: ${apiKey ? 'Google ✓' : 'Google ✗'} ${fsqApiKey ? 'Foursquare ✓' : 'Foursquare ✗'}</div>
+                                <div>Storage: ${typeof localStorage !== 'undefined' ? 'Available' : 'Not available'}</div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="login-btn" onclick="document.getElementById('dataMigrationModal').remove()" 
+                                style="width: 100%; margin-top: 15px; background: #6c757d;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('dataMigrationModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
     </script>
 </body>
