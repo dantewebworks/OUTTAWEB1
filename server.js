@@ -774,7 +774,11 @@ app.all('/api/business/contact-search', async (req, res) => {
         const businessQuery = `${niche} ${location} phone number contact`;
         const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchKey}&cx=${searchEngineId}&q=${encodeURIComponent(businessQuery)}&num=10`;
         
+        console.log(`📡 Making search request to: ${searchUrl.replace(googleSearchKey, 'API_KEY_HIDDEN')}`);
+        
         const searchResponse = await fetch(searchUrl);
+        
+        console.log(`📨 Search response status: ${searchResponse.status}`);
         
         if (!searchResponse.ok) {
             const errorText = await searchResponse.text();
@@ -782,13 +786,42 @@ app.all('/api/business/contact-search', async (req, res) => {
             return res.status(searchResponse.status).json({ 
                 error: 'search_api_error', 
                 message: 'Google Custom Search API request failed',
-                details: errorText
+                details: errorText,
+                status: searchResponse.status
             });
         }
 
-        const searchData = await searchResponse.json();
+        let searchData;
+        try {
+            const responseText = await searchResponse.text();
+            console.log(`📄 Raw response length: ${responseText.length}`);
+            
+            if (!responseText) {
+                throw new Error('Empty response from Google Custom Search API');
+            }
+            
+            searchData = JSON.parse(responseText);
+            console.log(`✅ Successfully parsed JSON response`);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError.message);
+            return res.status(500).json({ 
+                error: 'json_parse_error', 
+                message: 'Failed to parse Google Custom Search API response',
+                details: parseError.message
+            });
+        }
+
+        if (searchData.error) {
+            console.error('Google Custom Search API returned error:', searchData.error);
+            return res.status(400).json({ 
+                error: 'search_api_error', 
+                message: `Google Custom Search API error: ${searchData.error.message}`,
+                details: searchData.error
+            });
+        }
 
         if (!searchData.items || searchData.items.length === 0) {
+            console.log('⚠️ No search results found');
             return res.json({
                 results: [],
                 message: `No businesses found for ${niche} in ${location}`,
@@ -863,14 +896,17 @@ app.all('/api/business/contact-search', async (req, res) => {
                     const instagramResponse = await fetch(instagramSearchUrl);
                     
                     if (instagramResponse.ok) {
-                        const instagramData = await instagramResponse.json();
-                        
-                        if (instagramData.items && instagramData.items.length > 0) {
-                            // Look for Instagram URLs in the results
-                            for (const item of instagramData.items) {
-                                if (item.link && item.link.includes('instagram.com')) {
-                                    contactInfo.instagram = item.link;
-                                    break;
+                        const responseText = await instagramResponse.text();
+                        if (responseText) {
+                            const instagramData = JSON.parse(responseText);
+                            
+                            if (instagramData.items && instagramData.items.length > 0) {
+                                // Look for Instagram URLs in the results
+                                for (const item of instagramData.items) {
+                                    if (item.link && item.link.includes('instagram.com')) {
+                                        contactInfo.instagram = item.link;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -880,7 +916,7 @@ app.all('/api/business/contact-search', async (req, res) => {
                         contactInfo.instagram = 'Not found';
                     }
                 } catch (instagramError) {
-                    console.warn('Instagram search failed:', instagramError);
+                    console.warn('Instagram search failed:', instagramError.message);
                     contactInfo.instagram = 'Search failed';
                 }
 
@@ -892,28 +928,31 @@ app.all('/api/business/contact-search', async (req, res) => {
                     const emailResponse = await fetch(emailSearchUrl);
                     
                     if (emailResponse.ok) {
-                        const emailData = await emailResponse.json();
-                        
-                        if (emailData.items && emailData.items.length > 0) {
-                            // Look for email addresses in the results
-                            const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                        const responseText = await emailResponse.text();
+                        if (responseText) {
+                            const emailData = JSON.parse(responseText);
                             
-                            for (const item of emailData.items) {
-                                const emailText = (item.snippet || '') + ' ' + (item.title || '');
-                                const emailMatch = emailText.match(emailRegex);
+                            if (emailData.items && emailData.items.length > 0) {
+                                // Look for email addresses in the results
+                                const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
                                 
-                                if (emailMatch && emailMatch.length > 0) {
-                                    // Filter out generic emails
-                                    const validEmail = emailMatch.find(email => 
-                                        !email.includes('gmail.com') && 
-                                        !email.includes('yahoo.com') && 
-                                        !email.includes('hotmail.com') &&
-                                        !email.includes('example.com')
-                                    );
+                                for (const item of emailData.items) {
+                                    const emailText = (item.snippet || '') + ' ' + (item.title || '');
+                                    const emailMatch = emailText.match(emailRegex);
                                     
-                                    if (validEmail) {
-                                        contactInfo.email = validEmail;
-                                        break;
+                                    if (emailMatch && emailMatch.length > 0) {
+                                        // Filter out generic emails
+                                        const validEmail = emailMatch.find(email => 
+                                            !email.includes('gmail.com') && 
+                                            !email.includes('yahoo.com') && 
+                                            !email.includes('hotmail.com') &&
+                                            !email.includes('example.com')
+                                        );
+                                        
+                                        if (validEmail) {
+                                            contactInfo.email = validEmail;
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -924,7 +963,7 @@ app.all('/api/business/contact-search', async (req, res) => {
                         contactInfo.email = 'Not found';
                     }
                 } catch (emailError) {
-                    console.warn('Email search failed:', emailError);
+                    console.warn('Email search failed:', emailError.message);
                     contactInfo.email = 'Search failed';
                 }
 
