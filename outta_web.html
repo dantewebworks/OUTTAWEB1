@@ -1700,6 +1700,16 @@ State abbreviations (CA)"
                         </button>
                     </div>
                 </div>
+                
+                <!-- WhatsApp Filter Options -->
+                <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #25D366;">
+                    <h5 style="margin: 0 0 10px 0; color: #333; display: flex; align-items: center;"><span style="margin-right: 8px;">📱</span>WhatsApp Contact Detection</h5>
+                    <label style="display: flex; align-items: center; cursor: pointer; font-weight: 500;">
+                        <input type="checkbox" id="whatsappOnlyFilter" style="margin-right: 10px; transform: scale(1.2);">
+                        <span>Only show profiles with WhatsApp contact info</span>
+                    </label>
+                    <p style="margin: 8px 0 0 0; font-size: 13px; color: #6c757d;">When enabled, only profiles containing WhatsApp numbers, wa.me links, or WhatsApp keywords will be shown.</p>
+                </div>
             </div>
 
             <!-- Loading Section -->
@@ -7696,33 +7706,48 @@ State abbreviations (CA)"
                     throw new Error(data.error.message || 'Google API error');
                 }
                 
-                // Process the results with enhanced filtering
+                // Process the results with enhanced filtering and WhatsApp detection
                 const profiles = [];
+                const whatsappOnlyFilter = document.getElementById('whatsappOnlyFilter').checked;
                 let totalResults = 0;
                 let filteredCount = 0;
+                let whatsappCount = 0;
                 
                 if (data.items && data.items.length > 0) {
                     totalResults = data.items.length;
                     console.log(`📄 Processing ${totalResults} raw search results...`);
+                    console.log(`📱 WhatsApp-only filter: ${whatsappOnlyFilter ? 'ENABLED' : 'DISABLED'}`);
                     
                     data.items.forEach((item, index) => {
                         const profile = parseInstagramResult(item);
                         if (profile) {
+                            // Count WhatsApp profiles
+                            if (profile.hasWhatsApp) {
+                                whatsappCount++;
+                            }
+                            
+                            // Apply WhatsApp filter if enabled
+                            if (whatsappOnlyFilter && !profile.hasWhatsApp) {
+                                filteredCount++;
+                                console.log(`🚫 Filtered out @${profile.username} (no WhatsApp)`);
+                                return;
+                            }
+                            
                             profiles.push(profile);
-                            console.log(`✅ Valid profile #${profiles.length}: @${profile.username}`);
+                            console.log(`✅ Valid profile #${profiles.length}: @${profile.username}${profile.hasWhatsApp ? ' (📱 WhatsApp)' : ''}`);
                         } else {
                             filteredCount++;
                         }
                     });
                     
-                    console.log(`📊 Filter results: ${profiles.length} valid profiles, ${filteredCount} filtered out`);
+                    console.log(`📊 Filter results: ${profiles.length} valid profiles, ${whatsappCount} with WhatsApp, ${filteredCount} filtered out`);
                 }
                 
                 // Limit to 10 results as requested
                 const limitedProfiles = profiles.slice(0, 10);
                 
                 instagramSearchResults = limitedProfiles;
-                displayInstagramSearchResults(limitedProfiles, niche, location, totalResults, filteredCount);
+                displayInstagramSearchResults(limitedProfiles, niche, location, totalResults, filteredCount, whatsappCount, whatsappOnlyFilter);
                 
             } catch (error) {
                 console.error('❌ Instagram search failed:', error);
@@ -7732,11 +7757,122 @@ State abbreviations (CA)"
             }
         }
         
-        // Parse individual Instagram search result with enhanced filtering
+        // WhatsApp detection functions
+        function detectWhatsAppInfo(text) {
+            if (!text) return null;
+            
+            const whatsappInfo = {
+                hasWhatsApp: false,
+                phoneNumber: null,
+                waLink: null,
+                whatsappKeyword: false
+            };
+            
+            const lowerText = text.toLowerCase();
+            
+            // 1. Look for wa.me/ links
+            const waLinkPattern = /wa\.me\/([\+]?[\d]{10,15})/gi;
+            const waLinkMatch = text.match(waLinkPattern);
+            if (waLinkMatch) {
+                whatsappInfo.hasWhatsApp = true;
+                whatsappInfo.waLink = waLinkMatch[0];
+                // Extract phone number from wa.me link
+                const phoneMatch = waLinkMatch[0].match(/wa\.me\/([\+]?[\d]{10,15})/i);
+                if (phoneMatch) {
+                    whatsappInfo.phoneNumber = phoneMatch[1];
+                }
+            }
+            
+            // 2. Look for international phone numbers (+country code)
+            if (!whatsappInfo.phoneNumber) {
+                // Match international phone numbers: +1234567890, +1 234 567 890, +1-234-567-890, etc.
+                const phonePatterns = [
+                    /\+\d{1,4}[\s\-\.]?\(?(\d{1,4})\)?[\s\-\.]?\d{3,4}[\s\-\.]?\d{3,4}/g,
+                    /\+\d{10,15}/g,
+                    /\(\+\d{1,4}\)[\s\-\.]?\d{9,14}/g
+                ];
+                
+                for (const pattern of phonePatterns) {
+                    const phoneMatch = text.match(pattern);
+                    if (phoneMatch) {
+                        // Clean phone number (remove spaces, dashes, parentheses)
+                        const cleanPhone = phoneMatch[0].replace(/[\s\-\.\(\)]/g, '');
+                        if (cleanPhone.length >= 10 && cleanPhone.startsWith('+')) {
+                            whatsappInfo.phoneNumber = cleanPhone;
+                            whatsappInfo.hasWhatsApp = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // 3. Look for WhatsApp keywords
+            const whatsappKeywords = [
+                'whatsapp', 'what\'s app', 'whats app', 'wa', 'wap',
+                'dm for info', 'message me', 'text me', 'contact via wa'
+            ];
+            
+            const hasKeyword = whatsappKeywords.some(keyword => {
+                // Use word boundary for exact matches
+                const keywordPattern = new RegExp(`\\b${keyword.replace(/'/g, "\\'").replace(/\s/g, '\\s+')}\\b`, 'i');
+                return keywordPattern.test(lowerText);
+            });
+            
+            if (hasKeyword) {
+                whatsappInfo.whatsappKeyword = true;
+                whatsappInfo.hasWhatsApp = true;
+            }
+            
+            // 4. Look for business contact indicators with phone numbers
+            if (!whatsappInfo.hasWhatsApp) {
+                const businessContactPatterns = [
+                    /contact[:\s]*[\+]?\d{10,15}/gi,
+                    /call[:\s]*[\+]?\d{10,15}/gi,
+                    /phone[:\s]*[\+]?\d{10,15}/gi,
+                    /mobile[:\s]*[\+]?\d{10,15}/gi
+                ];
+                
+                for (const pattern of businessContactPatterns) {
+                    const contactMatch = text.match(pattern);
+                    if (contactMatch) {
+                        const phoneMatch = contactMatch[0].match(/[\+]?\d{10,15}/);
+                        if (phoneMatch) {
+                            whatsappInfo.phoneNumber = phoneMatch[0];
+                            whatsappInfo.hasWhatsApp = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return whatsappInfo.hasWhatsApp ? whatsappInfo : null;
+        }
+        
+        // Format WhatsApp info for display
+        function formatWhatsAppDisplay(whatsappInfo) {
+            if (!whatsappInfo || !whatsappInfo.hasWhatsApp) {
+                return null;
+            }
+            
+            let display = '';
+            
+            if (whatsappInfo.waLink) {
+                display = `<a href="https://${whatsappInfo.waLink}" target="_blank" style="color: #25D366; font-weight: 600; text-decoration: none;">📱 ${whatsappInfo.phoneNumber || whatsappInfo.waLink}</a>`;
+            } else if (whatsappInfo.phoneNumber) {
+                const whatsappUrl = `https://wa.me/${whatsappInfo.phoneNumber.replace(/[^\d+]/g, '')}`;
+                display = `<a href="${whatsappUrl}" target="_blank" style="color: #25D366; font-weight: 600; text-decoration: none;">📱 ${whatsappInfo.phoneNumber}</a>`;
+            } else if (whatsappInfo.whatsappKeyword) {
+                display = '<span style="color: #25D366; font-weight: 600;">📱 WhatsApp Available</span>';
+            }
+            
+            return display;
+        }
+        // Parse individual Instagram search result with WhatsApp detection and enhanced filtering
         function parseInstagramResult(item) {
             try {
                 const url = item.link;
                 const title = item.title;
+                const snippet = item.snippet || '';
                 
                 // Ensure it's an Instagram URL
                 if (!url || !url.includes('instagram.com')) {
@@ -7754,7 +7890,7 @@ State abbreviations (CA)"
                 
                 const username = urlMatch[2];
                 
-                // Apply filtering criteria for valid usernames
+                // Apply filtering criteria for valid usernames (from memory specification)
                 if (!isValidInstagramUsername(username)) {
                     console.log('❌ Skipping invalid username:', username);
                     return null;
@@ -7770,28 +7906,33 @@ State abbreviations (CA)"
                     displayName = username.charAt(0).toUpperCase() + username.slice(1); // Capitalize username as fallback
                 }
                 
+                // WhatsApp detection in title and snippet
+                const combinedText = title + ' ' + snippet;
+                const whatsappInfo = detectWhatsAppInfo(combinedText);
+                
                 // Additional validation: ensure the profile seems business-related
-                const snippet = item.snippet || '';
-                const combinedText = (displayName + ' ' + snippet).toLowerCase();
+                const lowerCombinedText = combinedText.toLowerCase();
                 
                 // Skip obvious non-business accounts (optional filtering)
                 const personalIndicators = ['personal', 'private', 'my life', 'selfie', 'travel diary', 'food blog'];
                 const hasPersonalIndicators = personalIndicators.some(indicator => 
-                    combinedText.includes(indicator)
+                    lowerCombinedText.includes(indicator)
                 );
                 
-                if (hasPersonalIndicators && !haBusinessIndicators(combinedText)) {
+                if (hasPersonalIndicators && !haBusinessIndicators(lowerCombinedText) && !whatsappInfo) {
                     console.log('⚠️ Skipping likely personal account:', username);
                     return null;
                 }
                 
-                console.log('✅ Valid Instagram profile found:', username);
+                console.log(`✅ Valid Instagram profile found: @${username}${whatsappInfo ? ' (with WhatsApp)' : ''}`);
                 
                 return {
                     username: username,
                     displayName: displayName,
                     profileUrl: url,
-                    snippet: snippet
+                    snippet: snippet,
+                    whatsappInfo: whatsappInfo,
+                    hasWhatsApp: whatsappInfo ? whatsappInfo.hasWhatsApp : false
                 };
             } catch (error) {
                 console.warn('❌ Error parsing Instagram result:', error);
@@ -7899,73 +8040,112 @@ State abbreviations (CA)"
             document.getElementById('instagramSearchResults').style.display = 'none';
         }
         
-        // Display Instagram search results with filtering statistics
-        function displayInstagramSearchResults(profiles, niche, location, totalResults = 0, filteredCount = 0) {
+        // Display Instagram search results with WhatsApp info and filtering statistics
+        function displayInstagramSearchResults(profiles, niche, location, totalResults = 0, filteredCount = 0, whatsappCount = 0, whatsappFilterEnabled = false) {
             const resultsContainer = document.getElementById('instagramProfilesList');
             const resultsSection = document.getElementById('instagramSearchResults');
             const resultsCounter = document.getElementById('resultsCounter');
             
             if (!profiles || profiles.length === 0) {
-                let errorMessage = `No valid Instagram profiles found for '${niche}' in '${location}'.`;
+                let errorMessage = `No ${whatsappFilterEnabled ? 'WhatsApp-enabled ' : ''}Instagram profiles found for '${niche}' in '${location}'.`;
                 
                 if (totalResults > 0) {
-                    errorMessage += ` Found ${totalResults} search result${totalResults !== 1 ? 's' : ''} but ${filteredCount} were filtered out due to invalid usernames or non-business accounts.`;
+                    if (whatsappFilterEnabled) {
+                        errorMessage += ` Found ${totalResults} search result${totalResults !== 1 ? 's' : ''} with ${whatsappCount} WhatsApp profile${whatsappCount !== 1 ? 's' : ''}, but all were filtered out.`;
+                    } else {
+                        errorMessage += ` Found ${totalResults} search result${totalResults !== 1 ? 's' : ''} but ${filteredCount} were filtered out due to invalid usernames or non-business accounts.`;
+                    }
                 }
                 
-                errorMessage += ' Try different keywords, broader locations, or check your search terms.';
+                errorMessage += ' Try different keywords, broader locations, or disable WhatsApp-only filter.';
                 
                 showInstagramSearchError(errorMessage);
                 return;
             }
             
-            // Update counter with filtering info
-            let counterText = `${profiles.length} valid profile${profiles.length !== 1 ? 's' : ''}`;
+            // Update counter with filtering and WhatsApp info
+            let counterText = `${profiles.length} profile${profiles.length !== 1 ? 's' : ''}`;
+            const whatsappInResults = profiles.filter(p => p.hasWhatsApp).length;
+            
+            if (whatsappFilterEnabled) {
+                counterText += ` (📱 WhatsApp only)`;
+            } else if (whatsappInResults > 0) {
+                counterText += ` (${whatsappInResults} with 📱)`;
+            }
+            
             if (filteredCount > 0) {
                 counterText += ` (${filteredCount} filtered)`;
             }
+            
             resultsCounter.textContent = counterText;
             
-            // Generate results HTML with improved styling
+            // Sort profiles: WhatsApp profiles first
+            const sortedProfiles = [...profiles].sort((a, b) => {
+                if (a.hasWhatsApp && !b.hasWhatsApp) return -1;
+                if (!a.hasWhatsApp && b.hasWhatsApp) return 1;
+                return 0;
+            });
+            
+            // Generate results HTML with WhatsApp information
             let resultsHTML = '';
-            profiles.forEach((profile, index) => {
+            sortedProfiles.forEach((profile, index) => {
+                const whatsappDisplay = formatWhatsAppDisplay(profile.whatsappInfo);
+                const isWhatsAppProfile = profile.hasWhatsApp;
+                const borderColor = isWhatsAppProfile ? '#25D366' : '#e9ecef';
+                const cardStyle = `background: white; border: 2px solid ${borderColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);`;
+                
                 resultsHTML += `
-                    <div class="instagram-profile" style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="instagram-profile" style="${cardStyle}">
                         <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div style="flex: 1;">
                                 <p style="margin: 0 0 8px 0; font-size: 16px;"><strong>Name:</strong> <span style="color: #333;">${profile.displayName}</span></p>
                                 <p style="margin: 0 0 8px 0; font-size: 15px;"><strong>Username:</strong> <span style="color: #007bff; font-weight: 500;">@${profile.username}</span></p>
-                                <p style="margin: 0;"><strong>Profile:</strong> <a href="${profile.profileUrl}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500;">View on Instagram ↗️</a></p>
+                                <p style="margin: 0 0 8px 0;"><strong>Profile:</strong> <a href="${profile.profileUrl}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500;">View on Instagram ↗️</a></p>
+                                ${whatsappDisplay ? `<p style="margin: 0;"><strong>WhatsApp:</strong> ${whatsappDisplay}</p>` : ''}
                             </div>
                             <div style="text-align: right;">
-                                <span style="background: #007bff; color: white; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
-                                    #${index + 1}
+                                <span style="background: ${isWhatsAppProfile ? '#25D366' : '#007bff'}; color: white; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                    ${isWhatsAppProfile ? '📱 ' : ''}#${index + 1}
                                 </span>
                             </div>
                         </div>
                         ${profile.snippet ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; font-size: 14px; color: #6c757d; line-height: 1.4;">📝 ${profile.snippet}</div>` : ''}
                         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef;">
-                            <button onclick="copyProfileInfo('${profile.displayName.replace(/'/g, "\\'")}', '${profile.username}', '${profile.profileUrl}')" 
+                            <button onclick="copyProfileInfoWithWhatsApp('${profile.displayName.replace(/'/g, "\\'")}', '${profile.username}', '${profile.profileUrl}', '${profile.whatsappInfo ? (profile.whatsappInfo.phoneNumber || 'Available') : ''}')" 
                                     style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px;">
                                 📋 Copy Info
                             </button>
                             <button onclick="window.open('${profile.profileUrl}', '_blank')" 
-                                    style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                    style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px;">
                                 🔗 Open Profile
                             </button>
+                            ${profile.whatsappInfo && profile.whatsappInfo.phoneNumber ? `
+                                <button onclick="openWhatsApp('${profile.whatsappInfo.phoneNumber}', '${profile.displayName}')" 
+                                        style="background: #25D366; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                    📱 WhatsApp
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 `;
             });
             
-            // Add filtering summary at the bottom
-            if (totalResults > 0 && filteredCount > 0) {
+            // Add comprehensive filtering summary
+            if (totalResults > 0) {
+                const summaryBg = whatsappFilterEnabled ? '#e8f5e8' : '#f8f9fa';
+                const summaryBorder = whatsappFilterEnabled ? '#25D366' : '#e9ecef';
+                
                 resultsHTML += `
-                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
+                    <div style="background: ${summaryBg}; border: 1px solid ${summaryBorder}; border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center;">
                         <h5 style="margin: 0 0 8px 0; color: #495057;">📊 Search Summary</h5>
-                        <p style="margin: 0; font-size: 14px; color: #6c757d;">
-                            Found <strong>${totalResults}</strong> search results, showing <strong>${profiles.length}</strong> valid business profiles. 
-                            <span style="color: #dc3545;">${filteredCount} results filtered out</span> (invalid usernames, non-business accounts, etc.)
-                        </p>
+                        <div style="font-size: 14px; color: #6c757d; line-height: 1.6;">
+                            <div style="margin-bottom: 4px;">
+                                Found <strong>${totalResults}</strong> search results, showing <strong>${profiles.length}</strong> valid profiles.
+                            </div>
+                            ${whatsappCount > 0 ? `<div style="margin-bottom: 4px; color: #25D366; font-weight: 600;">📱 <strong>${whatsappCount}</strong> profile${whatsappCount !== 1 ? 's' : ''} with WhatsApp contact info detected.</div>` : ''}
+                            ${filteredCount > 0 ? `<div style="color: #dc3545;"><strong>${filteredCount}</strong> results filtered out (invalid usernames, non-business accounts${whatsappFilterEnabled ? ', no WhatsApp' : ''})</div>` : ''}
+                            ${whatsappFilterEnabled ? '<div style="margin-top: 8px; font-style: italic; color: #25D366;">📱 Showing only profiles with WhatsApp contact information</div>' : ''}
+                        </div>
                     </div>
                 `;
             }
@@ -8048,6 +8228,46 @@ State abbreviations (CA)"
                 location.toLowerCase().includes(query.toLowerCase())
             ).slice(0, 8);
         }
+        
+        // Copy profile information with WhatsApp to clipboard
+        function copyProfileInfoWithWhatsApp(name, username, profileUrl, whatsappInfo) {
+            let profileInfo = `Name: ${name}\nUsername: @${username}\nProfile: ${profileUrl}`;
+            
+            if (whatsappInfo && whatsappInfo !== '') {
+                profileInfo += `\nWhatsApp: ${whatsappInfo}`;
+            }
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(profileInfo).then(() => {
+                    // Show temporary success message
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = '✅ Copied!';
+                    button.style.background = '#28a745';
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.background = '#28a745';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy to clipboard:', err);
+                    fallbackCopyToClipboard(profileInfo);
+                });
+            } else {
+                fallbackCopyToClipboard(profileInfo);
+            }
+        }
+        
+        // Open WhatsApp with pre-filled message
+        function openWhatsApp(phoneNumber, businessName) {
+            // Clean phone number (remove any non-digit characters except +)
+            const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+            const message = encodeURIComponent(`Hi ${businessName}, I found your Instagram profile and I'm interested in your services. Could you please provide more information?`);
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+        
         function copyProfileInfo(name, username, profileUrl) {
             const profileInfo = `Name: ${name}\nUsername: @${username}\nProfile: ${profileUrl}`;
             
