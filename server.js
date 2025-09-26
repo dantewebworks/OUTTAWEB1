@@ -156,23 +156,7 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// EARLY TEST ROUTE - placed here to avoid middleware conflicts
-app.all('/api/test-early', (req, res) => {
-    // Enable CORS for all origins
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, x-search-engine-id, x-google-search-key');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    console.log('🔥 Early test endpoint hit!');
-    console.log('📎 Method:', req.method);
-    console.log('📎 Headers:', req.headers);
-    console.log('📎 Body:', req.body);
-    res.json({ success: true, message: 'Early endpoint working', method: req.method });
-});
 
 // Serve static files (but do NOT auto-serve index.html for '/')
 app.use(express.static(path.join(__dirname), { index: false }));
@@ -752,26 +736,7 @@ app.all('/api/instagram/search', async (req, res) => {
     }
 });
 
-// Test endpoint for debugging 405 issues
-app.all('/api/business/test', (req, res) => {
-    // Enable CORS for all origins
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, x-search-engine-id, x-google-search-key');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    console.log(`✅ Test endpoint reached with method: ${req.method}`);
-    console.log('📎 Body:', req.body);
-    res.json({ 
-        success: true, 
-        method: req.method,
-        message: 'Test endpoint working',
-        receivedBody: req.body
-    });
-});
 
 // Business Contact Search API endpoint
 app.all('/api/business/contact-search', async (req, res) => {
