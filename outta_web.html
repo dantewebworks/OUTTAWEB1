@@ -1683,15 +1683,17 @@ State abbreviations (CA)"
                         </select>
                     </div>
                     <div>
-                        <label for="instagramSearchLocation" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Location</label>
+                        <label for="instagramSearchLocation" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Location(s)</label>
                         <div style="position: relative;">
-                            <input type="text" id="instagramSearchLocation" placeholder="e.g., Houston, New York, Los Angeles" 
+                            <input type="text" id="instagramSearchLocation" placeholder="e.g., Houston, TX, New York, NY (comma-separated)" 
                                    style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 6px;"
                                    oninput="handleInstagramLocationInput(this.value)"
                                    onfocus="handleInstagramLocationInput(this.value)"
                                    onblur="setTimeout(() => hideInstagramLocationSuggestions(), 200)">
                             <div id="instagramLocationSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                         </div>
+                        <div id="selectedLocations" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                        <button type="button" onclick="addCurrentLocation()" style="margin-top: 8px; padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">+ Add Location</button>
                     </div>
                     <div style="display: flex; align-items: end;">
                         <button onclick="searchInstagramBusinesses()" id="instagramSearchButton" 
@@ -1717,6 +1719,23 @@ State abbreviations (CA)"
                 <div style="width: 30px; height: 30px; border: 3px solid #e9ecef; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
                 <h4 style="color: #007bff; margin: 0 0 8px 0;">🔍 Searching Instagram...</h4>
                 <p style="color: #6c757d; margin: 0;">Finding Instagram profiles for "<span id="searchingNiche"></span>" in "<span id="searchingLocation"></span>"</p>
+            </div>
+
+            <!-- Saved Results Management -->
+            <div id="savedResultsSection" style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745; display: none;">
+                <h4 style="margin: 0 0 15px 0; color: #28a745; display: flex; align-items: center;"><span style="margin-right: 8px;">💾</span>Saved Results Management</h4>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button onclick="viewSavedResults()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        👁️ View All (<span id="savedResultsCount">0</span>)
+                    </button>
+                    <button onclick="exportSavedResultsToCSV()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        📊 Export CSV
+                    </button>
+                    <button onclick="clearSavedResults()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #6c757d;">Results are automatically saved from all searches across multiple locations.</p>
             </div>
 
             <!-- Results Section -->
@@ -1814,7 +1833,7 @@ State abbreviations (CA)"
         </div>
 
         <div id="contacts-tab" class="tab-content">
-            <h2>� Insstagram Contact Finder</h2>
+            <h2>📸 Instagram Contact Finder</h2>
             <p style="color: #666; margin-bottom: 20px;">Find Instagram business profiles for specific niches and
                 locations using Google Custom Search API. Perfect for discovering potential leads who maintain active
                 Instagram presence.</p>
@@ -1862,31 +1881,45 @@ State abbreviations (CA)"
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
                         <label for="instagramNiche" style="font-weight: 600; color: #495057;">Business Niche</label>
-                        <input type="text" id="instagramNiche" class="form-control"
-                            placeholder="e.g., barber, restaurant, gym, dentist"
+                        <select id="instagramNiche" class="form-control"
                             style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;">
-                        <small style="color: #6c757d;">Enter the type of business you're looking for</small>
+                            <option value="">Choose a niche...</option>
+                        </select>
+                        <small style="color: #6c757d;">Select the type of business you're looking for</small>
                     </div>
                     <div class="form-group">
-                        <label for="instagramLocation" style="font-weight: 600; color: #495057;">Location</label>
-                        <input type="text" id="instagramLocation" class="form-control"
-                            placeholder="e.g., Houston, New York, Los Angeles"
-                            style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;">
-                        <small style="color: #6c757d;">Enter city, state, or region</small>
+                        <label for="instagramLocation" style="font-weight: 600; color: #495057;">Multiple Locations</label>
+                        <div style="position: relative;">
+                            <input type="text" id="instagramLocation" class="form-control"
+                                placeholder="e.g., Houston TX, New York NY, Los Angeles CA (comma-separated)"
+                                style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;"
+                                oninput="handleInstagramLocationInput(this.value)">
+                            <div id="instagramLocationSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <div id="selectedLocations" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+                            <button type="button" onclick="addCurrentLocation()" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">+ Add Location</button>
+                            <small style="color: #6c757d;">Enter cities/states, separate with commas or add one by one</small>
+                        </div>
                     </div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <div class="form-group" style="flex: 1; margin-right: 20px;">
-                        <label for="instagramMaxResults" style="font-weight: 600; color: #495057;">Maximum
-                            Results</label>
-                        <select id="instagramMaxResults" class="form-control"
-                            style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;">
-                            <option value="5">5 results</option>
-                            <option value="10" selected>10 results</option>
-                            <option value="15">15 results</option>
-                            <option value="20">20 results</option>
-                        </select>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="instagramMaxResults" style="font-weight: 600; color: #495057; margin-bottom: 5px; display: block;">Max Results per Location</label>
+                            <select id="instagramMaxResults" class="form-control"
+                                style="padding: 8px 12px; border: 2px solid #e9ecef; border-radius: 6px; min-width: 120px;">
+                                <option value="5">5 results</option>
+                                <option value="10" selected>10 results</option>
+                                <option value="15">15 results</option>
+                                <option value="20">20 results</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-option" style="margin-top: 20px;">
+                            <input type="checkbox" id="whatsappOnlyFilter" style="margin-right: 8px;">
+                            <label for="whatsappOnlyFilter" style="cursor: pointer; color: #495057; font-weight: 500;">📱 Only show profiles with WhatsApp</label>
+                        </div>
                     </div>
                     <div style="text-align: center;">
                         <button class="btn btn-primary btn-lg" onclick="searchInstagramProfiles()"
@@ -1896,6 +1929,73 @@ State abbreviations (CA)"
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Saved Results Management -->
+            <div id="savedResultsSection" style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745; display: none;">
+                <h4 style="margin: 0 0 15px 0; color: #28a745; display: flex; align-items: center;"><span style="margin-right: 8px;">💾</span>Saved Results Management</h4>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button onclick="viewSavedResults()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        👁️ View All (<span id="savedResultsCount">0</span>)
+                    </button>
+                    <button onclick="exportSavedResultsToCSV()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        📊 Export CSV
+                    </button>
+                    <button onclick="clearSavedResults()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #6c757d;">Results are automatically saved from all searches across multiple locations. CSV includes: Name, Username, Profile URL, WhatsApp, Location</p>
+            </div>
+
+            <!-- Loading Section -->
+            <div id="instagramLoading" class="loading-section"
+                style="display: none; text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px;">
+                <div style="margin-bottom: 20px;">
+                    <div class="spinner"
+                        style="width: 40px; height: 40px; border: 4px solid #e9ecef; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;">
+                    </div>
+                </div>
+                <h4 style="color: #007bff; margin: 0 0 10px 0;">🔍 Searching Instagram...</h4>
+                <p style="color: #6c757d; margin: 0;">Finding Instagram business profiles for "<span
+                        id="searchNicheDisplay"></span>" in "<span id="searchLocationDisplay"></span>"</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="instagramResults" class="results-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h4 style="margin: 0; color: #333;">📋 Search Results</h4>
+                    <div class="export-buttons" style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline-primary" onclick="exportInstagramResults('json')"
+                            id="exportJsonBtn" style="padding: 8px 16px;">
+                            📄 Export JSON
+                        </button>
+                        <button class="btn btn-outline-success" onclick="exportInstagramResults('csv')"
+                            id="exportCsvBtn" style="padding: 8px 16px;">
+                            📊 Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div id="instagramResultsList" class="results-list"></div>
+
+                <div id="instagramResultsStats" class="results-stats"
+                    style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; text-align: center;">
+                    <span style="font-weight: 600;">Found <span id="resultsCount">0</span> Instagram profiles</span>
+                    <span style="margin-left: 20px; color: #6c757d;">Search completed at <span
+                            id="searchTimestamp"></span></span>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="instagramError" class="error-section"
+                style="display: none; padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin-bottom: 20px;">
+                <h5 style="color: #721c24; margin: 0 0 10px 0;">❌ Search Error</h5>
+                <p id="instagramErrorMessage" style="color: #721c24; margin: 0;"></p>
+                <button class="btn btn-outline-danger btn-sm" onclick="retryInstagramSearch()"
+                    style="margin-top: 10px;">
+                    🔄 Retry Search
+                </button>
             </div>
 
             <!-- Loading Section -->
@@ -2136,6 +2236,15 @@ State abbreviations (CA)"
 
             // Wire exclusions UI (if present)
             try { wireExclusionsUI(); } catch { }
+
+            // Initialize Instagram Contact Finder
+            try {
+                populateInstagramSearchNiches();
+                loadInstagramSearchConfig();
+                loadSavedResults();
+            } catch (error) {
+                console.warn('Failed to initialize Instagram Contact Finder:', error);
+            }
 
             // Provider selection events
             try {
@@ -7482,14 +7591,489 @@ State abbreviations (CA)"
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
 
-        // ======= INSTAGRAM CONTACT FINDER FUNCTIONALITY =======
+        // WhatsApp detection in Instagram bios
+        function detectWhatsAppInfo(text) {
+            const whatsappInfo = {
+                hasWhatsApp: false,
+                phoneNumber: null,
+                waLink: null,
+                whatsappKeyword: false
+            };
+            
+            const lowerText = text.toLowerCase();
+            
+            // 1. Look for wa.me/ links
+            const waLinkPattern = /wa\.me\/([\+]?[\d]{10,15})/gi;
+            const waLinkMatch = text.match(waLinkPattern);
+            if (waLinkMatch) {
+                whatsappInfo.hasWhatsApp = true;
+                whatsappInfo.waLink = waLinkMatch[0];
+                // Extract phone number from wa.me link
+                const phoneMatch = waLinkMatch[0].match(/wa\.me\/([\+]?[\d]{10,15})/i);
+                if (phoneMatch) {
+                    whatsappInfo.phoneNumber = phoneMatch[1];
+                }
+            }
+            
+            // 2. Look for international phone numbers (+country code)
+            if (!whatsappInfo.phoneNumber) {
+                // Match international phone numbers: +1234567890, +1 234 567 890, +1-234-567-890, etc.
+                const phonePatterns = [
+                    /\+\d{1,4}[\s\-\.]?\(?(\d{1,4})\)?[\s\-\.]?\d{3,4}[\s\-\.]?\d{3,4}/g,
+                    /\+\d{10,15}/g,
+                    /\(\+\d{1,4}\)[\s\-\.]?\d{9,14}/g
+                ];
+                
+                for (const pattern of phonePatterns) {
+                    const phoneMatch = text.match(pattern);
+                    if (phoneMatch) {
+                        whatsappInfo.phoneNumber = phoneMatch[0].trim();
+                        whatsappInfo.hasWhatsApp = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 3. Look for WhatsApp keywords
+            const whatsappKeywords = [
+                'whatsapp', 'whats app', 'wa.me', 'dm for info', 'text me', 'message me',
+                'contact via whatsapp', 'whatsapp me', 'whatsapp only', 'wa only'
+            ];
+            
+            const hasKeyword = whatsappKeywords.some(keyword => lowerText.includes(keyword));
+            if (hasKeyword) {
+                whatsappInfo.whatsappKeyword = true;
+                whatsappInfo.hasWhatsApp = true;
+            }
+            
+            // 4. Look for business contact indicators with phone numbers
+            if (!whatsappInfo.hasWhatsApp) {
+                const businessContactPatterns = [
+                    /contact[:\s]*[\+]?\d{10,15}/gi,
+                    /call[:\s]*[\+]?\d{10,15}/gi,
+                    /phone[:\s]*[\+]?\d{10,15}/gi,
+                    /mobile[:\s]*[\+]?\d{10,15}/gi
+                ];
+                
+                for (const pattern of businessContactPatterns) {
+                    const contactMatch = text.match(pattern);
+                    if (contactMatch) {
+                        const phoneMatch = contactMatch[0].match(/[\+]?\d{10,15}/);
+                        if (phoneMatch) {
+                            whatsappInfo.phoneNumber = phoneMatch[0];
+                            whatsappInfo.hasWhatsApp = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return whatsappInfo.hasWhatsApp ? whatsappInfo : null;
+        }
         
-        // Store Instagram search results (reusing existing variable)
-        // let instagramSearchResults = []; // Already declared elsewhere
+        // Format WhatsApp info for display
+        function formatWhatsAppDisplay(whatsappInfo) {
+            if (!whatsappInfo || !whatsappInfo.hasWhatsApp) {
+                return null;
+            }
+            
+            let display = '';
+            
+            if (whatsappInfo.waLink) {
+                display = `<a href="https://${whatsappInfo.waLink}" target="_blank" style="color: #25D366; font-weight: 600; text-decoration: none;">📱 ${whatsappInfo.phoneNumber || whatsappInfo.waLink}</a>`;
+            } else if (whatsappInfo.phoneNumber) {
+                const whatsappUrl = `https://wa.me/${whatsappInfo.phoneNumber.replace(/[^\d+]/g, '')}`;
+                display = `<a href="${whatsappUrl}" target="_blank" style="color: #25D366; font-weight: 600; text-decoration: none;">📱 ${whatsappInfo.phoneNumber}</a>`;
+            } else if (whatsappInfo.whatsappKeyword) {
+                display = '<span style="color: #25D366; font-weight: 600;">📱 WhatsApp Available</span>';
+            }
+            
+            return display;
+        }
+        // Parse individual Instagram search result with WhatsApp detection and enhanced filtering
+        function parseInstagramResult(item) {
+            try {
+                const url = item.link;
+                const title = item.title;
+                const snippet = item.snippet || '';
+                
+                // Validate Instagram URL
+                if (!url || !url.includes('instagram.com/')) {
+                    console.log('⚠️ Skipping non-Instagram URL:', url);
+                    return null;
+                }
+                
+                // Extract username from URL
+                const usernameMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
+                if (!usernameMatch || !usernameMatch[1]) {
+                    console.log('⚠️ Could not extract username from URL:', url);
+                    return null;
+                }
+                
+                const username = usernameMatch[1];
+                
+                // Validate username (Instagram rules: 3-30 characters, letters, numbers, periods, underscores)
+                const usernameRegex = /^[a-zA-Z0-9_.]{3,30}$/;
+                if (!usernameRegex.test(username)) {
+                    console.log('⚠️ Invalid Instagram username format:', username);
+                    return null;
+                }
+                
+                // Skip official Instagram pages and common non-business accounts
+                const skipPatterns = ['instagram', 'help', 'about', 'press', 'blog', 'jobs', 'api', 'privacy', 'terms', 'support', 'business', 'creators'];
+                if (skipPatterns.includes(username.toLowerCase())) {
+                    console.log('⚠️ Skipping official Instagram page:', username);
+                    return null;
+                }
+                
+                // Extract display name from title
+                let displayName = title.replace(/\s*\(.*?\)\s*/g, '').trim(); // Remove parentheses content
+                displayName = displayName.replace(/Instagram/gi, '').trim(); // Remove Instagram mentions
+                displayName = displayName.replace(/\s*\|.*$/, '').trim(); // Remove everything after pipe
+                displayName = displayName.replace(/\s*-.*$/, '').trim(); // Remove everything after dash
+                
+                if (!displayName || displayName.length < 2) {
+                    displayName = username.charAt(0).toUpperCase() + username.slice(1); // Capitalize username as fallback
+                }
+                
+                // WhatsApp detection in title and snippet
+                const combinedText = title + ' ' + snippet;
+                const whatsappInfo = detectWhatsAppInfo(combinedText);
+                
+                // Additional validation: ensure the profile seems business-related
+                const lowerCombinedText = combinedText.toLowerCase();
+                
+                // Skip obvious non-business accounts (optional filtering)
+                const personalIndicators = ['personal', 'private', 'my life', 'selfie', 'travel diary', 'food blog'];
+                const hasPersonalIndicators = personalIndicators.some(indicator => 
+                    lowerCombinedText.includes(indicator)
+                );
+                
+                const hasBusinessIndicators = (text) => {
+                    const businessKeywords = ['business', 'shop', 'store', 'service', 'company', 'professional', 'official', 'contact', 'booking', 'appointment'];
+                    return businessKeywords.some(keyword => text.includes(keyword));
+                };
+                
+                if (hasPersonalIndicators && !hasBusinessIndicators(lowerCombinedText) && !whatsappInfo) {
+                    console.log('⚠️ Skipping likely personal account:', username);
+                    return null;
+                }
+                
+                const profile = {
+                    username: username,
+                    displayName: displayName,
+                    profileUrl: url,
+                    snippet: snippet.substring(0, 200), // Limit snippet length
+                    whatsappInfo: whatsappInfo,
+                    hasWhatsApp: whatsappInfo ? true : false,
+                    searchLocation: null // Will be set by the calling function
+                };
+                
+        }
+        
+        // Saved results management functions
+        function saveResultsToMemory(profiles, niche, locations) {
+            const timestamp = new Date().toISOString();
+            const searchEntry = {
+                id: Date.now(),
+                timestamp: timestamp,
+                niche: niche,
+                locations: Array.isArray(locations) ? locations : [locations],
+                profiles: profiles.map(profile => ({
+                    name: profile.displayName,
+                    username: profile.username,
+                    url: profile.profileUrl,
+                    whatsapp: profile.whatsappInfo ? (profile.whatsappInfo.phoneNumber || 'Available') : '',
+                    location: profile.searchLocation || locations[0] || 'Unknown'
+                }))
+            };
+            
+            // Add to saved results
+            savedInstagramResults.push(...searchEntry.profiles);
+            
+            // Save to localStorage for persistence
+            try {
+                const existingSaved = JSON.parse(localStorage.getItem('instagramContactFinderResults') || '[]');
+                existingSaved.push(searchEntry);
+                // Keep only last 20 search sessions
+                const trimmed = existingSaved.slice(-20);
+                localStorage.setItem('instagramContactFinderResults', JSON.stringify(trimmed));
+                
+                console.log(`💾 Saved ${profiles.length} profiles to memory and localStorage`);
+            } catch (error) {
+                console.warn('❌ Failed to save to localStorage:', error);
+            }
+        }
+        
+        function loadSavedResults() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('instagramContactFinderResults') || '[]');
+                savedInstagramResults = [];
+                
+                // Flatten all profiles from all search sessions
+                saved.forEach(session => {
+                    savedInstagramResults.push(...session.profiles);
+                });
+                
+                console.log(`📅 Loaded ${savedInstagramResults.length} saved profiles from localStorage`);
+                updateSavedResultsDisplay();
+            } catch (error) {
+                console.warn('❌ Failed to load saved results:', error);
+                savedInstagramResults = [];
+            }
+        }
+        
+        function updateSavedResultsDisplay() {
+            const countElement = document.getElementById('savedResultsCount');
+            const section = document.getElementById('savedResultsSection');
+            
+            if (countElement) {
+                countElement.textContent = savedInstagramResults.length;
+            }
+            
+            if (section) {
+                section.style.display = savedInstagramResults.length > 0 ? 'block' : 'none';
+            }
+        }
+        
+        function viewSavedResults() {
+            if (savedInstagramResults.length === 0) {
+                alert('No saved results found. Start searching to save results automatically!');
+                return;
+            }
+            
+            // Create a modal to display all saved results
+            const modalHTML = `
+                <div id="savedResultsModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; justify-content: center; align-items: center;">
+                    <div style="background: white; width: 90%; max-width: 800px; max-height: 80%; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="padding: 20px; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+                            <h3 style="margin: 0; color: #333;">💾 Saved Instagram Results (${savedInstagramResults.length})</h3>
+                            <button onclick="closeSavedResultsModal()" style="background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px;">&times;</button>
+                        </div>
+                        <div style="padding: 20px; max-height: 500px; overflow-y: auto;">
+                            ${savedInstagramResults.map((profile, index) => `
+                                <div style="padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 10px; ${profile.whatsapp ? 'border-left: 4px solid #25D366;' : ''}">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <div style="flex: 1;">
+                                            <p style="margin: 0 0 5px 0; font-weight: 600;">${profile.name}</p>
+                                            <p style="margin: 0 0 5px 0; color: #007bff;">@${profile.username}</p>
+                                            <p style="margin: 0 0 5px 0;"><a href="${profile.url}" target="_blank" style="color: #007bff; text-decoration: none;">View Profile ↗️</a></p>
+                                            <p style="margin: 0 0 5px 0; color: #6c757d; font-size: 14px;">📍 ${profile.location}</p>
+                                            ${profile.whatsapp ? `<p style="margin: 0; color: #25D366; font-weight: 600;">📱 ${profile.whatsapp}</p>` : ''}
+                                        </div>
+                                        <span style="background: ${profile.whatsapp ? '#25D366' : '#6c757d'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">#${index + 1}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="padding: 15px; border-top: 1px solid #e9ecef; background: #f8f9fa; display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="exportSavedResultsToCSV()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">📊 Export CSV</button>
+                            <button onclick="clearSavedResults()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">🗑️ Clear All</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('savedResultsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        function closeSavedResultsModal() {
+            const modal = document.getElementById('savedResultsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function exportSavedResultsToCSV() {
+            if (savedInstagramResults.length === 0) {
+                alert('No saved results to export. Start searching to save results automatically!');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = ['Name', 'Username', 'Profile URL', 'WhatsApp', 'Location'];
+            const csvContent = [
+                headers.join(','),
+                ...savedInstagramResults.map(profile => [
+                    `"${profile.name}"`,
+                    `"@${profile.username}"`,
+                    `"${profile.url}"`,
+                    `"${profile.whatsapp}"`,
+                    `"${profile.location}"`
+                ].join(','))
+            ].join('\n');
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `instagram-contacts-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log(`📊 Exported ${savedInstagramResults.length} profiles to CSV`);
+        }
+        
+        function clearSavedResults() {
+            if (!confirm('Are you sure you want to clear all saved results? This action cannot be undone.')) {
+                return;
+            }
+            
+            savedInstagramResults = [];
+            localStorage.removeItem('instagramContactFinderResults');
+            updateSavedResultsDisplay();
+            
+            // Close modal if open
+            const modal = document.getElementById('savedResultsModal');
+            if (modal) {
+                modal.remove();
+            }
+            
+        
+        // Location handling functions
+        function handleInstagramLocationInput(value) {
+            const suggestionsContainer = document.getElementById('instagramLocationSuggestions');
+            
+            if (!value || value.length < 2) {
+                suggestionsContainer.style.display = 'none';
+                return;
+            }
+            
+            // Get location recommendations
+            const recommendations = getInstagramLocationRecommendations(value);
+            
+            if (recommendations.length > 0) {
+                let html = '';
+                recommendations.forEach(location => {
+                    html += `<div onclick="selectInstagramLocation('${location}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='white'">${location}</div>`;
+                });
+                
+                suggestionsContainer.innerHTML = html;
+                suggestionsContainer.style.display = 'block';
+            } else {
+                suggestionsContainer.style.display = 'none';
+            }
+        }
+        
+        function getInstagramLocationRecommendations(query) {
+            // US major cities database
+            const allLocations = [
+                // Major Cities
+                'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
+                'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
+                'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
+                'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
+                'Boston, MA', 'El Paso, TX', 'Nashville, TN', 'Detroit, MI', 'Oklahoma City, OK',
+                'Portland, OR', 'Las Vegas, NV', 'Memphis, TN', 'Louisville, KY', 'Baltimore, MD',
+                'Milwaukee, WI', 'Albuquerque, NM', 'Tucson, AZ', 'Fresno, CA', 'Sacramento, CA',
+                'Kansas City, MO', 'Mesa, AZ', 'Atlanta, GA', 'Omaha, NE', 'Colorado Springs, CO',
+                'Raleigh, NC', 'Miami, FL', 'Oakland, CA', 'Minneapolis, MN', 'Tulsa, OK',
+                'Cleveland, OH', 'Wichita, KS', 'Arlington, TX', 'New Orleans, LA', 'Bakersfield, CA',
+                
+                // Additional Popular Cities
+                'Tampa, FL', 'Honolulu, HI', 'Aurora, CO', 'Anaheim, CA', 'Santa Ana, CA',
+                'St. Louis, MO', 'Riverside, CA', 'Corpus Christi, TX', 'Lexington, KY', 'Pittsburgh, PA',
+                'Anchorage, AK', 'Stockton, CA', 'Cincinnati, OH', 'St. Paul, MN', 'Toledo, OH',
+                'Newark, NJ', 'Greensboro, NC', 'Plano, TX', 'Henderson, NV', 'Lincoln, NE',
+                'Buffalo, NY', 'Jersey City, NJ', 'Chula Vista, CA', 'Fort Wayne, IN', 'Orlando, FL',
+                'St. Petersburg, FL', 'Chandler, AZ', 'Laredo, TX', 'Norfolk, VA', 'Durham, NC',
+                'Madison, WI', 'Lubbock, TX', 'Irvine, CA', 'Winston-Salem, NC', 'Glendale, AZ',
+                'Garland, TX', 'Hialeah, FL', 'Reno, NV', 'Baton Rouge, LA', 'Irving, TX',
+                'Chesapeake, VA', 'Scottsdale, AZ', 'North Las Vegas, NV', 'Fremont, CA', 'Gilbert, AZ',
+                'San Bernardino, CA', 'Boise, ID', 'Birmingham, AL'
+            ];
+            
+            return allLocations.filter(location =>
+                location.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 8);
+        }
+        
+        function selectInstagramLocation(location) {
+            const input = document.getElementById('instagramLocation');
+            input.value = location;
+            document.getElementById('instagramLocationSuggestions').style.display = 'none';
+        }
+        
+        // Display and UI functions
+        function showInstagramSearchLoading(niche, locations) {
+            // Implementation depends on existing loading UI elements
+            console.log(`🔄 Starting search for ${niche} in ${locations}`);
+        }
+        
+        function hideInstagramSearchLoading() {
+            console.log('✅ Search completed');
+        }
+        
+        function showInstagramSearchError(message) {
+            console.error('❌ Search error:', message);
+            alert(`Search Error: ${message}`);
+        }
+        
+        function hideInstagramSearchError() {
+            // Hide error display
+        }
+        
+        function hideInstagramSearchResults() {
+            // Hide results display
+        }
+        
+        function displayInstagramSearchResults(profiles, niche, locations, totalResults, filteredCount, whatsappCount, whatsappFilterEnabled) {
+            console.log(`📊 Displaying ${profiles.length} Instagram profiles for ${niche} in ${locations}`);
+            
+            if (profiles.length === 0) {
+                showInstagramSearchError(`No ${whatsappFilterEnabled ? 'WhatsApp-enabled ' : ''}Instagram profiles found for '${niche}' in '${locations}'.`);
+                return;
+            }
+            
+            // Create results display
+            const resultsHTML = profiles.map((profile, index) => {
+                const whatsappDisplay = formatWhatsAppDisplay(profile.whatsappInfo);
+                const isWhatsAppProfile = profile.hasWhatsApp;
+                const borderColor = isWhatsAppProfile ? '#25D366' : '#e9ecef';
+                
+                return `
+                    <div style="background: white; border: 2px solid ${borderColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 8px 0; font-size: 16px;"><strong>Name:</strong> <span style="color: #333;">${profile.displayName}</span></p>
+                                <p style="margin: 0 0 8px 0; font-size: 15px;"><strong>Username:</strong> <span style="color: #007bff; font-weight: 500;">@${profile.username}</span></p>
+                                <p style="margin: 0 0 8px 0;"><strong>Profile:</strong> <a href="${profile.profileUrl}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500;">View on Instagram ↗️</a></p>
+                                <p style="margin: 0 0 8px 0;"><strong>Location:</strong> <span style="color: #6c757d; font-weight: 500;">${profile.searchLocation || 'Unknown'}</span></p>
+                                ${whatsappDisplay ? `<p style="margin: 0;"><strong>WhatsApp:</strong> ${whatsappDisplay}</p>` : ''}
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background: ${isWhatsAppProfile ? '#25D366' : '#007bff'}; color: white; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                    ${isWhatsAppProfile ? '📱 ' : ''}#${index + 1}
+                                </span>
+                            </div>
+                        </div>
+                        ${profile.snippet ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; font-size: 14px; color: #6c757d; line-height: 1.4;">📝 ${profile.snippet}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Display results (this would need to target actual DOM elements)
+            console.log('Generated results HTML for display');
+            
+            // Show success message
+            alert(`Found ${profiles.length} Instagram profiles!${whatsappCount > 0 ? ` (${whatsappCount} with WhatsApp)` : ''}`);
+        }
+        let instagramSearchResults = [];
+        let savedInstagramResults = [];
+        let selectedLocations = [];
         
         // Populate niches dropdown for Instagram search
         function populateInstagramSearchNiches() {
-            const selectElement = document.getElementById('instagramSearchNiche');
+            const selectElement = document.getElementById('instagramNiche');
             if (!selectElement) return;
             
             // Clear existing options except the first one
@@ -7504,6 +8088,157 @@ State abbreviations (CA)"
                 // Automotive
                 'auto repair', 'car wash', 'tire shops', 'auto detailing', 'oil change', 'brake repair', 'transmission repair', 'auto body shops',
                 // Professional Services
+                'lawyers', 'accountants', 'insurance agents', 'real estate agents', 'financial advisors', 'consultants', 'therapists', 'chiropractors',
+                // Health & Wellness
+                'dentists', 'doctors', 'veterinarians', 'physical therapy', 'mental health', 'nutrition', 'fitness trainers', 'yoga studios',
+                // Food & Beverage
+                'restaurants', 'cafes', 'food trucks', 'catering', 'bakeries', 'bars', 'pizza shops', 'ice cream shops',
+                // Retail & Shopping
+                'clothing stores', 'jewelry shops', 'electronics stores', 'furniture stores', 'gift shops', 'bookstores', 'sporting goods', 'pet stores',
+                // Entertainment & Events
+                'event planners', 'photographers', 'videographers', 'musicians', 'DJs', 'entertainers', 'venues', 'party supplies',
+                // Construction & Trades
+                'contractors', 'carpenters', 'electricians', 'plumbers', 'roofers', 'flooring', 'tile work', 'kitchen remodeling',
+                // Technology
+                'computer repair', 'phone repair', 'IT services', 'web design', 'marketing agencies', 'graphic design', 'printing services'
+            ];
+            
+            // Remove duplicates and sort
+            const uniqueNiches = [...new Set(allNiches)];
+            uniqueNiches.sort();
+            
+            // Add each niche as an option
+            uniqueNiches.forEach(niche => {
+                const option = document.createElement('option');
+                option.value = niche;
+                option.textContent = niche.charAt(0).toUpperCase() + niche.slice(1); // Capitalize first letter
+                selectElement.appendChild(option);
+            });
+            
+            console.log(`✅ Populated Instagram Search with ${uniqueNiches.length} niches`);
+        }
+        
+        // Save Instagram Search API configuration
+        function saveInstagramApiKeys() {
+            const apiKey = document.getElementById('instagramSearchApiKey').value.trim();
+            const searchEngineId = document.getElementById('instagramSearchEngineId').value.trim();
+
+            if (!apiKey || !searchEngineId) {
+                alert('❌ Please enter both API key and Search Engine ID');
+                return;
+            }
+
+            try {
+                localStorage.setItem('instagramSearchApiKey', apiKey);
+                localStorage.setItem('instagramSearchEngineId', searchEngineId);
+
+                document.getElementById('instagramApiStatus').innerHTML =
+                    '<span class="status-indicator" style="color: #28a745;">✅ Configuration saved</span>';
+
+                console.log('✅ Instagram API credentials saved');
+                alert('✅ Instagram API credentials saved successfully!');
+            } catch (error) {
+                console.error('❌ Error saving Instagram API credentials:', error);
+                alert('❌ Error saving credentials: ' + error.message);
+            }
+        }
+        
+        // Test Instagram API connection
+        async function testInstagramApiKeys() {
+            const apiKey = document.getElementById('instagramSearchApiKey').value.trim() ||
+                localStorage.getItem('instagramSearchApiKey');
+            const engineId = document.getElementById('instagramSearchEngineId').value.trim() ||
+                localStorage.getItem('instagramSearchEngineId');
+
+            if (!apiKey || !engineId) {
+                alert('❌ Please enter both API key and Search Engine ID first');
+                return;
+            }
+
+            try {
+                // Test with a simple query
+                const testUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=test&num=1`;
+                const response = await fetch(testUrl);
+
+                if (response.ok) {
+                    document.getElementById('instagramApiStatus').innerHTML =
+                        '<span class="status-indicator" style="color: #28a745;">✅ Connection successful</span>';
+                    saveInstagramApiKeys();
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('instagramApiStatus').innerHTML =
+                        '<span class="status-indicator" style="color: #dc3545;">❌ Connection failed</span>';
+                    console.error('API test failed:', errorData);
+                }
+            } catch (error) {
+                document.getElementById('instagramApiStatus').innerHTML =
+                    '<span class="status-indicator" style="color: #dc3545;">❌ Connection error</span>';
+                console.error('API test error:', error);
+            }
+        }
+        
+        // Load saved Instagram Search configuration
+        function loadInstagramSearchConfig() {
+            const apiKey = localStorage.getItem('instagramSearchApiKey');
+            const engineId = localStorage.getItem('instagramSearchEngineId');
+            
+            if (apiKey) document.getElementById('instagramSearchApiKey').value = apiKey;
+            if (engineId) document.getElementById('instagramSearchEngineId').value = engineId;
+            
+            if (apiKey && engineId) {
+                document.getElementById('instagramApiStatus').innerHTML = 
+                    '<span class="status-indicator" style="color: #28a745;">✅ Configuration loaded</span>';
+            }
+        }
+        
+        // Multiple locations management for Instagram search
+        function addCurrentLocation() {
+            const input = document.getElementById('instagramLocation');
+            const value = input.value.trim();
+            
+            if (!value) {
+                alert('Please enter a location first');
+                return;
+            }
+            
+            // Parse comma-separated locations
+            const locations = value.split(',').map(loc => loc.trim()).filter(loc => loc);
+            
+            locations.forEach(location => {
+                if (!selectedLocations.includes(location)) {
+                    selectedLocations.push(location);
+                }
+            });
+            
+            // Clear input and update display
+            input.value = '';
+            updateSelectedLocationsDisplay();
+        }
+        
+        // Update the selected locations display
+        function updateSelectedLocationsDisplay() {
+            const container = document.getElementById('selectedLocations');
+            
+            if (selectedLocations.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const locationsHTML = selectedLocations.map((location, index) => {
+                return `<span class="location-chip" style="background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                    ${location}
+                    <span onclick="removeSelectedLocation(${index})" style="cursor: pointer; font-weight: bold; margin-left: 4px;">&times;</span>
+                </span>`;
+            }).join('');
+            
+            container.innerHTML = locationsHTML;
+        }
+        
+        // Remove a selected location
+        function removeSelectedLocation(index) {
+            selectedLocations.splice(index, 1);
+            updateSelectedLocationsDisplay();
+        }
                 'interior designers', 'photographers', 'personal trainers', 'tutors', 'accountants', 'lawyers', 'real estate agents', 'consultants',
                 // Food & Beverage
                 'restaurants', 'food trucks', 'catering', 'bakeries', 'coffee shops', 'pizza places', 'food delivery', 'meal prep',
@@ -7519,18 +8254,19 @@ State abbreviations (CA)"
                 'construction companies', 'contractors', 'architects', 'engineers', 'surveyors', 'inspectors', 'appraisers', 'notaries'
             ];
             
-            // Sort niches alphabetically
-            allNiches.sort();
+            // Remove duplicates and sort
+            const uniqueNiches = [...new Set(allNiches)];
+            uniqueNiches.sort();
             
             // Add each niche as an option
-            allNiches.forEach(niche => {
+            uniqueNiches.forEach(niche => {
                 const option = document.createElement('option');
                 option.value = niche;
                 option.textContent = niche.charAt(0).toUpperCase() + niche.slice(1); // Capitalize first letter
                 selectElement.appendChild(option);
             });
             
-            console.log(`✅ Populated Instagram Search with ${allNiches.length} niches`);
+            console.log(`✅ Populated Instagram Search with ${uniqueNiches.length} niches`);
         }
         
         // Save Instagram Search API configuration
@@ -7635,10 +8371,69 @@ State abbreviations (CA)"
             }
         }
         
-        // Main Instagram search function
-        async function searchInstagramBusinesses() {
-            const niche = document.getElementById('instagramSearchNiche').value.trim();
-            const location = document.getElementById('instagramSearchLocation').value.trim();
+        // Multiple locations management for Instagram search
+        function addCurrentLocation() {
+            const input = document.getElementById('instagramSearchLocation');
+            const value = input.value.trim();
+            
+            if (!value) {
+                alert('Please enter a location first');
+                return;
+            }
+            
+            // Parse comma-separated locations
+            const locations = value.split(',').map(loc => loc.trim()).filter(loc => loc);
+            
+            locations.forEach(location => {
+                if (!selectedLocations.includes(location)) {
+                    selectedLocations.push(location);
+                }
+            });
+            
+            // Clear input and update display
+            input.value = '';
+            updateSelectedLocationsDisplay();
+        }
+        
+        function removeLocation(location) {
+            const index = selectedLocations.indexOf(location);
+            if (index > -1) {
+                selectedLocations.splice(index, 1);
+                updateSelectedLocationsDisplay();
+            }
+        }
+        
+        function updateSelectedLocationsDisplay() {
+            const container = document.getElementById('selectedLocations');
+            
+            if (selectedLocations.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = selectedLocations.map(location => `
+                <span class="location-chip" style="background: #007bff; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-right: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                    ${location}
+                    <button onclick="removeLocation('${location}')" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px; padding: 0; margin: 0;">×</button>
+                </span>
+            `).join('');
+        }
+        async function searchInstagramProfiles() {
+            const niche = document.getElementById('instagramNiche').value.trim();
+            const locationInput = document.getElementById('instagramLocation').value.trim();
+            const maxResults = document.getElementById('instagramMaxResults').value;
+            const whatsappOnlyFilter = document.getElementById('whatsappOnlyFilter').checked;
+            
+            // Get all locations (selected + current input)
+            let allLocations = [...selectedLocations];
+            if (locationInput) {
+                const inputLocations = locationInput.split(',').map(loc => loc.trim()).filter(loc => loc);
+                inputLocations.forEach(loc => {
+                    if (!allLocations.includes(loc)) {
+                        allLocations.push(loc);
+                    }
+                });
+            }
             
             // Validation
             if (!niche) {
@@ -7646,13 +8441,13 @@ State abbreviations (CA)"
                 return;
             }
             
-            if (!location) {
-                alert('❌ Please enter a location');
+            if (allLocations.length === 0) {
+                alert('❌ Please enter at least one location');
                 return;
             }
             
-            const apiKey = localStorage.getItem('instagramSearchApiKey') || document.getElementById('googleApiKey').value.trim();
-            const engineId = localStorage.getItem('instagramSearchEngineId') || document.getElementById('searchEngineId').value.trim();
+            const apiKey = localStorage.getItem('instagramSearchApiKey') || document.getElementById('instagramSearchApiKey').value.trim();
+            const engineId = localStorage.getItem('instagramSearchEngineId') || document.getElementById('instagramSearchEngineId').value.trim();
             
             if (!apiKey || !engineId) {
                 alert('❌ Please configure your API credentials first');
@@ -7660,10 +8455,69 @@ State abbreviations (CA)"
             }
             
             // Show loading state
-            showInstagramSearchLoading(niche, location);
+            showInstagramSearchLoading(niche, allLocations.join(', '));
             hideInstagramSearchError();
             hideInstagramSearchResults();
             
+            try {
+                console.log(`🔍 Starting multi-location Instagram search for "${niche}" in ${allLocations.length} locations`);
+                
+                let finalProfiles = [];
+                let totalResults = 0;
+                let totalFiltered = 0;
+                let totalWhatsApp = 0;
+                
+                // Search each location
+                for (let i = 0; i < allLocations.length; i++) {
+                    const location = allLocations[i];
+                    console.log(`📍 Searching location ${i + 1}/${allLocations.length}: ${location}`);
+                    
+                    const locationResults = await searchSingleLocation(niche, location, apiKey, engineId, maxResults);
+                    
+                    // Add location info to each profile
+                    locationResults.profiles.forEach(profile => {
+                        profile.searchLocation = location;
+                    });
+                    
+                    finalProfiles.push(...locationResults.profiles);
+                    totalResults += locationResults.totalResults;
+                    totalFiltered += locationResults.filteredCount;
+                    totalWhatsApp += locationResults.whatsappCount;
+                    
+                    // Small delay between requests to avoid rate limiting
+                    if (i < allLocations.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                // Apply WhatsApp filter if enabled
+                if (whatsappOnlyFilter) {
+                    finalProfiles = finalProfiles.filter(profile => profile.hasWhatsApp);
+                    console.log(`📱 WhatsApp filter applied: ${finalProfiles.length} profiles remaining`);
+                }
+                
+                // Save results to memory
+                if (finalProfiles.length > 0) {
+                    saveResultsToMemory(finalProfiles, niche, allLocations);
+                }
+                
+                // Update saved results section
+                updateSavedResultsDisplay();
+                
+                // Display results
+                instagramSearchResults = finalProfiles;
+                displayInstagramSearchResults(finalProfiles, niche, allLocations.join(', '), totalResults, totalFiltered, totalWhatsApp, whatsappOnlyFilter);
+                
+            } catch (error) {
+                console.error('❌ Instagram search failed:', error);
+                showInstagramSearchError(error.message);
+            } finally {
+                hideInstagramSearchLoading();
+            }
+        }
+        
+        // Search a single location
+        async function searchSingleLocation(niche, location, apiKey, engineId) {
             try {
                 // Form the search query: site:instagram.com "niche" "location"
                 const searchQuery = `site:instagram.com "${niche}" "${location}"`;
@@ -7706,17 +8560,15 @@ State abbreviations (CA)"
                     throw new Error(data.error.message || 'Google API error');
                 }
                 
-                // Process the results with enhanced filtering and WhatsApp detection
+                // Process the results
                 const profiles = [];
-                const whatsappOnlyFilter = document.getElementById('whatsappOnlyFilter').checked;
                 let totalResults = 0;
                 let filteredCount = 0;
                 let whatsappCount = 0;
                 
                 if (data.items && data.items.length > 0) {
                     totalResults = data.items.length;
-                    console.log(`📄 Processing ${totalResults} raw search results...`);
-                    console.log(`📱 WhatsApp-only filter: ${whatsappOnlyFilter ? 'ENABLED' : 'DISABLED'}`);
+                    console.log(`📄 Processing ${totalResults} raw search results for ${location}...`);
                     
                     data.items.forEach((item, index) => {
                         const profile = parseInstagramResult(item);
@@ -7726,38 +8578,224 @@ State abbreviations (CA)"
                                 whatsappCount++;
                             }
                             
-                            // Apply WhatsApp filter if enabled
-                            if (whatsappOnlyFilter && !profile.hasWhatsApp) {
-                                filteredCount++;
-                                console.log(`🚫 Filtered out @${profile.username} (no WhatsApp)`);
-                                return;
-                            }
-                            
                             profiles.push(profile);
-                            console.log(`✅ Valid profile #${profiles.length}: @${profile.username}${profile.hasWhatsApp ? ' (📱 WhatsApp)' : ''}`);
+                            console.log(`✅ Valid profile #${profiles.length}: @${profile.username}${profile.hasWhatsApp ? ' (📱 WhatsApp)' : ''} in ${location}`);
                         } else {
                             filteredCount++;
                         }
                     });
                     
-                    console.log(`📊 Filter results: ${profiles.length} valid profiles, ${whatsappCount} with WhatsApp, ${filteredCount} filtered out`);
+                    console.log(`📊 Results for ${location}: ${profiles.length} valid profiles, ${whatsappCount} with WhatsApp, ${filteredCount} filtered out`);
                 }
                 
-                // Limit to 10 results as requested
-                const limitedProfiles = profiles.slice(0, 10);
-                
-                instagramSearchResults = limitedProfiles;
-                displayInstagramSearchResults(limitedProfiles, niche, location, totalResults, filteredCount, whatsappCount, whatsappOnlyFilter);
+                return {
+                    profiles: profiles.slice(0, 10), // Limit to 10 results per location
+                    totalResults,
+                    filteredCount,
+                    whatsappCount
+                };
                 
             } catch (error) {
-                console.error('❌ Instagram search failed:', error);
-                showInstagramSearchError(error.message);
-            } finally {
-                hideInstagramSearchLoading();
+                console.error(`❌ Error searching ${location}:`, error.message);
+                return {
+                    profiles: [],
+                    totalResults: 0,
+                    filteredCount: 0,
+                    whatsappCount: 0
+                };
             }
         }
         
-        // WhatsApp detection functions
+        // Saved results management functions
+        function saveResultsToMemory(profiles, niche, locations) {
+            const timestamp = new Date().toISOString();
+            const searchEntry = {
+                id: Date.now(),
+                timestamp: timestamp,
+                niche: niche,
+                locations: Array.isArray(locations) ? locations : [locations],
+                profiles: profiles.map(profile => ({
+                    name: profile.displayName,
+                    username: profile.username,
+                    url: profile.profileUrl,
+                    whatsapp: profile.whatsappInfo ? (profile.whatsappInfo.phoneNumber || 'Available') : '',
+                    location: profile.searchLocation || locations[0] || 'Unknown'
+                }))
+            };
+            
+            // Add to saved results
+            savedInstagramResults.push(...searchEntry.profiles);
+            
+            // Save to localStorage for persistence
+            try {
+                const existingSaved = JSON.parse(localStorage.getItem('instagramContactFinderResults') || '[]');
+                existingSaved.push(searchEntry);
+                // Keep only last 20 search sessions
+                const trimmed = existingSaved.slice(-20);
+                localStorage.setItem('instagramContactFinderResults', JSON.stringify(trimmed));
+                
+                console.log(`💾 Saved ${profiles.length} profiles to memory and localStorage`);
+            } catch (error) {
+                console.warn('❌ Failed to save to localStorage:', error);
+            }
+        }
+        
+        function loadSavedResults() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('instagramContactFinderResults') || '[]');
+                savedInstagramResults = [];
+                
+                // Flatten all profiles from all search sessions
+                saved.forEach(session => {
+                    savedInstagramResults.push(...session.profiles);
+                });
+                
+                console.log(`📥 Loaded ${savedInstagramResults.length} saved profiles from localStorage`);
+                updateSavedResultsDisplay();
+            } catch (error) {
+                console.warn('❌ Failed to load saved results:', error);
+                savedInstagramResults = [];
+            }
+        }
+        
+        function updateSavedResultsDisplay() {
+            const countElement = document.getElementById('savedResultsCount');
+            const section = document.getElementById('savedResultsSection');
+            
+            if (countElement) {
+                countElement.textContent = savedInstagramResults.length;
+            }
+            
+            if (section) {
+                section.style.display = savedInstagramResults.length > 0 ? 'block' : 'none';
+            }
+        }
+        
+        function viewSavedResults() {
+            if (savedInstagramResults.length === 0) {
+                alert('No saved results found. Start searching to save results automatically!');
+                return;
+            }
+            
+            // Create a modal to display all saved results
+            const modalHTML = `
+                <div id="savedResultsModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+                    <div style="background: white; border-radius: 12px; max-width: 90%; max-height: 90%; overflow-y: auto; padding: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
+                            <h3 style="margin: 0; color: #333;">📊 All Saved Instagram Profiles (${savedInstagramResults.length})</h3>
+                            <button onclick="closeSavedResultsModal()" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">✕ Close</button>
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            ${savedInstagramResults.map((profile, index) => `
+                                <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 14px;">
+                                        <div><strong>Name:</strong> ${profile.name}</div>
+                                        <div><strong>Username:</strong> @${profile.username}</div>
+                                        <div><strong>Location:</strong> ${profile.location}</div>
+                                    </div>
+                                    <div style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+                                        <a href="${profile.url}" target="_blank" style="color: #007bff; text-decoration: none;">🔗 View Profile</a>
+                                        ${profile.whatsapp ? `<span style="color: #25D366; font-weight: 600;">📱 ${profile.whatsapp}</span>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('savedResultsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        function closeSavedResultsModal() {
+            const modal = document.getElementById('savedResultsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function exportSavedResultsToCSV() {
+            if (savedInstagramResults.length === 0) {
+                alert('No saved results to export. Start searching to save results automatically!');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = ['Name', 'Username', 'Profile URL', 'WhatsApp', 'Location'];
+            const csvContent = [
+                headers.join(','),
+                ...savedInstagramResults.map(profile => [
+                    `"${profile.name}"`,
+                    `"@${profile.username}"`,
+                    `"${profile.url}"`,
+                    `"${profile.whatsapp}"`,
+                    `"${profile.location}"`
+                ].join(','))
+            ].join('\n');
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `instagram-contacts-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log(`📊 Exported ${savedInstagramResults.length} profiles to CSV`);
+        }
+        
+        // Utility functions for Instagram profiles
+        function copyProfileInfoWithWhatsApp(name, username, url, whatsapp) {
+            const profileInfo = `Name: ${name}\nUsername: @${username}\nProfile: ${url}${whatsapp ? `\nWhatsApp: ${whatsapp}` : ''}`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(profileInfo).then(() => {
+                    alert('📋 Profile info copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for clipboard write failure
+                    fallbackCopyTextToClipboard(profileInfo);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyTextToClipboard(profileInfo);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('📋 Profile info copied to clipboard!');
+            } catch (err) {
+                alert('Unable to copy to clipboard. Please copy manually:\n\n' + text);
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        function openWhatsApp(phoneNumber, name) {
+            const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+            const message = encodeURIComponent(`Hi ${name}, I found your Instagram profile and wanted to connect!`);
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function retryInstagramSearch() {
+            hideInstagramSearchError();
+            searchInstagramBusinesses();
+        }
         function detectWhatsAppInfo(text) {
             if (!text) return null;
             
@@ -8101,6 +9139,7 @@ State abbreviations (CA)"
                                 <p style="margin: 0 0 8px 0; font-size: 16px;"><strong>Name:</strong> <span style="color: #333;">${profile.displayName}</span></p>
                                 <p style="margin: 0 0 8px 0; font-size: 15px;"><strong>Username:</strong> <span style="color: #007bff; font-weight: 500;">@${profile.username}</span></p>
                                 <p style="margin: 0 0 8px 0;"><strong>Profile:</strong> <a href="${profile.profileUrl}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500;">View on Instagram ↗️</a></p>
+                                <p style="margin: 0 0 8px 0;"><strong>Location:</strong> <span style="color: #6c757d; font-weight: 500;">${profile.searchLocation || 'Unknown'}</span></p>
                                 ${whatsappDisplay ? `<p style="margin: 0;"><strong>WhatsApp:</strong> ${whatsappDisplay}</p>` : ''}
                             </div>
                             <div style="text-align: right;">
@@ -8140,7 +9179,7 @@ State abbreviations (CA)"
                         <h5 style="margin: 0 0 8px 0; color: #495057;">📊 Search Summary</h5>
                         <div style="font-size: 14px; color: #6c757d; line-height: 1.6;">
                             <div style="margin-bottom: 4px;">
-                                Found <strong>${totalResults}</strong> search results, showing <strong>${profiles.length}</strong> valid profiles.
+                                Found <strong>${totalResults}</strong> search results across <strong>${Array.isArray(location) ? location.split(', ').length : 1}</strong> location(s), showing <strong>${profiles.length}</strong> valid profiles.
                             </div>
                             ${whatsappCount > 0 ? `<div style="margin-bottom: 4px; color: #25D366; font-weight: 600;">📱 <strong>${whatsappCount}</strong> profile${whatsappCount !== 1 ? 's' : ''} with WhatsApp contact info detected.</div>` : ''}
                             ${filteredCount > 0 ? `<div style="color: #dc3545;"><strong>${filteredCount}</strong> results filtered out (invalid usernames, non-business accounts${whatsappFilterEnabled ? ', no WhatsApp' : ''})</div>` : ''}
