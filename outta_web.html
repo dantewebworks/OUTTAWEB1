@@ -1192,6 +1192,7 @@ State abbreviations (CA)"
             <div class="tab active" onclick="switchTab('search')">Search</div>
             <div class="tab" onclick="switchTab('history')">History</div>
             <div class="tab" onclick="switchTab('contacts')">Contact Finder</div>
+            <div class="tab" onclick="switchTab('instagram-search')">Instagram Search</div>
             <div class="tab" onclick="switchTab('instagram')">Instagram</div>
             <div class="tab" onclick="switchTab('api')">API Key</div>
         </div>
@@ -1637,6 +1638,89 @@ State abbreviations (CA)"
 
             <div id="searchHistory" style="margin-top:16px"></div>
         </div>
+
+        <div id="instagram-search-tab" class="tab-content">
+            <h2>📸 Instagram Contact Finder</h2>
+            <p style="color: #666; margin-bottom: 20px;">Find Instagram business profiles using Google Custom Search API. Simply select a niche, enter a location, and discover potential leads with active Instagram presence.</p>
+
+            <!-- API Configuration Section -->
+            <div class="api-config-section" style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                <h4 style="margin: 0 0 15px 0; color: #007bff;">🔑 API Configuration</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label for="googleApiKey" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Google Custom Search API Key</label>
+                        <input type="password" id="googleApiKey" placeholder="Enter your Google Custom Search API key" 
+                               style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div>
+                        <label for="searchEngineId" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Search Engine ID (CX)</label>
+                        <input type="password" id="searchEngineId" placeholder="Enter your Search Engine ID" 
+                               style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 6px; font-family: monospace;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button onclick="saveInstagramSearchConfig()" style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">
+                        💾 Save Configuration
+                    </button>
+                    <button onclick="testInstagramSearchConfig()" style="background: #28a745; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer;">
+                        🧪 Test API
+                    </button>
+                    <div id="instagramSearchApiStatus" style="margin-left: 10px; font-weight: 600;">❓ Not configured</div>
+                </div>
+            </div>
+
+            <!-- Search Form Section -->
+            <div style="margin-bottom: 25px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h4 style="margin: 0 0 20px 0; color: #333;">🔍 Search Parameters</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 120px; gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <label for="instagramSearchNiche" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Business Niche</label>
+                        <select id="instagramSearchNiche" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 6px;">
+                            <option value="">Choose a niche...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="instagramSearchLocation" style="font-weight: 600; color: #495057; display: block; margin-bottom: 5px;">Location</label>
+                        <input type="text" id="instagramSearchLocation" placeholder="e.g., Houston, New York, Los Angeles" 
+                               style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; align-items: end;">
+                        <button onclick="searchInstagramBusinesses()" id="instagramSearchButton" 
+                                style="background: #007bff; color: white; border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
+                            🚀 Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Section -->
+            <div id="instagramSearchLoading" style="display: none; text-align: center; padding: 30px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px;">
+                <div style="width: 30px; height: 30px; border: 3px solid #e9ecef; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                <h4 style="color: #007bff; margin: 0 0 8px 0;">🔍 Searching Instagram...</h4>
+                <p style="color: #6c757d; margin: 0;">Finding Instagram profiles for "<span id="searchingNiche"></span>" in "<span id="searchingLocation"></span>"</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="instagramSearchResults" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h4 style="margin: 0; color: #333;">📋 Instagram Profiles Found</h4>
+                    <span id="resultsCounter" style="background: #007bff; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600;">0 results</span>
+                </div>
+                
+                <div id="instagramProfilesList"></div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="instagramSearchError" style="display: none; padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin-bottom: 20px;">
+                <h5 style="color: #721c24; margin: 0 0 10px 0;">❌ Search Error</h5>
+                <p id="instagramSearchErrorMessage" style="color: #721c24; margin: 0;"></p>
+                <button onclick="retryInstagramSearch()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                    🔄 Retry Search
+                </button>
+            </div>
 
         <div id="instagram-tab" class="tab-content">
             <h2>Instagram Lead Finder</h2>
@@ -2538,6 +2622,9 @@ State abbreviations (CA)"
             // Initialize specific tab functionality
             if (tabName === 'contacts') {
                 initializeContactSearch();
+            } else if (tabName === 'instagram-search') {
+                populateInstagramSearchNiches();
+                loadInstagramSearchConfig();
             }
         }
 
@@ -5953,7 +6040,6 @@ State abbreviations (CA)"
         }
 
         // Instagram Contact Finder Functions
-        let instagramSearchResults = [];
 
         function saveInstagramApiKeys() {
             const apiKey = document.getElementById('instagramSearchApiKey').value.trim();
@@ -6651,23 +6737,64 @@ State abbreviations (CA)"
                 return;
             }
 
+            // Update status to show testing
+            document.getElementById('contactApiStatus').innerHTML = 
+                '<span class="status-indicator" style="color: #007bff;">🧪 Testing API connection...</span>';
+
             try {
                 const testUrl = `https://www.googleapis.com/customsearch/v1?key=${searchKey}&cx=${engineId}&q=test&num=1`;
                 const response = await fetch(testUrl);
 
+                let responseText;
+                try {
+                    responseText = await response.text();
+                } catch (readError) {
+                    throw new Error(`Failed to read response: ${readError.message}`);
+                }
+
                 if (response.ok) {
-                    const data = await response.json();
+                    if (!responseText) {
+                        throw new Error('Empty response from Google API');
+                    }
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        throw new Error(`Invalid JSON response: ${parseError.message}`);
+                    }
+
                     if (data.items) {
+                        document.getElementById('contactApiStatus').innerHTML = 
+                            '<span class="status-indicator" style="color: #28a745;">✅ API connection successful</span>';
                         alert('✅ API keys are working correctly!');
                     } else {
+                        document.getElementById('contactApiStatus').innerHTML = 
+                            '<span class="status-indicator" style="color: #ffc107;">⚠️ API works but no results</span>';
                         alert('⚠️ API keys work but no search results. This might be normal.');
                     }
                 } else {
-                    const errorData = await response.json();
-                    alert(`❌ API test failed: ${errorData.error?.message || 'Unknown error'}`);
+                    let errorMessage = `HTTP ${response.status}`;
+                    
+                    if (responseText) {
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.error?.message || errorData.message || errorMessage;
+                        } catch (parseError) {
+                            // If JSON parsing fails, use the raw text or status
+                            errorMessage = responseText.length > 200 ? `HTTP ${response.status}` : responseText || errorMessage;
+                        }
+                    }
+                    
+                    document.getElementById('contactApiStatus').innerHTML = 
+                        '<span class="status-indicator" style="color: #dc3545;">❌ API connection failed</span>';
+                    alert(`❌ API test failed: ${errorMessage}`);
                 }
             } catch (error) {
-                alert(`❌ API test failed: ${error.message}`);
+                console.error('❌ API test error:', error);
+                document.getElementById('contactApiStatus').innerHTML = 
+                    '<span class="status-indicator" style="color: #dc3545;">❌ Connection error</span>';
+                alert(`❌ Connection test failed: ${error.message}`);
             }
         }
 
@@ -7339,11 +7466,390 @@ State abbreviations (CA)"
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
 
+        // ======= INSTAGRAM CONTACT FINDER FUNCTIONALITY =======
+        
+        // Store Instagram search results (reusing existing variable)
+        // let instagramSearchResults = []; // Already declared elsewhere
+        
+        // Populate niches dropdown for Instagram search
+        function populateInstagramSearchNiches() {
+            const selectElement = document.getElementById('instagramSearchNiche');
+            if (!selectElement) return;
+            
+            // Clear existing options except the first one
+            selectElement.innerHTML = '<option value="">Choose a niche...</option>';
+            
+            // Get all niches from the app
+            const allNiches = [
+                // Personal Services
+                'barber shops', 'hair salons', 'nail salons', 'spas', 'massage therapy', 'tattoo shops', 'piercing studios', 'tanning salons',
+                // Home Services  
+                'plumbers', 'electricians', 'HVAC contractors', 'roofers', 'painters', 'landscapers', 'cleaning services', 'handyman services',
+                // Automotive
+                'auto repair', 'car wash', 'tire shops', 'auto detailing', 'oil change', 'brake repair', 'transmission repair', 'auto body shops',
+                // Professional Services
+                'interior designers', 'photographers', 'personal trainers', 'tutors', 'accountants', 'lawyers', 'real estate agents', 'consultants',
+                // Food & Beverage
+                'restaurants', 'food trucks', 'catering', 'bakeries', 'coffee shops', 'pizza places', 'food delivery', 'meal prep',
+                // Health & Wellness
+                'chiropractors', 'dentists', 'physical therapy', 'yoga studios', 'gyms', 'nutritionists', 'acupuncture', 'mental health',
+                // Additional Services
+                'pet groomers', 'veterinarians', 'daycare centers', 'tutoring centers', 'music lessons', 'dance studios', 'martial arts', 'swimming lessons',
+                // Service Businesses
+                'dry cleaners', 'laundromats', 'tailors', 'shoe repair', 'jewelry repair', 'watch repair', 'key makers', 'locksmiths',
+                // Retail & Specialty
+                'florists', 'gift shops', 'antique stores', 'thrift stores', 'pawn shops', 'bookstores', 'libraries', 'art galleries',
+                // Construction & Professional
+                'construction companies', 'contractors', 'architects', 'engineers', 'surveyors', 'inspectors', 'appraisers', 'notaries'
+            ];
+            
+            // Sort niches alphabetically
+            allNiches.sort();
+            
+            // Add each niche as an option
+            allNiches.forEach(niche => {
+                const option = document.createElement('option');
+                option.value = niche;
+                option.textContent = niche.charAt(0).toUpperCase() + niche.slice(1); // Capitalize first letter
+                selectElement.appendChild(option);
+            });
+            
+            console.log(`✅ Populated Instagram Search with ${allNiches.length} niches`);
+        }
+        
+        // Save Instagram Search API configuration
+        function saveInstagramSearchConfig() {
+            const apiKey = document.getElementById('googleApiKey').value.trim();
+            const engineId = document.getElementById('searchEngineId').value.trim();
+            
+            if (!apiKey || !engineId) {
+                alert('❌ Please enter both API key and Search Engine ID');
+                return;
+            }
+            
+            try {
+                localStorage.setItem('instagramSearchApiKey', apiKey);
+                localStorage.setItem('instagramSearchEngineId', engineId);
+                
+                document.getElementById('instagramSearchApiStatus').innerHTML = '✅ Configuration saved';
+                document.getElementById('instagramSearchApiStatus').style.color = '#28a745';
+                
+                console.log('✅ Instagram Search API credentials saved');
+                alert('✅ API credentials saved successfully!');
+            } catch (error) {
+                console.error('❌ Error saving Instagram Search API credentials:', error);
+                alert('❌ Error saving credentials: ' + error.message);
+            }
+        }
+        
+        // Test Instagram Search API configuration
+        async function testInstagramSearchConfig() {
+            const apiKey = document.getElementById('googleApiKey').value.trim() || localStorage.getItem('instagramSearchApiKey');
+            const engineId = document.getElementById('searchEngineId').value.trim() || localStorage.getItem('instagramSearchEngineId');
+            
+            if (!apiKey || !engineId) {
+                alert('❌ Please enter API credentials first');
+                return;
+            }
+            
+            document.getElementById('instagramSearchApiStatus').innerHTML = '🧪 Testing...';
+            document.getElementById('instagramSearchApiStatus').style.color = '#007bff';
+            
+            try {
+                const testUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=test&num=1`;
+                const response = await fetch(testUrl);
+                
+                let responseText;
+                try {
+                    responseText = await response.text();
+                } catch (readError) {
+                    throw new Error(`Failed to read response: ${readError.message}`);
+                }
+                
+                if (response.ok) {
+                    if (!responseText) {
+                        throw new Error('Empty response from Google API');
+                    }
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        throw new Error(`Invalid JSON response: ${parseError.message}`);
+                    }
+                    
+                    document.getElementById('instagramSearchApiStatus').innerHTML = '✅ API working';
+                    document.getElementById('instagramSearchApiStatus').style.color = '#28a745';
+                    alert('✅ API connection test successful!');
+                } else {
+                    let errorMessage = `HTTP ${response.status}`;
+                    
+                    if (responseText) {
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.error?.message || errorData.message || errorMessage;
+                        } catch (parseError) {
+                            errorMessage = responseText.length > 200 ? `HTTP ${response.status}` : responseText || errorMessage;
+                        }
+                    }
+                    
+                    document.getElementById('instagramSearchApiStatus').innerHTML = '❌ API failed';
+                    document.getElementById('instagramSearchApiStatus').style.color = '#dc3545';
+                    alert(`❌ API test failed: ${errorMessage}`);
+                }
+            } catch (error) {
+                console.error('❌ Instagram Search API test failed:', error);
+                document.getElementById('instagramSearchApiStatus').innerHTML = '❌ Connection error';
+                document.getElementById('instagramSearchApiStatus').style.color = '#dc3545';
+                alert(`❌ Connection test failed: ${error.message}`);
+            }
+        }
+        
+        // Load saved API configuration
+        function loadInstagramSearchConfig() {
+            const apiKey = localStorage.getItem('instagramSearchApiKey');
+            const engineId = localStorage.getItem('instagramSearchEngineId');
+            
+            if (apiKey) document.getElementById('googleApiKey').value = apiKey;
+            if (engineId) document.getElementById('searchEngineId').value = engineId;
+            
+            if (apiKey && engineId) {
+                document.getElementById('instagramSearchApiStatus').innerHTML = '✅ Configuration loaded';
+                document.getElementById('instagramSearchApiStatus').style.color = '#28a745';
+            }
+        }
+        
+        // Main Instagram search function
+        async function searchInstagramBusinesses() {
+            const niche = document.getElementById('instagramSearchNiche').value.trim();
+            const location = document.getElementById('instagramSearchLocation').value.trim();
+            
+            // Validation
+            if (!niche) {
+                alert('❌ Please select a business niche');
+                return;
+            }
+            
+            if (!location) {
+                alert('❌ Please enter a location');
+                return;
+            }
+            
+            const apiKey = localStorage.getItem('instagramSearchApiKey') || document.getElementById('googleApiKey').value.trim();
+            const engineId = localStorage.getItem('instagramSearchEngineId') || document.getElementById('searchEngineId').value.trim();
+            
+            if (!apiKey || !engineId) {
+                alert('❌ Please configure your API credentials first');
+                return;
+            }
+            
+            // Show loading state
+            showInstagramSearchLoading(niche, location);
+            hideInstagramSearchError();
+            hideInstagramSearchResults();
+            
+            try {
+                // Form the search query: site:instagram.com "niche" "location"
+                const searchQuery = `site:instagram.com "${niche}" "${location}"`;
+                const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${engineId}&q=${encodeURIComponent(searchQuery)}&num=10`;
+                
+                console.log(`🔍 Searching Instagram for: ${searchQuery}`);
+                
+                const response = await fetch(searchUrl);
+                
+                let responseText;
+                try {
+                    responseText = await response.text();
+                } catch (readError) {
+                    throw new Error(`Failed to read response: ${readError.message}`);
+                }
+                
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}`;
+                    
+                    if (responseText) {
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.error?.message || errorData.message || errorMessage;
+                        } catch (parseError) {
+                            errorMessage = responseText.length > 200 ? `HTTP ${response.status}` : responseText || errorMessage;
+                        }
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error(`Invalid JSON response: ${parseError.message}`);
+                }
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'Google API error');
+                }
+                
+                // Process the results
+                const profiles = [];
+                
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => {
+                        const profile = parseInstagramResult(item);
+                        if (profile) {
+                            profiles.push(profile);
+                        }
+                    });
+                }
+                
+                instagramSearchResults = profiles;
+                displayInstagramSearchResults(profiles, niche, location);
+                
+            } catch (error) {
+                console.error('❌ Instagram search failed:', error);
+                showInstagramSearchError(error.message);
+            } finally {
+                hideInstagramSearchLoading();
+            }
+        }
+        
+        // Parse individual Instagram search result
+        function parseInstagramResult(item) {
+            try {
+                const url = item.link;
+                const title = item.title;
+                
+                // Ensure it's an Instagram URL
+                if (!url || !url.includes('instagram.com')) {
+                    return null;
+                }
+                
+                // Extract username from URL
+                const usernameMatch = url.match(/instagram\.com\/([^\/?]+)/);
+                if (!usernameMatch) {
+                    return null;
+                }
+                
+                const username = usernameMatch[1];
+                
+                // Clean the title to get display name
+                let displayName = title.replace(/(@[^\s]+)/g, '').replace(/\s+/g, ' ').trim();
+                displayName = displayName.replace(/\s*\|.*$/, '').replace(/\s*-.*$/, '').trim();
+                
+                if (!displayName) {
+                    displayName = username;
+                }
+                
+                return {
+                    username: username,
+                    displayName: displayName,
+                    profileUrl: url,
+                    snippet: item.snippet || ''
+                };
+            } catch (error) {
+                console.warn('Error parsing Instagram result:', error);
+                return null;
+            }
+        }
+        
+        // Show loading state
+        function showInstagramSearchLoading(niche, location) {
+            document.getElementById('searchingNiche').textContent = niche;
+            document.getElementById('searchingLocation').textContent = location;
+            document.getElementById('instagramSearchLoading').style.display = 'block';
+            document.getElementById('instagramSearchButton').disabled = true;
+            document.getElementById('instagramSearchButton').textContent = '🔄 Searching...';
+        }
+        
+        // Hide loading state
+        function hideInstagramSearchLoading() {
+            document.getElementById('instagramSearchLoading').style.display = 'none';
+            document.getElementById('instagramSearchButton').disabled = false;
+            document.getElementById('instagramSearchButton').textContent = '🚀 Search';
+        }
+        
+        // Show error
+        function showInstagramSearchError(message) {
+            document.getElementById('instagramSearchErrorMessage').textContent = message;
+            document.getElementById('instagramSearchError').style.display = 'block';
+        }
+        
+        // Hide error
+        function hideInstagramSearchError() {
+            document.getElementById('instagramSearchError').style.display = 'none';
+        }
+        
+        // Hide results
+        function hideInstagramSearchResults() {
+            document.getElementById('instagramSearchResults').style.display = 'none';
+        }
+        
+        // Display Instagram search results
+        function displayInstagramSearchResults(profiles, niche, location) {
+            const resultsContainer = document.getElementById('instagramProfilesList');
+            const resultsSection = document.getElementById('instagramSearchResults');
+            const resultsCounter = document.getElementById('resultsCounter');
+            
+            if (!profiles || profiles.length === 0) {
+                showInstagramSearchError(`No Instagram profiles found for '${niche}' in '${location}'. Try different keywords or locations.`);
+                return;
+            }
+            
+            // Update counter
+            resultsCounter.textContent = `${profiles.length} result${profiles.length !== 1 ? 's' : ''}`;
+            
+            // Generate results HTML
+            let resultsHTML = '';
+            profiles.forEach((profile, index) => {
+                resultsHTML += `
+                    <div class="instagram-profile" style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${profile.displayName}</p>
+                                <p style="margin: 0 0 8px 0;"><strong>Username:</strong> @${profile.username}</p>
+                                <p style="margin: 0;"><strong>Profile:</strong> <a href="${profile.profileUrl}" target="_blank" style="color: #007bff; text-decoration: none;">Link</a></p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background: #e9ecef; color: #495057; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                                    #${index + 1}
+                                </span>
+                            </div>
+                        </div>
+                        ${profile.snippet ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e9ecef; font-size: 14px; color: #6c757d;">${profile.snippet}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = resultsHTML;
+            resultsSection.style.display = 'block';
+        }
+        
+        // Retry search function
+        function retryInstagramSearch() {
+            hideInstagramSearchError();
+            searchInstagramBusinesses();
+        }
+        
+        // Initialize Instagram Search when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            populateInstagramSearchNiches();
+            loadInstagramSearchConfig();
+        });
+        
+        // ======= END INSTAGRAM CONTACT FINDER FUNCTIONALITY =======
+
         // Initialize spinner CSS injection
         const spinnerCSS = `
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        .instagram-profile {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .instagram-profile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
         }
         `;
         const style = document.createElement('style');
