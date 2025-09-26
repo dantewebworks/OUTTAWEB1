@@ -1087,6 +1087,164 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'outta_web.html'));
 });
 
+// Instagram Contact Finder API endpoint
+app.all('/api/instagram/contact-finder', async (req, res) => {
+    try {
+        // Enable CORS for all origins
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, x-search-engine-id, x-google-search-key');
+
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
+
+        console.log(`📥 Received ${req.method} request to /api/instagram/contact-finder`);
+
+        const { 
+            niche,
+            location,
+            maxResults = 10
+        } = req.method === 'GET' ? req.query : req.body;
+
+        // Get API credentials from environment or headers
+        const googleSearchKey = process.env.GOOGLE_SEARCH_API_KEY || req.headers['x-google-search-key'];
+        const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || req.headers['x-search-engine-id'];
+
+        // Validate API credentials
+        if (!googleSearchKey || !searchEngineId) {
+            return res.status(400).json({ 
+                success: false,
+                error: {
+                    code: 'MISSING_CREDENTIALS',
+                    message: 'API credentials not configured',
+                    details: 'Google Custom Search API key and Search Engine ID are required'
+                }
+            });
+        }
+
+        // Validate required parameters
+        if (!niche || !location) {
+            return res.status(400).json({ 
+                success: false,
+                error: {
+                    code: 'MISSING_PARAMS',
+                    message: 'Missing required parameters',
+                    details: 'Both niche and location are required'
+                }
+            });
+        }
+
+        console.log(`🔍 Searching Instagram for ${niche} businesses in ${location}`);
+
+        // Construct Instagram search query
+        const searchQuery = `site:instagram.com "${niche}" "${location}"`;
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=${maxResults}`;
+        
+        console.log(`📡 Search query: ${searchQuery}`);
+        
+        // Make API call to Google Custom Search
+        const searchResponse = await fetch(searchUrl);
+        
+        if (!searchResponse.ok) {
+            const errorText = await searchResponse.text();
+            console.error('Google Custom Search API error:', errorText);
+            
+            // Handle specific error cases
+            if (searchResponse.status === 429) {
+                return res.status(429).json({ 
+                    success: false,
+                    error: {
+                        code: 'QUOTA_EXCEEDED',
+                        message: 'Daily search limit reached',
+                        details: 'Your Google Custom Search API quota has been exceeded'
+                    }
+                });
+            }
+            
+            return res.status(searchResponse.status).json({ 
+                success: false,
+                error: {
+                    code: 'SEARCH_API_ERROR',
+                    message: 'Google Custom Search API request failed',
+                    details: errorText
+                }
+            });
+        }
+
+        const searchData = await searchResponse.json();
+        console.log(`📄 Found ${searchData.items?.length || 0} search results`);
+
+        // Extract Instagram profiles from search results
+        const profiles = [];
+        
+        if (searchData.items && searchData.items.length > 0) {
+            for (const item of searchData.items) {
+                try {
+                    // Extract username from Instagram URL
+                    const urlMatch = item.link.match(/instagram\.com\/([^\/\?]+)/);
+                    if (!urlMatch) continue;
+                    
+                    const username = urlMatch[1];
+                    
+                    // Skip invalid usernames (stories, p/, reel/, etc.)
+                    if (['stories', 'p', 'reel', 'tv', 'explore'].includes(username)) continue;
+                    
+                    // Extract display name from title (before @username if present)
+                    let displayName = item.title;
+                    if (displayName.includes('(@')) {
+                        displayName = displayName.split('(@')[0].trim();
+                    }
+                    
+                    // Remove common Instagram title suffixes
+                    displayName = displayName.replace(/\s*•\s*Instagram.*$/i, '').trim();
+                    displayName = displayName.replace(/\s*on Instagram.*$/i, '').trim();
+                    
+                    // Validate extracted data
+                    if (username && displayName && username.match(/^[a-zA-Z0-9._]+$/)) {
+                        profiles.push({
+                            name: displayName,
+                            username: username,
+                            profileUrl: `https://instagram.com/${username}`
+                        });
+                    }
+                } catch (extractError) {
+                    console.warn('Error extracting profile data:', extractError.message);
+                    continue;
+                }
+            }
+        }
+
+        console.log(`✅ Successfully extracted ${profiles.length} valid Instagram profiles`);
+
+        // Prepare response
+        const response = {
+            success: true,
+            data: {
+                profiles: profiles,
+                totalFound: profiles.length,
+                searchQuery: searchQuery,
+                niche: niche,
+                location: location,
+                searchDate: new Date().toISOString()
+            }
+        };
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('Instagram Contact Finder error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: {
+                code: 'INTERNAL_ERROR',
+                message: 'An unexpected error occurred',
+                details: error.message
+            }
+        });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
@@ -1094,6 +1252,181 @@ app.use((err, req, res, next) => {
         error: 'Internal server error',
         message: err.message 
     });
+});
+
+// Instagram Contact Finder API endpoint
+app.all('/api/instagram/contact-finder', async (req, res) => {
+    try {
+        // Enable CORS for all origins
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, x-search-engine-id, x-google-search-key');
+
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
+
+        console.log(`📥 Received ${req.method} request to /api/instagram/contact-finder`);
+
+        const { 
+            niche,
+            location,
+            maxResults = 10
+        } = req.method === 'GET' ? req.query : req.body;
+
+        // Get API credentials
+        const googleSearchKey = process.env.GOOGLE_SEARCH_API_KEY || req.headers['x-google-search-key'] || req.headers['x-api-key'];
+        const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || req.headers['x-search-engine-id'];
+
+        // Validate credentials
+        if (!googleSearchKey || !searchEngineId) {
+            return res.status(400).json({ 
+                success: false,
+                error: {
+                    code: 'MISSING_CREDENTIALS',
+                    message: 'API credentials not configured',
+                    userMessage: 'Please configure your Google Custom Search API credentials'
+                }
+            });
+        }
+
+        // Validate required parameters
+        if (!niche || !location) {
+            return res.status(400).json({ 
+                success: false,
+                error: {
+                    code: 'MISSING_PARAMS',
+                    message: 'Missing required parameters',
+                    userMessage: 'Both niche and location are required'
+                }
+            });
+        }
+
+        console.log(`🔍 Searching Instagram for ${niche} businesses in ${location}`);
+
+        // Construct search query
+        const searchQuery = `site:instagram.com "${niche}" "${location}"`;
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleSearchKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=${Math.min(maxResults, 10)}`;
+        
+        console.log(`📡 Making search request: ${searchQuery}`);
+        
+        // Make API call to Google Custom Search
+        const searchResponse = await fetch(searchUrl);
+        
+        if (!searchResponse.ok) {
+            const errorText = await searchResponse.text();
+            console.error('Google Custom Search API error:', errorText);
+            
+            // Handle specific error cases
+            if (searchResponse.status === 429) {
+                return res.status(429).json({ 
+                    success: false,
+                    error: {
+                        code: 'QUOTA_EXCEEDED',
+                        message: 'Daily search limit reached',
+                        userMessage: 'Daily search limit reached. Please try again tomorrow or upgrade your API plan'
+                    }
+                });
+            }
+            
+            return res.status(searchResponse.status).json({ 
+                success: false,
+                error: {
+                    code: 'API_ERROR',
+                    message: 'Google Custom Search API request failed',
+                    userMessage: 'Search service temporarily unavailable. Please try again later'
+                }
+            });
+        }
+
+        const searchData = await searchResponse.json();
+        console.log(`📄 Search returned ${searchData.items ? searchData.items.length : 0} results`);
+
+        // Check if no results found
+        if (!searchData.items || searchData.items.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    profiles: [],
+                    totalFound: 0,
+                    searchQuery: searchQuery,
+                    niche: niche,
+                    location: location,
+                    searchDate: new Date().toISOString(),
+                    message: `No Instagram profiles found for '${niche}' in '${location}'`
+                }
+            });
+        }
+
+        // Extract and validate Instagram profiles
+        const profiles = [];
+        
+        for (const item of searchData.items) {
+            try {
+                // Extract username from Instagram URL
+                const usernameMatch = item.link.match(/instagram\.com\/([^\/\?]+)/);
+                if (!usernameMatch) continue;
+                
+                const username = usernameMatch[1];
+                
+                // Skip invalid usernames (stories, p/, reel/, etc.)
+                if (['stories', 'p', 'reel', 'tv', 'explore'].includes(username)) continue;
+                
+                // Validate username format
+                if (!/^[a-zA-Z0-9._]+$/.test(username)) continue;
+                
+                // Extract display name from title
+                let displayName = item.title;
+                
+                // Remove (@username) from title if present
+                displayName = displayName.replace(/\s*\(@[^)]+\)\s*/, '').trim();
+                
+                // Remove "Instagram" from the end if present
+                displayName = displayName.replace(/\s*-?\s*Instagram\s*$/i, '').trim();
+                
+                // Skip if no meaningful display name
+                if (!displayName || displayName.length < 2) continue;
+                
+                const profile = {
+                    name: displayName,
+                    username: username,
+                    profileUrl: `https://instagram.com/${username}`
+                };
+                
+                profiles.push(profile);
+                
+            } catch (extractError) {
+                console.warn('Error extracting profile data:', extractError);
+                continue;
+            }
+        }
+
+        console.log(`✅ Successfully extracted ${profiles.length} valid Instagram profiles`);
+
+        // Return formatted results
+        res.json({
+            success: true,
+            data: {
+                profiles: profiles,
+                totalFound: profiles.length,
+                searchQuery: searchQuery,
+                niche: niche,
+                location: location,
+                searchDate: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error('Instagram Contact Finder error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: {
+                code: 'INTERNAL_ERROR',
+                message: 'Internal server error',
+                userMessage: 'An unexpected error occurred. Please try again later'
+            }
+        });
+    }
 });
 
 // Start server
